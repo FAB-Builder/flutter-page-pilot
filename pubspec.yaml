@@ -1,7 +1,7 @@
 name: pagepilot
 description: A new Flutter plugin project.
 version: 0.0.1
-homepage:
+homepage: https://www.example.com
 
 environment:
   sdk: ">=2.17.5 <3.0.0"
@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  http: ^1.2.2
   plugin_platform_interface: ^2.0.2
 
 dev_dependencies:
