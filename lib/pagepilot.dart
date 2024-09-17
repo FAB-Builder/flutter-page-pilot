@@ -5,10 +5,17 @@
 // platforms in the `pubspec.yaml` at
 // https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
 
+import 'package:flutter/material.dart';
+import 'package:pagepilot/models/config_model.dart';
+
 import 'pagepilot_platform_interface.dart';
 
 class Pagepilot {
   Future<String?> getPlatformVersion() {
     return PagepilotPlatform.instance.getPlatformVersion();
+  }
+
+  Future<void> init(Config config) async {
+    return PagepilotPlatform.instance.init(config);
   }
 }

@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:flutter/services.dart';
+import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/pagepilot.dart';
+import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(MyApp());
 }
+
+// TODO : Add your crdentials
+const applicationId = "";
+const clientId = "";
+const clientSecret = "";
+const version = "";
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -23,6 +31,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+    initPagePilot();
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
@@ -31,9 +40,12 @@ class _MyAppState extends State<MyApp> {
     // Platform messages may fail, so we use a try/catch PlatformException.
     // We also handle the message potentially returning null.
     try {
-      platformVersion =
-          await _pagepilotPlugin.getPlatformVersion() ?? 'Unknown platform version';
+      platformVersion = await _pagepilotPlugin.getPlatformVersion() ??
+          'Unknown platform version';
     } on PlatformException {
+      platformVersion = 'Failed to get platform version.';
+    } catch (e) {
+      print(e.toString());
       platformVersion = 'Failed to get platform version.';
     }
 
@@ -47,17 +59,74 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  initPagePilot() async {
+    Config config = Config(
+        applicationId: applicationId,
+        clientId: clientId,
+        clientSecret: clientSecret,
+        version: version);
+    try {
+      await _pagepilotPlugin.init(config!); // initialize the library
+    } on PlatformException {
+      // Log exception and report studio@gameolive.com
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Plugin example app'),
-        ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
-        ),
+      home: App(
+        platformVersion: _platformVersion,
       ),
+    );
+  }
+}
+
+class App extends StatelessWidget {
+  String platformVersion;
+  App({super.key, required this.platformVersion});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Plugin example app'),
+      ),
+      body: Column(children: [
+        Center(
+          child: Text('Running on: $platformVersion\n'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            PagePilot.showSnackbar(
+              context,
+              message: "Hello World",
+              duration: 10,
+            );
+          },
+          child: Text("Show snackbar "),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            PagePilot.showOkCancelDialog(
+              context,
+              title: "Title",
+              description: "lorem ipsum dolor ?",
+              onOkPressed: () {
+                //do something
+                Navigator.pop(context);
+              },
+            );
+          },
+          child: Text("Show dialog "),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            PagePilot.showBottomSheet(context, text: "Hello");
+          },
+          child: Text("Show bottom sheet"),
+        ),
+      ]),
     );
   }
 }

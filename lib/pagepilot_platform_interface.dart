@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+import 'package:pagepilot/models/config_model.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
 import 'pagepilot_method_channel.dart';
@@ -14,7 +16,7 @@ abstract class PagepilotPlatform extends PlatformInterface {
   ///
   /// Defaults to [MethodChannelPagepilot].
   static PagepilotPlatform get instance => _instance;
-  
+
   /// Platform-specific implementations should set this with their own
   /// platform-specific class that extends [PagepilotPlatform] when
   /// they register themselves.
@@ -25,5 +27,9 @@ abstract class PagepilotPlatform extends PlatformInterface {
 
   Future<String?> getPlatformVersion() {
     throw UnimplementedError('platformVersion() has not been implemented.');
+  }
+
+  Future<void> init(Config config) async {
+    throw UnimplementedError('init() has not been implemented.');
   }
 }
