@@ -3,8 +3,8 @@ import UIKit
 
 public class PagePilotPlugin: NSObject, FlutterPlugin {
   public static func register(with registrar: FlutterPluginRegistrar) {
-    let channel = FlutterMethodChannel(name: "page_pilot", binaryMessenger: registrar.messenger())
-    let instance = pagePilotPlugin()
+    let channel = FlutterMethodChannel(name: "pagepilot", binaryMessenger: registrar.messenger())
+    let instance = PagePilotPlugin()
     registrar.addMethodCallDelegate(instance, channel: channel)
   }
 
