@@ -18,7 +18,7 @@ public class PagePilotPlugin implements FlutterPlugin, MethodCallHandler {
 
   @Override
   public void onAttachedToEngine(@NonNull FlutterPluginBinding flutterPluginBinding) {
-    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "page_pilot");
+    channel = new MethodChannel(flutterPluginBinding.getBinaryMessenger(), "pagepilot");
     channel.setMethodCallHandler(this);
   }
 
