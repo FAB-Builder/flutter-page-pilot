@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
@@ -15,6 +16,10 @@ const applicationId = "";
 const clientId = "";
 const clientSecret = "";
 const version = "";
+
+GlobalKey keyDialog = GlobalKey();
+GlobalKey keyTooltip = GlobalKey();
+GlobalKey keyBeacon = GlobalKey();
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -60,11 +65,21 @@ class _MyAppState extends State<MyApp> {
   }
 
   initPagePilot() async {
+    Map keys = {
+      '#dialog': keyDialog,
+      '#tooltip': keyTooltip,
+      '#beacon': keyBeacon
+    };
+
     Config config = Config(
-        applicationId: applicationId,
-        clientId: clientId,
-        clientSecret: clientSecret,
-        version: version);
+      applicationId: applicationId,
+      clientId: clientId,
+      clientSecret: clientSecret,
+      version: version,
+      keys: keys,
+      styles:
+          Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
+    );
     try {
       await _pagepilotPlugin.init(config!); // initialize the library
     } on PlatformException {
@@ -77,6 +92,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: App(
         platformVersion: _platformVersion,
+        pagepilotPlugin: _pagepilotPlugin,
       ),
     );
   }
@@ -84,7 +100,13 @@ class _MyAppState extends State<MyApp> {
 
 class App extends StatelessWidget {
   String platformVersion;
-  App({super.key, required this.platformVersion});
+  Pagepilot pagepilotPlugin;
+
+  App({
+    super.key,
+    required this.platformVersion,
+    required this.pagepilotPlugin,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -92,41 +114,20 @@ class App extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Plugin example app'),
       ),
-      body: Column(children: [
-        Center(
-          child: Text('Running on: $platformVersion\n'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            PagePilot.showSnackbar(
-              context,
-              message: "Hello World",
-              duration: 10,
-            );
-          },
-          child: Text("Show snackbar "),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            PagePilot.showOkCancelDialog(
-              context,
-              title: "Title",
-              description: "lorem ipsum dolor ?",
-              onOkPressed: () {
-                //do something
-                Navigator.pop(context);
-              },
-            );
-          },
-          child: Text("Show dialog "),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            PagePilot.showBottomSheet(context, text: "Hello");
-          },
-          child: Text("Show bottom sheet"),
-        ),
-      ]),
+      body: Column(
+        children: [
+          Center(
+            child: Text('Running on: $platformVersion\n'),
+          ),
+          ElevatedButton(
+            key: keyDialog,
+            onPressed: () {
+              pagepilotPlugin.show(context: context);
+            },
+            child: Text("Show"),
+          ),
+        ],
+      ),
     );
   }
 }

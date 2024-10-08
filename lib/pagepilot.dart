@@ -18,4 +18,17 @@ class Pagepilot {
   Future<void> init(Config config) async {
     return PagepilotPlatform.instance.init(config);
   }
+
+  Future<void> show({
+    required BuildContext context,
+    Widget? widget, //required for tooltip
+    Config? config,
+    String? type,
+  }) async {
+    return PagepilotPlatform.instance.show(
+      context: context,
+      widget: widget,
+      type: type,
+    );
+  }
 }

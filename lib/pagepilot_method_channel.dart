@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/services/service.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 import 'pagepilot_platform_interface.dart';
@@ -25,5 +26,16 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   @override
   Future<void> init(Config config) async {
     CONFIG = config;
+  }
+
+  @override
+  Future<void> show({
+    required BuildContext context,
+    Widget? widget, //required for tooltip
+    Config? config,
+    String? type,
+  }) async {
+    config ??= CONFIG!;
+    doShow(context, config, widget: widget, type: type);
   }
 }
