@@ -120,11 +120,22 @@ class App extends StatelessWidget {
             child: Text('Running on: $platformVersion\n'),
           ),
           ElevatedButton(
-            key: keyDialog,
             onPressed: () {
               pagepilotPlugin.show(context: context);
             },
             child: Text("Show"),
+          ),
+          SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              Text(key: keyDialog, 'Dialog'),
+              Text(key: keyTooltip, 'Tooltip'),
+            ],
+          ),
+          SizedBox(height: 20),
+          Center(
+            child: Text(key: keyBeacon, 'Beacon'),
           ),
         ],
       ),

@@ -1,10 +1,8 @@
 import 'dart:ui';
-
-import 'package:flutter/material.dart';
-
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
+import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class PagePilot {
@@ -207,7 +205,7 @@ class PagePilot {
       {required GlobalKey key,
       required String shape,
       required String title,
-      required String description,
+      required String body,
       Function()? onOkPressed}) {
     List<TargetFocus> targets = [];
     targets.add(
@@ -232,7 +230,7 @@ class PagePilot {
                   child: ListBody(
                     children: <Widget>[
                       Text(
-                        description,
+                        body,
                       ),
                     ],
                   ),
@@ -310,7 +308,7 @@ class PagePilot {
     required GlobalKey key,
     required String shape,
     required String title,
-    required String description,
+    required String body,
   }) {
     List<TargetFocus> targets = [];
     targets.add(
@@ -343,7 +341,7 @@ class PagePilot {
                     ),
                     SizedBox(height: 10),
                     Text(
-                      description,
+                      body,
                       overflow: TextOverflow.clip,
                     ),
                   ],
@@ -445,39 +443,52 @@ class PagePilot {
     BuildContext context, {
     required String shape,
     required GlobalKey key,
+    required String beaconPosition,
+    required String title,
+    required String body,
+    required Color color,
+    required Function() onBeaconClicked,
   }) {
-    List<TargetFocus> targets = [];
-    targets.add(
-      TargetFocus(
-        shape: shape.toString().toLowerCase() == "rect"
-            ? ShapeLightFocus.RRect
-            : ShapeLightFocus.Circle,
-        identify: "keyBeacon",
-        keyTarget: key,
-        alignSkip: Alignment.topRight,
-        enableOverlayTab: false,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            builder: (context, controller) {
-              return Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.red,
-                  // border: Border.all(color: Colors.black),
-                  // borderRadius: BorderRadius.circular(50),
-                ),
-              );
-            },
+    // Get the render box for the target widget
+    final RenderBox renderBox =
+        key.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final position = renderBox.localToGlobal(Offset.zero);
+
+    Offset beaconOffset =
+        calculateBeaconPosition(beaconPosition, position, size);
+    // Use an OverlayEntry to display the pulse animation
+    final overlay = Overlay.of(context);
+    OverlayEntry? entry;
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: beaconOffset.dy, // Calculated top position
+        left: beaconOffset.dx, // Calculated left position
+        child: GestureDetector(
+          child: PulseAnimation(
+            color: color,
           ),
-        ],
+          onTap: () {
+            entry!.remove();
+            showTooltip(
+              context,
+              key: key,
+              shape: shape,
+              title: title,
+              body: body,
+            );
+            onBeaconClicked();
+          },
+        ),
       ),
     );
 
-    PagePilot.initTutorialCoachMark(targets);
-    tutorialCoachMark.show(context: context);
+    overlay.insert(entry);
+
+    // Remove the overlay after a delay
+    // Future.delayed(Duration(seconds: 3), () {
+    //   entry.remove();
+    // });
   }
 
   static void showTour(
@@ -518,7 +529,8 @@ class PagePilot {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      Text(tours[i]["description"].toString()),
+                      // Text(tours[i]["description"].toString()),
+                      Text(tours[i]["body"].toString()),
                     ],
                   ),
                 );
@@ -531,5 +543,53 @@ class PagePilot {
 
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
+  }
+
+  static Offset calculateBeaconPosition(
+      String position, Offset widgetPosition, Size widgetSize) {
+    double val = 15; //30 should be half of raius of circle
+    switch (position) {
+      case "topleft":
+        return widgetPosition - Offset(val, val); // Adjusted for padding
+      case "topright":
+        return Offset(widgetPosition.dx + widgetSize.width - val,
+            widgetPosition.dy - val);
+      case "bottomleft":
+        return Offset(widgetPosition.dx - val,
+            widgetPosition.dy + widgetSize.height - val);
+      case "bottomright":
+        return Offset(widgetPosition.dx + widgetSize.width - val,
+            widgetPosition.dy + widgetSize.height - val);
+      case "center":
+        return Offset(widgetPosition.dx + widgetSize.width / 2 - val,
+            widgetPosition.dy + widgetSize.height / 2 - val);
+      case "topcenter":
+      case "top":
+        return Offset(widgetPosition.dx + widgetSize.width / 2 - val,
+            widgetPosition.dy - val);
+      case "bottomcenter":
+      case "bottom":
+        return Offset(widgetPosition.dx + widgetSize.width / 2 - val,
+            widgetPosition.dy + widgetSize.height - val);
+      case "leftcenter":
+      case "left":
+        return Offset(widgetPosition.dx - val,
+            widgetPosition.dy + widgetSize.height / 2 - val);
+      case "rightcenter":
+      case "right":
+        return Offset(widgetPosition.dx + widgetSize.width - val,
+            widgetPosition.dy + widgetSize.height / 2 - val);
+      default:
+        return widgetPosition;
+    }
+  }
+
+  static Color hexToColor(String hexString) {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) {
+      buffer.write('ff'); // Adds 'ff' for opacity if alpha is missing
+    }
+    buffer.write(hexString.replaceFirst('#', '')); // Removes the # if present
+    return Color(int.parse(buffer.toString(), radix: 16));
   }
 }
