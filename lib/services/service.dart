@@ -70,11 +70,16 @@ void doShow(
       String body = jsonResponse["content"]["body"];
       String? position = jsonResponse["content"]["position"];
       String? color = jsonResponse["content"]["color"];
-      GlobalKey key =
+      GlobalKey? key =
           config.keys[jsonResponse["content"]["element"].toString()];
 
       switch (jsonResponse["type"].toString().toLowerCase()) {
         case "dialog":
+          if (key == null) {
+            throw Exception(
+              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            );
+          }
           PagePilot.showOkDialog(
             context,
             shape: shape,
@@ -109,9 +114,11 @@ void doShow(
         case "tooltip":
         case "i":
         case "?":
-          // if (widget == null) {
-          //   throw new Exception("Tooltip requires widget parameter");
-          // }
+          if (key == null) {
+            throw Exception(
+              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            );
+          }
           PagePilot.showTooltip(
             context,
             shape: shape,
@@ -144,6 +151,11 @@ void doShow(
         // case "spotlight":
         //   break;
         case "pip":
+          if (key == null) {
+            throw Exception(
+              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            );
+          }
           PagePilot.showPip(
             context,
             // shape: shape,
@@ -151,6 +163,11 @@ void doShow(
           );
           break;
         case "beacon":
+          if (key == null) {
+            throw Exception(
+              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            );
+          }
           PagePilot.showBeacon(
             context,
             shape: shape,

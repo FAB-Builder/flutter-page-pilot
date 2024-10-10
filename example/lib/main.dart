@@ -6,6 +6,7 @@ import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
+import 'package:pagepilot_example/app_theme.dart';
 
 void main() {
   runApp(MyApp());
@@ -90,6 +91,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: AppTheme.lightTheme,
       home: App(
         platformVersion: _platformVersion,
         pagepilotPlugin: _pagepilotPlugin,

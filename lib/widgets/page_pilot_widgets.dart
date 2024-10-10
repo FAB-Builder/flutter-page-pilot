@@ -147,6 +147,7 @@ class PagePilot {
       {required String title,
       required String body,
       required Function() onOkPressed}) {
+    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -161,7 +162,7 @@ class PagePilot {
                 left: padding,
                 right: padding),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkTheme ? Colors.black : Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -207,6 +208,7 @@ class PagePilot {
       required String title,
       required String body,
       Function()? onOkPressed}) {
+    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
     targets.add(
       TargetFocus(
@@ -222,6 +224,7 @@ class PagePilot {
             align: ContentAlign.bottom,
             builder: (context, controller) {
               return AlertDialog(
+                backgroundColor: isDarkTheme ? Colors.black : Colors.white,
                 title: Text(
                   title,
                 ),
@@ -310,6 +313,7 @@ class PagePilot {
     required String title,
     required String body,
   }) {
+    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
     targets.add(
       TargetFocus(
@@ -326,7 +330,7 @@ class PagePilot {
             builder: (context, controller) {
               return Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: isDarkTheme ? Colors.black : Colors.white,
                   borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 padding: EdgeInsets.all(padding),
@@ -497,6 +501,7 @@ class PagePilot {
     required List<dynamic> tours,
     // required Widget widget,
   }) {
+    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
 
     for (int i = 0; i < tours.length; i++) {
@@ -515,7 +520,7 @@ class PagePilot {
               builder: (context, controller) {
                 return Container(
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDarkTheme ? Colors.black : Colors.white,
                     borderRadius: BorderRadius.circular(borderRadius),
                   ),
                   padding: EdgeInsets.all(borderRadius),
@@ -527,6 +532,7 @@ class PagePilot {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color: isDarkTheme ? Colors.white : Colors.black,
                         ),
                       ),
                       // Text(tours[i]["description"].toString()),
