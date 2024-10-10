@@ -4,12 +4,14 @@ import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
   static OverlayEntry? _overlayEntry;
   static late TutorialCoachMark tutorialCoachMark;
   static double borderRadius = 20;
   static double padding = 16;
+  static WebViewController? controller;
   static Styles styles = Styles(
     shadowColor: Colors.red,
     shadowOpacity: 0.5,
@@ -34,6 +36,26 @@ class PagePilot {
     //     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
     //   );
     // }
+
+    controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) {},
+          onHttpError: (HttpResponseError error) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.startsWith('https://www.youtube.com/')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
   }
 
   static void initTutorialCoachMark(List<TargetFocus> targets) {
@@ -66,7 +88,7 @@ class PagePilot {
   }
 
   static void showSnackbar(BuildContext context,
-      {required String title, required String body, int duration = 3000}) {
+      {String? title, String? body, String? url, int duration = 3000}) {
     if (context == null) {
       print("No Overlay widget found in the current context.");
       return;
@@ -89,6 +111,7 @@ class PagePilot {
         child: Material(
           color: Colors.transparent,
           child: Container(
+            height: 80,
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
               color: Colors.black.withOpacity(0.8),
@@ -96,28 +119,38 @@ class PagePilot {
             ),
             child: Row(
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                title != null && body != null
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            body,
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      )
+                    : Container(
+                        height: 80,
+                        width: 340,
+                        child: WebViewWidget(
+                          controller: controller!,
+                        ),
                       ),
-                    ),
-                    Text(
-                      body,
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
                 Spacer(),
                 GestureDetector(
                   onTap: () {
                     _overlayEntry?.remove();
                     _overlayEntry = null;
+
+                    controller!.clearCache();
                   },
                   child: Icon(
                     Icons.close,
@@ -140,7 +173,12 @@ class PagePilot {
     Future.delayed(Duration(milliseconds: duration), () {
       _overlayEntry?.remove();
       _overlayEntry = null;
+      controller!.clearCache();
     });
+
+    if (url != null) {
+      controller!.loadRequest(Uri.parse(url));
+    }
   }
 
   static void showBottomSheet(BuildContext context,
@@ -202,7 +240,55 @@ class PagePilot {
     );
   }
 
-  static void showOkDialog(BuildContext context,
+  static void showOkDialog(
+    BuildContext context, {
+    required String shape,
+    String? title,
+    String? body,
+    String? url,
+    Function()? onOkPressed,
+  }) {
+    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+
+    showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            backgroundColor: isDarkTheme ? Colors.black : Colors.white,
+            title: title != null ? Text(title!) : null,
+            content: SingleChildScrollView(
+              child: body != null
+                  ? Text(body)
+                  : Container(
+                      height: 200,
+                      width: 200,
+                      child: WebViewWidget(controller: controller!),
+                    ),
+            ),
+            actions: <Widget>[
+              TextButton(
+                onPressed: onOkPressed == null
+                    ? () {
+                        Navigator.pop(context);
+                      }
+                    : () {
+                        Navigator.pop(context);
+                        controller!.clearCache();
+                        onOkPressed();
+                      },
+                child: const Text(
+                  'OK',
+                ),
+              ),
+            ],
+          );
+        });
+    if (url != null) {
+      controller!.loadRequest(Uri.parse(url!));
+    }
+  }
+
+  static void showInfoDialog(BuildContext context,
       {required GlobalKey key,
       required String shape,
       required String title,
@@ -268,42 +354,6 @@ class PagePilot {
 
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
-
-    // showDialog(
-    //   context: context,
-    //   barrierDismissible: false, // user must tap button!
-    //   builder: (BuildContext context) {
-    //     return AlertDialog(
-    //       title: Text(
-    //         title,
-    //       ),
-    //       // backgroundColor: AppTheme.backgroundColor,
-    //       content: SingleChildScrollView(
-    //         child: ListBody(
-    //           children: <Widget>[
-    //             Text(
-    //               description,
-    //             ),
-    //           ],
-    //         ),
-    //       ),
-    //       actions: <Widget>[
-    //         TextButton(
-    //           onPressed: () => Navigator.pop(context),
-    //           child: const Text(
-    //             'Cancel',
-    //           ),
-    //         ),
-    //         TextButton(
-    //           onPressed: onOkPressed,
-    //           child: const Text(
-    //             'OK',
-    //           ),
-    //         ),
-    //       ],
-    //     );
-    //   },
-    // );
   }
 
   static void showTooltip(

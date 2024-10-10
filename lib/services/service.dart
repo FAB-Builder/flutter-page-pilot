@@ -66,152 +66,156 @@ void doShow(
     if (response.body != "null") {
       String shape = jsonResponse["content"]["shape"] ?? "rect";
 
-      String title = jsonResponse["content"]["title"];
-      String body = jsonResponse["content"]["body"];
+      String? title = jsonResponse["content"]["title"];
+      String? body = jsonResponse["content"]["body"];
+      String? url = jsonResponse["content"]["url"];
       String? position = jsonResponse["content"]["position"];
       String? color = jsonResponse["content"]["color"];
       GlobalKey? key =
           config.keys[jsonResponse["content"]["element"].toString()];
 
-      switch (jsonResponse["type"].toString().toLowerCase()) {
-        case "dialog":
-          if (key == null) {
-            throw Exception(
-              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+      if ((title != null && body != null) || url != null) {
+        switch (jsonResponse["type"].toString().toLowerCase()) {
+          case "dialog":
+            PagePilot.showOkDialog(
+              context,
+              shape: shape,
+              title: title,
+              body: body,
+              url: url,
+              onOkPressed: () async {
+                await http.get(
+                  Uri.parse(
+                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                  ),
+                );
+              },
             );
-          }
-          PagePilot.showOkDialog(
-            context,
-            shape: shape,
-            key: key,
-            title: title,
-            body: body,
-            onOkPressed: () async {
-              await http.get(
-                Uri.parse(
-                  "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-                ),
+            break;
+          case "snackbar":
+          case "snack":
+          case "toast":
+            PagePilot.showSnackbar(
+              context,
+              title: title,
+              body: body,
+              url: url,
+              duration:
+                  int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
+            );
+            //acknowledge
+            await http.get(
+              Uri.parse(
+                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+            break;
+          case "tooltip":
+          case "i":
+          case "?":
+            if (key == null) {
+              throw Exception(
+                "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
               );
-            },
-          );
-          break;
-        case "snackbar":
-        case "snack":
-        case "toast":
-          PagePilot.showSnackbar(
-            context,
-            title: title,
-            body: body,
-            duration: int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
-          );
-          //acknowledge
-          await http.get(
-            Uri.parse(
-              "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-            ),
-          );
-          break;
-        case "tooltip":
-        case "i":
-        case "?":
-          if (key == null) {
-            throw Exception(
-              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            }
+            PagePilot.showTooltip(
+              context,
+              shape: shape,
+              key: key,
+              // title: jsonResponse["content"]["tour"][0]["title"],
+              // description: jsonResponse["content"]["tour"][0]["description"],
+              title: title ?? "",
+              body: body ?? "",
             );
-          }
-          PagePilot.showTooltip(
-            context,
-            shape: shape,
-            key: key,
-            // title: jsonResponse["content"]["tour"][0]["title"],
-            // description: jsonResponse["content"]["tour"][0]["description"],
-            title: title,
-            body: body,
-          );
-          await http.get(
-            Uri.parse(
-              "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-            ),
-          );
-          break;
-        case "bottomsheet":
-          PagePilot.showBottomSheet(
-            context,
-            title: title,
-            body: body,
-            onOkPressed: () async {
-              await http.get(
-                Uri.parse(
-                  "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-                ),
+            await http.get(
+              Uri.parse(
+                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+            break;
+          case "bottomsheet":
+            PagePilot.showBottomSheet(
+              context,
+              title: title ?? "",
+              body: body ?? "",
+              onOkPressed: () async {
+                await http.get(
+                  Uri.parse(
+                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                  ),
+                );
+              },
+            );
+            break;
+          // case "spotlight":
+          //   break;
+          case "pip":
+            if (key == null) {
+              throw Exception(
+                "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
               );
-            },
-          );
-          break;
-        // case "spotlight":
-        //   break;
-        case "pip":
-          if (key == null) {
-            throw Exception(
-              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+            }
+            PagePilot.showPip(
+              context,
+              // shape: shape,
+              key: key,
             );
-          }
-          PagePilot.showPip(
-            context,
-            // shape: shape,
-            key: key,
-          );
-          break;
-        case "beacon":
-          if (key == null) {
-            throw Exception(
-              "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
-            );
-          }
-          PagePilot.showBeacon(
-            context,
-            shape: shape,
-            key: key,
-            beaconPosition:
-                position == null ? "center" : position!.toLowerCase(),
-            title: title,
-            body: body,
-            color: color == null
-                ? Colors.blue.withOpacity(0.5)
-                : PagePilot.hexToColor(color),
-            onBeaconClicked: () async {
-              //acknowledge
-              await http.get(
-                Uri.parse(
-                  "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-                ),
+            break;
+          case "beacon":
+            if (key == null) {
+              throw Exception(
+                "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
               );
-            },
-            // title: jsonResponse["content"]["tour"][0]["title"],
-            // description: jsonResponse["content"]["tour"][0]["description"],
-          );
-
-          break;
-        case "tour":
-        case "walktrough":
-          List<dynamic> tours = [];
-          for (int i = 0;
-              i < jsonResponse["content"]["tourContent"].length;
-              i++) {
-            tours.add(
-              jsonResponse["content"]["tourContent"][i],
+            }
+            PagePilot.showBeacon(
+              context,
+              shape: shape,
+              key: key,
+              beaconPosition:
+                  position == null ? "center" : position!.toLowerCase(),
+              title: title ?? "",
+              body: body ?? "",
+              color: color == null
+                  ? Colors.blue.withOpacity(0.5)
+                  : PagePilot.hexToColor(color),
+              onBeaconClicked: () async {
+                //acknowledge
+                await http.get(
+                  Uri.parse(
+                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                  ),
+                );
+              },
+              // title: jsonResponse["content"]["tour"][0]["title"],
+              // description: jsonResponse["content"]["tour"][0]["description"],
             );
-          }
 
-          //KEYCHANGE: "description" => "body"
-          PagePilot.showTour(context, config, tours: tours);
+            break;
+          case "tour":
+          case "walktrough":
+            List<dynamic> tours = [];
+            for (int i = 0;
+                i < jsonResponse["content"]["tourContent"].length;
+                i++) {
+              tours.add(
+                jsonResponse["content"]["tourContent"][i],
+              );
+            }
 
-          await http.get(
-            Uri.parse(
-              "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
-            ),
-          );
-          break;
+            //KEYCHANGE: "description" => "body"
+            PagePilot.showTour(context, config, tours: tours);
+
+            await http.get(
+              Uri.parse(
+                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+            break;
+        }
+      } else {
+        throw Exception(
+          "PagePilotPluginError: Either provide title & body or html for ${jsonResponse["content"]["element"].toString()}",
+        );
       }
     }
   } catch (e) {
