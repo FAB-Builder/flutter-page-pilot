@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
-import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 import 'package:pagepilot_example/app_theme.dart';
 
 void main() {
@@ -17,6 +16,7 @@ const applicationId = "";
 const clientId = "";
 const clientSecret = "";
 const version = "";
+const userId = "1234";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -76,6 +76,7 @@ class _MyAppState extends State<MyApp> {
       applicationId: applicationId,
       clientId: clientId,
       clientSecret: clientSecret,
+      userId: userId,
       version: version,
       keys: keys,
       styles:

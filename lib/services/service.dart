@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 import 'package:http/http.dart' as http;
@@ -9,7 +9,6 @@ import 'package:http/http.dart' as http;
 void doShow(
   BuildContext context,
   Config config, {
-  Widget? widget,
   String? type,
 }) async {
   try {
@@ -17,8 +16,7 @@ void doShow(
     var jsonResponse;
 
     var response = await http.get(
-      Uri.parse(
-          "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/get/unacknowledged"),
+      Uri.parse("$baseUrl/get/unacknowledged?userId=${config.userId}"),
     );
 
     //mock data
@@ -86,7 +84,7 @@ void doShow(
               onOkPressed: () async {
                 await http.get(
                   Uri.parse(
-                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                    "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
                   ),
                 );
               },
@@ -106,7 +104,7 @@ void doShow(
             //acknowledge
             await http.get(
               Uri.parse(
-                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
             );
             break;
@@ -129,7 +127,7 @@ void doShow(
             );
             await http.get(
               Uri.parse(
-                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
             );
             break;
@@ -141,7 +139,7 @@ void doShow(
               onOkPressed: () async {
                 await http.get(
                   Uri.parse(
-                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                    "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
                   ),
                 );
               },
@@ -182,7 +180,7 @@ void doShow(
                 //acknowledge
                 await http.get(
                   Uri.parse(
-                    "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                    "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
                   ),
                 );
               },
@@ -207,7 +205,7 @@ void doShow(
 
             await http.get(
               Uri.parse(
-                "https://asia-south1.gcp.data.mongodb-api.com/app/mock-wallet-vrughwh/endpoint/ahd/acknowledge?id=${jsonResponse["_id"]}",
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
             );
             break;

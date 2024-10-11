@@ -31,11 +31,10 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   @override
   Future<void> show({
     required BuildContext context,
-    Widget? widget, //required for tooltip
     Config? config,
     String? type,
   }) async {
     config ??= CONFIG!;
-    doShow(context, config, widget: widget, type: type);
+    doShow(context, config, type: type);
   }
 }

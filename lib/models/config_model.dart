@@ -4,6 +4,7 @@ class Config {
   final String applicationId;
   final String clientId;
   final String clientSecret;
+  final String userId;
   String version;
   Map keys;
   Styles? styles;
@@ -22,6 +23,7 @@ class Config {
     required this.applicationId,
     required this.clientId,
     required this.clientSecret,
+    required this.userId,
     required this.keys,
     this.version = "",
     this.styles,
@@ -30,6 +32,7 @@ class Config {
   factory Config.fromJson(Map<String, String> json) {
     Config config = Config(
       applicationId: json['applicationId'] ?? "",
+      userId: json['userId'] ?? "",
       clientId: json['clientId'] ?? "",
       clientSecret: json['clientSecret'] ?? "",
       keys: json['keys'] as Map ?? {},
