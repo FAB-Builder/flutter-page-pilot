@@ -35,6 +35,7 @@ abstract class PagepilotPlatform extends PlatformInterface {
 
   Future<void> show({
     required BuildContext context,
+    required String screen,
     Config? config,
     String? type,
   }) async {

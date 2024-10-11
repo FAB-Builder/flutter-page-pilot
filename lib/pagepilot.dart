@@ -21,11 +21,13 @@ class Pagepilot {
 
   Future<void> show({
     required BuildContext context,
+    required String screen,
     Config? config,
     String? type,
   }) async {
     return PagepilotPlatform.instance.show(
       context: context,
+      screen: screen,
       type: type,
     );
   }

@@ -124,7 +124,7 @@ class App extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              pagepilotPlugin.show(context: context);
+              pagepilotPlugin.show(context: context, screen: "main");
             },
             child: Text("Show"),
           ),
