@@ -23,7 +23,7 @@ class Config {
     required this.applicationId,
     required this.clientId,
     required this.clientSecret,
-    required this.userId,
+    this.userId = "ANOYMOUS",
     required this.keys,
     this.version = "",
     this.styles,
