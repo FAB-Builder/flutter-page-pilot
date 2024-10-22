@@ -63,7 +63,7 @@ void doShow({
     }
 
     if (response.body != "null") {
-      String shape = jsonResponse["content"]["shape"] ?? "rect";
+      String? shape = jsonResponse["content"]["shape"] ?? "rect";
 
       String? title = jsonResponse["content"]["title"];
       String? body = jsonResponse["content"]["body"];
@@ -75,12 +75,13 @@ void doShow({
 
       if (jsonResponse["screen"].toString().toLowerCase() ==
           screen.toLowerCase()) {
-        if ((title != null && body != null) || url != null) {
+        if (((title != null && body != null) || url != null) ||
+            jsonResponse["type"].toString() == "tour") {
           switch (jsonResponse["type"].toString().toLowerCase()) {
             case "dialog":
               PagePilot.showOkDialog(
                 context,
-                shape: shape,
+                shape: shape ?? "rect",
                 title: title,
                 body: body,
                 url: url,
@@ -121,7 +122,7 @@ void doShow({
               }
               PagePilot.showTooltip(
                 context,
-                shape: shape,
+                shape: shape ?? "rect",
                 key: key,
                 // title: jsonResponse["content"]["tour"][0]["title"],
                 // description: jsonResponse["content"]["tour"][0]["description"],
@@ -170,7 +171,7 @@ void doShow({
               }
               PagePilot.showBeacon(
                 context,
-                shape: shape,
+                shape: shape ?? "rect",
                 key: key,
                 beaconPosition:
                     position == null ? "center" : position!.toLowerCase(),
@@ -195,11 +196,9 @@ void doShow({
             case "tour":
             case "walktrough":
               List<dynamic> tours = [];
-              for (int i = 0;
-                  i < jsonResponse["content"]["tourContent"].length;
-                  i++) {
+              for (int i = 0; i < jsonResponse["tourContent"].length; i++) {
                 tours.add(
-                  jsonResponse["content"]["tourContent"][i],
+                  jsonResponse["tourContent"][i],
                 );
               }
 
