@@ -1,3 +1,7 @@
+## 0.0.5
+
+- Tours: support added for webviews, image and videos in body
+
 ## 0.0.4
 
 - Bug fixes
