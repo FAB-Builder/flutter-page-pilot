@@ -63,15 +63,18 @@ void doShow({
     }
 
     if (response.body != "null") {
-      String? shape = jsonResponse["content"]["shape"] ?? "rect";
+      String? shape, title, body, url, position, color;
+      GlobalKey? key;
+      if (jsonResponse["type"].toString() != "tour") {
+        shape = jsonResponse["content"]["shape"] ?? "rect";
 
-      String? title = jsonResponse["content"]["title"];
-      String? body = jsonResponse["content"]["body"];
-      String? url = jsonResponse["content"]["url"];
-      String? position = jsonResponse["content"]["position"];
-      String? color = jsonResponse["content"]["color"];
-      GlobalKey? key =
-          config.keys[jsonResponse["content"]["element"].toString()];
+        title = jsonResponse["content"]["title"];
+        body = jsonResponse["content"]["body"];
+        url = jsonResponse["content"]["url"];
+        position = jsonResponse["content"]["position"];
+        color = jsonResponse["content"]["color"];
+        key = config.keys[jsonResponse["content"]["element"].toString()];
+      }
 
       if (jsonResponse["screen"].toString().toLowerCase() ==
           screen.toLowerCase()) {

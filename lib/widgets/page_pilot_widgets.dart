@@ -63,6 +63,7 @@ class PagePilot {
       targets: targets,
       colorShadow: styles.shadowColor ?? Colors.red,
       textSkip: styles.textSkip ?? "SKIP",
+      alignSkip: Alignment.bottomRight,
       paddingFocus: 5,
       opacityShadow: styles.shadowOpacity ?? 0.5,
       imageFilter: styles.imageFilter ?? ImageFilter.blur(sigmaX: 8, sigmaY: 8),
@@ -555,6 +556,26 @@ class PagePilot {
     List<TargetFocus> targets = [];
 
     for (int i = 0; i < tours.length; i++) {
+      String body = tours[i]["body"].toString();
+      WebViewController webViewController = WebViewController()
+        ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..setNavigationDelegate(
+          NavigationDelegate(
+            onProgress: (int progress) {
+              // Update loading bar.
+            },
+            onPageStarted: (String url) {},
+            onPageFinished: (String url) {},
+            onHttpError: (HttpResponseError error) {},
+            onWebResourceError: (WebResourceError error) {},
+            onNavigationRequest: (NavigationRequest request) {
+              if (request.url.startsWith('https://www.youtube.com/')) {
+                return NavigationDecision.prevent;
+              }
+              return NavigationDecision.navigate;
+            },
+          ),
+        );
       targets.add(
         TargetFocus(
           identify: "",
@@ -567,34 +588,50 @@ class PagePilot {
           contents: [
             TargetContent(
               align: ContentAlign.bottom,
-              builder: (context, controller) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: isDarkTheme ? Colors.black : Colors.white,
-                    borderRadius: BorderRadius.circular(borderRadius),
-                  ),
-                  padding: EdgeInsets.all(borderRadius),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        tours[i]["title"].toString(),
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: isDarkTheme ? Colors.white : Colors.black,
-                        ),
+              builder: (context, TCMcontroller) {
+                return Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                        color: isDarkTheme ? Colors.black : Colors.white,
+                        borderRadius: BorderRadius.circular(borderRadius),
                       ),
-                      // Text(tours[i]["description"].toString()),
-                      Text(tours[i]["body"].toString()),
-                    ],
-                  ),
+                      padding: EdgeInsets.all(borderRadius),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            tours[i]["title"].toString(),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkTheme ? Colors.white : Colors.black,
+                            ),
+                          ),
+                          // Text(tours[i]["description"].toString()),
+                          body.startsWith("http")
+                              ? Container(
+                                  height: 200,
+                                  width: 200,
+                                  child: WebViewWidget(
+                                      controller: webViewController),
+                                )
+                              : Text(tours[i]["body"].toString()),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    previousAndNextButtons(i, tours.length - 1),
+                  ],
                 );
               },
             ),
           ],
         ),
       );
+      if (body.startsWith("http")) {
+        webViewController.loadRequest(Uri.parse(body));
+      }
     }
 
     PagePilot.initTutorialCoachMark(targets);
@@ -647,5 +684,21 @@ class PagePilot {
     }
     buffer.write(hexString.replaceFirst('#', '')); // Removes the # if present
     return Color(int.parse(buffer.toString(), radix: 16));
+  }
+
+  static Widget previousAndNextButtons(int index, lastIndex) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+          child: Text(index == 0 ? '' : 'Previous'),
+        ),
+        GestureDetector(
+          onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+          child: Text(index == lastIndex ? '' : 'Next'),
+        ),
+      ],
+    );
   }
 }
