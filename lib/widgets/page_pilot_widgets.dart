@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
@@ -11,6 +12,8 @@ class PagePilot {
   static late TutorialCoachMark tutorialCoachMark;
   static double borderRadius = 20;
   static double padding = 16;
+  // static double webViewHeight = 200;
+  // static double webViewWidth = 200;
   static WebViewController? controller;
   static Styles styles = Styles(
     shadowColor: Colors.red,
@@ -45,7 +48,12 @@ class PagePilot {
             // Update loading bar.
           },
           onPageStarted: (String url) {},
-          onPageFinished: (String url) {},
+          onPageFinished: (String url) async {
+            var x = await controller!.runJavaScriptReturningResult(
+                "document.documentElement.scrollHeight");
+            double? y = double.tryParse(x.toString());
+            debugPrint('parse : $y');
+          },
           onHttpError: (HttpResponseError error) {},
           onWebResourceError: (WebResourceError error) {},
           onNavigationRequest: (NavigationRequest request) {
@@ -132,10 +140,18 @@ class PagePilot {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          Text(
-                            body,
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          body.toString().startsWith("<")
+                              ? Container(
+                                  height: 20,
+                                  width: 340,
+                                  child: WebViewWidget(
+                                    controller: controller!,
+                                  ),
+                                )
+                              : Text(
+                                  body,
+                                  style: TextStyle(color: Colors.white),
+                                ),
                         ],
                       )
                     : Container(
@@ -179,6 +195,10 @@ class PagePilot {
 
     if (url != null) {
       controller!.loadRequest(Uri.parse(url));
+    }
+    if (body.toString().startsWith("<")) {
+      controller!.loadHtmlString(body.toString());
+      adjustWebviewZoom(scale: 2);
     }
   }
 
@@ -259,7 +279,13 @@ class PagePilot {
             title: title != null ? Text(title!) : null,
             content: SingleChildScrollView(
               child: body != null
-                  ? Text(body)
+                  ? body.toString().startsWith("<")
+                      ? Container(
+                          height: 200,
+                          width: 200,
+                          child: WebViewWidget(controller: controller!),
+                        )
+                      : Text(body)
                   : Container(
                       height: 200,
                       width: 200,
@@ -286,6 +312,10 @@ class PagePilot {
         });
     if (url != null) {
       controller!.loadRequest(Uri.parse(url!));
+    }
+    if (body.toString().startsWith("<")) {
+      controller!.loadHtmlString(body.toString());
+      adjustWebviewZoom();
     }
   }
 
@@ -378,7 +408,7 @@ class PagePilot {
         contents: [
           TargetContent(
             align: ContentAlign.bottom,
-            builder: (context, controller) {
+            builder: (context, coachMarkController) {
               return Container(
                 decoration: BoxDecoration(
                   color: isDarkTheme ? Colors.black : Colors.white,
@@ -395,10 +425,16 @@ class PagePilot {
                       ),
                     ),
                     SizedBox(height: 10),
-                    Text(
-                      body,
-                      overflow: TextOverflow.clip,
-                    ),
+                    body.toString().startsWith("<")
+                        ? SizedBox(
+                            height: 200,
+                            width: MediaQuery.of(context).size.width * 0.8,
+                            child: WebViewWidget(controller: controller!),
+                          )
+                        : Text(
+                            body,
+                            overflow: TextOverflow.clip,
+                          ),
                   ],
                 ),
               );
@@ -410,6 +446,10 @@ class PagePilot {
 
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
+    if (body.toString().startsWith("<")) {
+      controller!.loadHtmlString(body.toString());
+      adjustWebviewZoom();
+    }
   }
 
   static void showPip(
@@ -701,4 +741,61 @@ class PagePilot {
       ],
     );
   }
+
+  static void adjustWebviewZoom({int scale = 4}) {
+    controller!.setNavigationDelegate(NavigationDelegate(
+      onPageFinished: (String url) async {
+//document.body.style.zoom = 5; NOT SUPPORTED
+        await controller!.runJavaScript("""
+              document.body.style.transform = "scale(${scale.toString()})";
+              document.body.style.transformOrigin = "0 0";
+            """);
+      },
+    ));
+  }
+
+//   static Widget AdjustedWebView(
+//       WebViewController controller, String htmlString) {
+//     return StatefulBuilder(
+//       builder: (context, setState) {
+//         double webViewHeight = 1.0;
+//         double webViewWidth = 1.0;
+
+//         controller!.setNavigationDelegate(NavigationDelegate(
+//           onPageFinished: (String url) async {
+//             Object heightObj = await controller!.runJavaScriptReturningResult(
+//                 "document.documentElement.scrollHeight");
+//             Object widthObj = await controller!.runJavaScriptReturningResult(
+//                 'document.documentElement.scrollHeight;');
+//             double height = double.tryParse(heightObj.toString()) ?? 0.0;
+//             double width = double.tryParse(widthObj.toString()) ?? 0.0;
+//             debugPrint('parse : $height $width');
+//             if (webViewHeight != height) {
+//               setState(() {
+//                 webViewHeight = height;
+//                 webViewWidth = width;
+//               });
+//               print("INSIDE");
+//               print(webViewHeight * 2);
+//               print(webViewWidth * 2);
+//             }
+// //document.body.style.zoom = 5; NOT SUPPORTED
+//             await controller.runJavaScript("""
+//               document.body.style.transform = "scale(5)";
+//               document.body.style.transformOrigin = "0 0";
+//             """);
+//           },
+//         ));
+//         print(webViewHeight * 2);
+//         print(webViewWidth * 2);
+//         return Container(
+//           // height: webViewHeight * 9,
+//           // width: webViewWidth / 60,
+//           height: webViewHeight * 2,
+//           width: webViewWidth * 2,
+//           child: WebViewWidget(controller: controller!),
+//         );
+//       },
+//     );
+//   }
 }

@@ -16,7 +16,7 @@ const applicationId = "";
 const clientId = "";
 const clientSecret = "";
 const version = "";
-const userId = "1234";
+const userId = "58"; //1234
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -124,7 +124,7 @@ class App extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              pagepilotPlugin.show(context: context, screen: "main");
+              pagepilotPlugin.show(context: context, screen: "home");
             },
             child: Text("Show"),
           ),
