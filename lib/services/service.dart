@@ -67,16 +67,18 @@ void doShow({
       String? shape, title, body, url, position, color;
       int? scale;
       GlobalKey? key;
-      bool showConfetti = false;
+      bool showConfetti = false, isDraggable = false;
       if (jsonResponse["type"].toString() != "tour") {
         shape = jsonResponse["content"]["shape"] ?? "rect";
 
         title = jsonResponse["content"]["title"];
         body = jsonResponse["content"]["body"];
         showConfetti = jsonResponse["showConfetti"];
+
         url = jsonResponse["content"]["url"];
         scale =
             int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
+        isDraggable = jsonResponse["content"]["draggable"] ?? false;
         position = jsonResponse["content"]["position"];
         color = jsonResponse["content"]["color"];
         key = config.keys[jsonResponse["content"]["element"].toString()];
@@ -172,9 +174,16 @@ void doShow({
                 title: title,
                 body: body,
                 url: url,
-                position: position,
+                position:
+                    "center", //TODO: check all positions and add fix width
                 scale: scale,
+                isDraggable: isDraggable,
               );
+              // await http.get(
+              //   Uri.parse(
+              //     "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+              //   ),
+              // );
               break;
             case "beacon":
               if (key == null) {

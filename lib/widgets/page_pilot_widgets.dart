@@ -509,131 +509,142 @@ class PagePilot {
     String? url,
     String? position,
     int? scale,
+    bool isDraggable = false,
   }) {
     // Use an OverlayEntry to display the pulse animation
     final overlay = Overlay.of(context);
     OverlayEntry? entry;
     double margin = 30;
-    double? top, left, right = margin, bottom = margin;
 
-    entry = OverlayEntry(builder: (context) {
-      final screenSize = MediaQuery.of(context).size;
+    final screenSize = MediaQuery.of(context).size;
+    Offset currentOffset = Offset(0, 0);
+    switch (position.toString().toLowerCase()) {
+      case "topleft":
+        currentOffset = Offset(margin, margin);
+        break;
+      case "topcenter":
+      case "top":
+        currentOffset = Offset(
+          (screenSize.width - margin * 2.2) / 2,
+          margin,
+        );
+        break;
+      case "topright":
+        currentOffset = Offset(
+          margin,
+          margin,
+        );
+        break;
+      case "bottomleft":
+        currentOffset = Offset(
+          margin,
+          screenSize.height - margin * 5,
+        );
+        break;
+      case "bottomcenter":
+      case "bottom":
+        currentOffset = Offset(
+          (screenSize.width - margin * 2.2) / 2,
+          margin,
+        );
+        break;
+      case "bottomright":
+        currentOffset = Offset(
+          screenSize.width - margin * 2.2,
+          screenSize.height - margin * 5,
+        );
+        break;
+      case "center":
+        currentOffset = Offset(
+          (screenSize.width - margin * 4) / 2,
+          (screenSize.height - margin * 5) / 2,
+        ); // Center
+        break;
+      case "leftcenter":
+      case "left":
+        currentOffset =
+            Offset(margin, (screenSize.height - margin * 5) / 2); // Left Center
+        break;
+      case "rightcenter":
+      case "right":
+        currentOffset = Offset(
+            margin, (screenSize.height - margin * 5) / 2); // Right Center
+        break;
+    }
 
-      switch (position.toString().toLowerCase()) {
-        case "topleft":
-          top = margin;
-          left = margin;
-          right = null;
-          bottom = null;
-          break;
-        case "topcenter":
-        case "top":
-          top = margin;
-          left = (screenSize.width - margin * 2.2) / 2; // Center horizontally
-          right = null;
-          bottom = null;
-          break;
-        case "topright":
-          top = margin;
-          right = margin;
-          left = null;
-          bottom = null;
-          break;
-        case "bottomleft":
-          bottom = margin;
-          left = margin;
-          top = null;
-          right = null;
-          break;
-        case "bottomcenter":
-        case "bottom":
-          bottom = margin;
-          left = (screenSize.width - margin * 2.2) / 2; // Center horizontally
-          right = null;
-          top = null;
-          break;
-        case "bottomright":
-          bottom = margin;
-          right = margin;
-          top = null;
-          left = null;
-          break;
-        case "center":
-          top = (screenSize.height - margin * 5) / 2; // Center vertically
-          left = (screenSize.width - margin * 2.3) / 2; // Center horizontally
-          bottom = null;
-          right = null;
-          break;
-        case "leftcenter":
-        case "left":
-          top = (screenSize.height - margin * 5) / 2; // Center vertically
-          left = margin;
-          bottom = null;
-          right = null;
-          break;
-        case "rightcenter":
-        case "right":
-          top = (screenSize.height - margin * 5) / 2; // Center vertically
-          right = margin;
-          bottom = null;
-          left = null;
-          break;
-      }
-
-      return Positioned(
-        top: top,
-        left: left,
-        right: right,
-        bottom: bottom,
-        child: SafeArea(
-          child: Material(
-            elevation: 4,
-            color: Colors.transparent,
-            child: Container(
-              padding: EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 10,
-                    offset: Offset(2, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  title != null
-                      ? Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+    entry = OverlayEntry(
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // final screenSize = MediaQuery.of(context).size;
+            // Offset currentOffset = Offset(0, 0);
+            return Positioned(
+              top: currentOffset.dy,
+              left: currentOffset.dx,
+              child: SafeArea(
+                child: Material(
+                  elevation: 4,
+                  color: Colors.transparent,
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      if (isDraggable) {
+                        setState(() {
+                          // Update position as the user drags
+                          currentOffset += details.delta;
+                          //entry?.markNeedsBuild();
+                        });
+                      }
+                    },
+                    child: Container(
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black26,
+                            blurRadius: 10,
+                            offset: Offset(2, 2),
                           ),
-                        )
-                      : SizedBox(),
-                  body != null
-                      ? body.toString().startsWith("<")
-                          ? Container(
-                              height: 200,
-                              width: 200,
-                              child: WebViewWidget(controller: controller!),
-                            )
-                          : Text(body)
-                      : Container(
-                          height: 200,
-                          width: 200,
-                          child: WebViewWidget(controller: controller!),
-                        ),
-                ],
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          title != null
+                              ? Text(
+                                  title,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : SizedBox(),
+                          body != null
+                              ? body.toString().startsWith("<")
+                                  ? Container(
+                                      height: 200,
+                                      width: 200,
+                                      child: WebViewWidget(
+                                          controller: controller!),
+                                    )
+                                  : Text(body)
+                              : Container(
+                                  height: 200,
+                                  width: 200,
+                                  child: WebViewWidget(controller: controller!),
+                                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-      );
-    });
+            );
+          },
+        );
+      },
+    );
 
     if (url != null) {
       controller!.loadRequest(Uri.parse(url!));
