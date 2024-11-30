@@ -65,6 +65,7 @@ void doShow({
 
     if (response.body != "null") {
       String? shape, title, body, url, position, color;
+      int? scale;
       GlobalKey? key;
       bool showConfetti = false;
       if (jsonResponse["type"].toString() != "tour") {
@@ -74,6 +75,8 @@ void doShow({
         body = jsonResponse["content"]["body"];
         showConfetti = jsonResponse["showConfetti"];
         url = jsonResponse["content"]["url"];
+        scale =
+            int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
         position = jsonResponse["content"]["position"];
         color = jsonResponse["content"]["color"];
         key = config.keys[jsonResponse["content"]["element"].toString()];
@@ -93,6 +96,7 @@ void doShow({
                 title: title,
                 body: body,
                 url: url,
+                scale: scale,
                 onOkPressed: () async {
                   await http.get(
                     Uri.parse(
@@ -110,6 +114,7 @@ void doShow({
                 title: title,
                 body: body,
                 url: url,
+                scale: scale,
                 duration:
                     int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
               );
@@ -132,6 +137,7 @@ void doShow({
                 context,
                 shape: shape ?? "rect",
                 key: key,
+                scale: scale,
                 // title: jsonResponse["content"]["tour"][0]["title"],
                 // description: jsonResponse["content"]["tour"][0]["description"],
                 title: title,
@@ -167,6 +173,7 @@ void doShow({
                 body: body,
                 url: url,
                 position: position,
+                scale: scale,
               );
               break;
             case "beacon":

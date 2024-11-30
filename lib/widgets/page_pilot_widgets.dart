@@ -100,8 +100,14 @@ class PagePilot {
     );
   }
 
-  static void showSnackbar(BuildContext context,
-      {String? title, String? body, String? url, int duration = 3000}) {
+  static void showSnackbar(
+    BuildContext context, {
+    String? title,
+    String? body,
+    String? url,
+    int duration = 3000,
+    int? scale,
+  }) {
     if (context == null) {
       print("No Overlay widget found in the current context.");
       return;
@@ -204,7 +210,7 @@ class PagePilot {
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: 2);
+      adjustWebviewZoom(scale: scale ?? 2);
     }
   }
 
@@ -273,6 +279,7 @@ class PagePilot {
     String? title,
     String? body,
     String? url,
+    int? scale,
     Function()? onOkPressed,
   }) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
@@ -355,7 +362,7 @@ class PagePilot {
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom();
+      adjustWebviewZoom(scale: scale ?? 4);
     }
   }
 
@@ -432,6 +439,7 @@ class PagePilot {
     required GlobalKey key,
     required String shape,
     String? title,
+    int? scale,
     required String body,
   }) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
@@ -490,7 +498,7 @@ class PagePilot {
     tutorialCoachMark.show(context: context);
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom();
+      adjustWebviewZoom(scale: scale ?? 4);
     }
   }
 
@@ -500,6 +508,7 @@ class PagePilot {
     String? body,
     String? url,
     String? position,
+    int? scale,
   }) {
     // Use an OverlayEntry to display the pulse animation
     final overlay = Overlay.of(context);
@@ -610,7 +619,7 @@ class PagePilot {
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom();
+      adjustWebviewZoom(scale: scale ?? 4);
     }
 
     overlay.insert(entry);
