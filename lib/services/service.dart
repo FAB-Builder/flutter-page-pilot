@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
@@ -65,20 +66,24 @@ void doShow({
     if (response.body != "null") {
       String? shape, title, body, url, position, color;
       GlobalKey? key;
+      bool showConfetti = false;
       if (jsonResponse["type"].toString() != "tour") {
         shape = jsonResponse["content"]["shape"] ?? "rect";
 
         title = jsonResponse["content"]["title"];
         body = jsonResponse["content"]["body"];
+        showConfetti = jsonResponse["showConfetti"];
         url = jsonResponse["content"]["url"];
         position = jsonResponse["content"]["position"];
         color = jsonResponse["content"]["color"];
         key = config.keys[jsonResponse["content"]["element"].toString()];
       }
 
+      PagePilot.showConfetti = showConfetti;
+
       if (jsonResponse["screen"].toString().toLowerCase() ==
           screen.toLowerCase()) {
-        if (((title != null && body != null) || url != null) ||
+        if (((body != null) || url != null) ||
             jsonResponse["type"].toString() == "tour") {
           switch (jsonResponse["type"].toString().toLowerCase()) {
             case "dialog":
@@ -129,7 +134,7 @@ void doShow({
                 key: key,
                 // title: jsonResponse["content"]["tour"][0]["title"],
                 // description: jsonResponse["content"]["tour"][0]["description"],
-                title: title ?? "",
+                title: title,
                 body: body ?? "",
               );
               await http.get(
@@ -141,7 +146,7 @@ void doShow({
             case "bottomsheet":
               PagePilot.showBottomSheet(
                 context,
-                title: title ?? "",
+                title: title,
                 body: body ?? "",
                 onOkPressed: () async {
                   await http.get(
@@ -155,15 +160,13 @@ void doShow({
             // case "spotlight":
             //   break;
             case "pip":
-              if (key == null) {
-                throw Exception(
-                  "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
-                );
-              }
-              PagePilot.showPip(
+            case "floatingwidget":
+              PagePilot.showFloatingWidget(
                 context,
-                // shape: shape,
-                key: key,
+                title: title,
+                body: body,
+                url: url,
+                position: position,
               );
               break;
             case "beacon":
@@ -178,7 +181,7 @@ void doShow({
                 key: key,
                 beaconPosition:
                     position == null ? "center" : position!.toLowerCase(),
-                title: title ?? "",
+                title: title,
                 body: body ?? "",
                 color: color == null
                     ? Colors.blue.withOpacity(0.5)
@@ -217,7 +220,7 @@ void doShow({
           }
         } else {
           throw Exception(
-            "PagePilotPluginError: Either provide title & body or html for ${jsonResponse["content"]["element"].toString()}",
+            "PagePilotPluginError: Either provide title & body or html for ${jsonResponse["type"].toString()}  and key: ${jsonResponse["content"]["element"].toString()}",
           );
         }
       }

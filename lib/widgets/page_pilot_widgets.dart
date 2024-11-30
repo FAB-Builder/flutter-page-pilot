@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:math';
 import 'dart:ui';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
@@ -12,6 +14,8 @@ class PagePilot {
   static late TutorialCoachMark tutorialCoachMark;
   static double borderRadius = 20;
   static double padding = 16;
+  static bool showConfetti = false;
+  static late ConfettiController _confettiController;
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
   static WebViewController? controller;
@@ -128,18 +132,20 @@ class PagePilot {
             ),
             child: Row(
               children: [
-                title != null && body != null
+                body != null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          title != null
+                              ? Text(
+                                  title,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : SizedBox(),
                           body.toString().startsWith("<")
                               ? Container(
                                   height: 20,
@@ -203,9 +209,7 @@ class PagePilot {
   }
 
   static void showBottomSheet(BuildContext context,
-      {required String title,
-      required String body,
-      required Function() onOkPressed}) {
+      {String? title, required String body, required Function() onOkPressed}) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
@@ -230,13 +234,15 @@ class PagePilot {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                title != null
+                    ? Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : SizedBox(),
                 SizedBox(height: 16),
                 Text(
                   body,
@@ -271,6 +277,12 @@ class PagePilot {
   }) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
+    if (showConfetti) {
+      _confettiController =
+          ConfettiController(duration: const Duration(seconds: 10));
+      _confettiController.play();
+    }
+
     showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -278,29 +290,57 @@ class PagePilot {
             backgroundColor: isDarkTheme ? Colors.black : Colors.white,
             title: title != null ? Text(title!) : null,
             content: SingleChildScrollView(
-              child: body != null
-                  ? body.toString().startsWith("<")
-                      ? Container(
+              child: Stack(
+                children: [
+                  body != null
+                      ? body.toString().startsWith("<")
+                          ? Container(
+                              height: 200,
+                              width: 200,
+                              child: WebViewWidget(controller: controller!),
+                            )
+                          : Text(body)
+                      : Container(
                           height: 200,
                           width: 200,
                           child: WebViewWidget(controller: controller!),
+                        ),
+                  showConfetti
+                      ? Container(
+                          height: 250,
+                          width: 250,
+                          child: ConfettiWidget(
+                            confettiController: _confettiController,
+                            blastDirectionality: BlastDirectionality.explosive,
+                            // don't specify a direction, blast randomly
+                            shouldLoop: true,
+                            // start again as soon as the animation is finished
+                            colors: const [
+                              Colors.green,
+                              Colors.blue,
+                              Colors.pink,
+                              Colors.orange,
+                              Colors.purple
+                            ],
+                            // manually specify the colors to be used
+                            createParticlePath: drawStar,
+                          ),
                         )
-                      : Text(body)
-                  : Container(
-                      height: 200,
-                      width: 200,
-                      child: WebViewWidget(controller: controller!),
-                    ),
+                      : SizedBox(),
+                ],
+              ),
             ),
             actions: <Widget>[
               TextButton(
                 onPressed: onOkPressed == null
                     ? () {
                         Navigator.pop(context);
+                        _confettiController.stop();
                       }
                     : () {
                         Navigator.pop(context);
                         controller!.clearCache();
+                        _confettiController.stop();
                         onOkPressed();
                       },
                 child: const Text(
@@ -391,7 +431,7 @@ class PagePilot {
     BuildContext context, {
     required GlobalKey key,
     required String shape,
-    required String title,
+    String? title,
     required String body,
   }) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
@@ -417,13 +457,15 @@ class PagePilot {
                 padding: EdgeInsets.all(padding),
                 child: Column(
                   children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    title != null
+                        ? Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : SizedBox(),
                     SizedBox(height: 10),
                     body.toString().startsWith("<")
                         ? SizedBox(
@@ -452,86 +494,126 @@ class PagePilot {
     }
   }
 
-  static void showPip(
+  static void showFloatingWidget(
     BuildContext context, {
-    required GlobalKey key,
+    String? title,
+    String? body,
+    String? url,
+    String? position,
   }) {
-    List<TargetFocus> targets = [];
-    targets.add(
-      TargetFocus(
-        identify: "keyPip",
-        keyTarget: key,
-        alignSkip: Alignment.topRight,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            builder: (context, controller) {
-              return Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(borderRadius),
-                ),
-                child: Stack(
-                  children: [
-                    Container(
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(borderRadius),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(
-                              borderRadius), // Image border
-                          child: SizedBox.fromSize(
-                            // size: Size.fromRadius(48), // Image radius
-                            child: Image.network(
-                              "https://picsum.photos/200/400",
-                              fit: BoxFit.cover,
-                            ),
+    // Use an OverlayEntry to display the pulse animation
+    final overlay = Overlay.of(context);
+    OverlayEntry? entry;
+    double margin = 30;
+    double? top, left, right = margin, bottom = margin;
+
+    switch (position.toString().toLowerCase()) {
+      case "topleft":
+        top = margin;
+        left = margin;
+        right = null;
+        bottom = null;
+        break;
+      case "topright":
+        top = margin;
+        right = margin;
+        left = null;
+        bottom = null;
+        break;
+      case "bottomleft":
+        bottom = margin;
+        left = margin;
+        top = null;
+        right = null;
+        break;
+      case "bottomright":
+        bottom = margin;
+        right = margin;
+        top = null;
+        left = null;
+        break;
+      // these should not be allowed
+      case "center":
+        break;
+      case "topcenter":
+      case "top":
+        break;
+      case "bottomcenter":
+      case "bottom":
+        break;
+      case "leftcenter":
+      case "left":
+        break;
+      case "rightcenter":
+      case "right":
+        break;
+    }
+
+    entry = OverlayEntry(
+      builder: (context) => Positioned(
+        top: top,
+        left: left,
+        right: right,
+        bottom: bottom,
+        child: SafeArea(
+          child: Material(
+            elevation: 4,
+            color: Colors.transparent,
+            child: Container(
+              padding: EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 10,
+                    offset: Offset(2, 2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  title != null
+                      ? Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
-                        )),
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(borderRadius),
-                            topRight: Radius.circular(borderRadius),
-                          ),
-                          color: Color.fromARGB(120, 0, 0, 0),
+                        )
+                      : SizedBox(),
+                  body != null
+                      ? body.toString().startsWith("<")
+                          ? Container(
+                              height: 200,
+                              width: 200,
+                              child: WebViewWidget(controller: controller!),
+                            )
+                          : Text(body)
+                      : Container(
+                          height: 200,
+                          width: 200,
+                          child: WebViewWidget(controller: controller!),
                         ),
-                        child: Row(
-                          children: [
-                            GestureDetector(
-                              child: Icon(Icons.fullscreen),
-                            ),
-                            SizedBox(width: 20),
-                            GestureDetector(
-                              child: Icon(Icons.audiotrack_sharp),
-                            ),
-                            Spacer(),
-                            GestureDetector(
-                              onTap: () {
-                                tutorialCoachMark.finish();
-                              },
-                              child: Icon(Icons.close),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
+                ],
+              ),
+            ),
           ),
-        ],
+        ),
       ),
     );
 
-    PagePilot.initTutorialCoachMark(targets);
-    tutorialCoachMark.show(context: context);
+    if (url != null) {
+      controller!.loadRequest(Uri.parse(url!));
+    }
+    if (body.toString().startsWith("<")) {
+      controller!.loadHtmlString(body.toString());
+      adjustWebviewZoom();
+    }
+
+    overlay.insert(entry);
   }
 
   static void showBeacon(
@@ -539,7 +621,7 @@ class PagePilot {
     required String shape,
     required GlobalKey key,
     required String beaconPosition,
-    required String title,
+    String? title,
     required String body,
     required Color color,
     required Function() onBeaconClicked,
@@ -798,4 +880,29 @@ class PagePilot {
 //       },
 //     );
 //   }
+
+  /// A custom Path to paint stars.
+  static Path drawStar(Size size) {
+    // Method to convert degree to radians
+    double degToRad(double deg) => deg * (pi / 180.0);
+
+    const numberOfPoints = 5;
+    final halfWidth = size.width / 2;
+    final externalRadius = halfWidth;
+    final internalRadius = halfWidth / 2.5;
+    final degreesPerStep = degToRad(360 / numberOfPoints);
+    final halfDegreesPerStep = degreesPerStep / 2;
+    final path = Path();
+    final fullAngle = degToRad(360);
+    path.moveTo(size.width, halfWidth);
+
+    for (double step = 0; step < fullAngle; step += degreesPerStep) {
+      path.lineTo(halfWidth + externalRadius * cos(step),
+          halfWidth + externalRadius * sin(step));
+      path.lineTo(halfWidth + internalRadius * cos(step + halfDegreesPerStep),
+          halfWidth + internalRadius * sin(step + halfDegreesPerStep));
+    }
+    path.close();
+    return path;
+  }
 }
