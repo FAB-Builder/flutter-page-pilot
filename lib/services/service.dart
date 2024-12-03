@@ -76,8 +76,10 @@ void doShow({
         showConfetti = jsonResponse["showConfetti"];
 
         url = jsonResponse["content"]["url"];
-        scale =
-            int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
+        //TODO adjust scale from frontend(cs) first
+        scale = null;
+        // scale =
+        //     int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
         isDraggable = jsonResponse["content"]["draggable"] ?? false;
         position = jsonResponse["content"]["position"];
         color = jsonResponse["content"]["color"];
@@ -155,7 +157,9 @@ void doShow({
               PagePilot.showBottomSheet(
                 context,
                 title: title,
-                body: body ?? "",
+                body: body,
+                url: url,
+                scale: scale,
                 onOkPressed: () async {
                   await http.get(
                     Uri.parse(
@@ -174,16 +178,15 @@ void doShow({
                 title: title,
                 body: body,
                 url: url,
-                position:
-                    "center", //TODO: check all positions and add fix width
+                position: position,
                 scale: scale,
                 isDraggable: isDraggable,
               );
-              // await http.get(
-              //   Uri.parse(
-              //     "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-              //   ),
-              // );
+              await http.get(
+                Uri.parse(
+                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+                ),
+              );
               break;
             case "beacon":
               if (key == null) {

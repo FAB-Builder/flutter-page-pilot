@@ -214,8 +214,14 @@ class PagePilot {
     }
   }
 
-  static void showBottomSheet(BuildContext context,
-      {String? title, required String body, required Function() onOkPressed}) {
+  static void showBottomSheet(
+    BuildContext context, {
+    String? title,
+    required String? body,
+    String? url,
+    int? scale,
+    required Function() onOkPressed,
+  }) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
@@ -250,9 +256,23 @@ class PagePilot {
                       )
                     : SizedBox(),
                 SizedBox(height: 16),
-                Text(
-                  body,
-                ),
+                body != null
+                    ? body.toString().startsWith("<")
+                        ? Container(
+                            height: 200,
+                            constraints: BoxConstraints(
+                              minHeight: 200, // Minimum height
+                              maxHeight: 500, // Maximum height
+                            ),
+                            // width: double.infinity,
+                            child: WebViewWidget(controller: controller!),
+                          )
+                        : Text(body)
+                    : Container(
+                        height: 200,
+                        width: 200,
+                        child: WebViewWidget(controller: controller!),
+                      ),
                 Row(
                   children: [
                     Spacer(),
@@ -271,6 +291,14 @@ class PagePilot {
         );
       },
     );
+
+    if (url != null) {
+      controller!.loadRequest(Uri.parse(url!));
+    }
+    if (body.toString().startsWith("<")) {
+      controller!.loadHtmlString(body.toString());
+      adjustWebviewZoom(scale: scale ?? 4);
+    }
   }
 
   static void showOkDialog(
