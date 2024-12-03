@@ -525,38 +525,38 @@ class PagePilot {
       case "topcenter":
       case "top":
         currentOffset = Offset(
-          (screenSize.width - margin * 2.2) / 2,
+          (screenSize.width - margin * 6) / 2,
           margin,
         );
         break;
       case "topright":
         currentOffset = Offset(
-          margin,
+          (screenSize.width + margin) / 2,
           margin,
         );
         break;
       case "bottomleft":
         currentOffset = Offset(
           margin,
-          screenSize.height - margin * 5,
+          screenSize.height - margin * 6,
         );
         break;
       case "bottomcenter":
       case "bottom":
         currentOffset = Offset(
-          (screenSize.width - margin * 2.2) / 2,
-          margin,
+          (screenSize.width - margin * 6) / 2,
+          screenSize.height - margin * 6,
         );
         break;
       case "bottomright":
         currentOffset = Offset(
-          screenSize.width - margin * 2.2,
-          screenSize.height - margin * 5,
+          (screenSize.width + margin) / 2,
+          screenSize.height - margin * 6,
         );
         break;
       case "center":
         currentOffset = Offset(
-          (screenSize.width - margin * 4) / 2,
+          (screenSize.width - margin * 6) / 2,
           (screenSize.height - margin * 5) / 2,
         ); // Center
         break;
@@ -568,7 +568,9 @@ class PagePilot {
       case "rightcenter":
       case "right":
         currentOffset = Offset(
-            margin, (screenSize.height - margin * 5) / 2); // Right Center
+          (screenSize.width + margin) / 2,
+          (screenSize.height - margin * 5) / 2,
+        ); // Right Center
         break;
     }
 
@@ -596,6 +598,7 @@ class PagePilot {
                       }
                     },
                     child: Container(
+                      width: MediaQuery.of(context).size.width * 0.40,
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         color: Colors.white,
