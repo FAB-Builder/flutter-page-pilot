@@ -1,3 +1,7 @@
+## 0.0.6
+
+- New Widget! support for floating widget added. Bottom sheet now supports richcontent and webview and soe configuration fixes
+
 ## 0.0.5
 
 - Tours: support added for webviews, image and videos in body
