@@ -171,11 +171,11 @@ showWidget(BuildContext context, dynamic jsonResponse, Config config) async {
           "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
         );
       }
-      PagePilot.showPip(
-        context,
-        // shape: shape,
-        key: key,
-      );
+      // PagePilot.showPip(
+      //   context,
+      //   // shape: shape,
+      //   key: key,
+      // );
       break;
     case "beacon":
       if (key == null) {

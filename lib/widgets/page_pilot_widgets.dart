@@ -16,6 +16,7 @@ class PagePilot {
   static double padding = 16;
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
+
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
   static WebViewController? controller;
@@ -370,12 +371,16 @@ class PagePilot {
                 onPressed: onOkPressed == null
                     ? () {
                         Navigator.pop(context);
-                        _confettiController.stop();
+                        if (showConfetti) {
+                          _confettiController.stop();
+                        }
                       }
                     : () {
                         Navigator.pop(context);
                         controller!.clearCache();
-                        _confettiController.stop();
+                        if (showConfetti) {
+                          _confettiController.stop();
+                        }
                         onOkPressed();
                       },
                 child: const Text(

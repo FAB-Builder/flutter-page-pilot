@@ -1,44 +1,26 @@
 import 'package:pagepilot/models/styles_model.dart';
 
 class Config {
-  final String applicationId;
-  final String clientId;
-  final String clientSecret;
+  dynamic credentials;
   final String userId;
-  String version;
   Map keys;
   Styles? styles;
 
-  String? server;
-  String? static;
-  String application = "android";
-
-  String? token = "";
-  String? orderBy = "";
-  int limit = 10;
-  int offset = 0;
-  String? category;
-
   Config({
-    required this.applicationId,
-    required this.clientId,
-    required this.clientSecret,
+    required this.credentials,
     this.userId = "ANONYMOUS",
     required this.keys,
-    this.version = "",
     this.styles,
   });
 
   factory Config.fromJson(Map<String, String> json) {
     Config config = Config(
-      applicationId: json['applicationId'] ?? "",
+      credentials: json['keys'] as Map ?? {},
       userId: json['userId'] ?? "",
-      clientId: json['clientId'] ?? "",
-      clientSecret: json['clientSecret'] ?? "",
       keys: json['keys'] as Map ?? {},
     );
-    if (json["category"] != null) {
-      config.category = json["category"];
+    if (json["credentials"] != null) {
+      config.credentials = json["credentials"];
     }
     if (json["keys"] != null) {
       config.keys = json["keys"] as Map;

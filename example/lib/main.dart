@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
-import 'package:pagepilot_example/app_theme.dart';
+import 'app_theme.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,9 +13,6 @@ void main() {
 
 // TODO : Add your crdentials
 const applicationId = "";
-const clientId = "";
-const clientSecret = "";
-const version = "";
 const userId = "58"; //1234
 
 GlobalKey keyDialog = GlobalKey();
@@ -73,11 +70,10 @@ class _MyAppState extends State<MyApp> {
     };
 
     Config config = Config(
-      applicationId: applicationId,
-      clientId: clientId,
-      clientSecret: clientSecret,
+      credentials: {
+        "applicationId": applicationId,
+      },
       userId: userId,
-      version: version,
       keys: keys,
       styles:
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
