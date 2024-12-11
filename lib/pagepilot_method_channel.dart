@@ -29,6 +29,11 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   }
 
   @override
+  void setUserIdentifier({required String userId}) {
+    Config.setUserIdentifier(userId);
+  }
+
+  @override
   Future<void> show({
     required BuildContext context,
     required String screen,

@@ -19,6 +19,10 @@ class Pagepilot {
     return PagepilotPlatform.instance.init(config);
   }
 
+  void setUserIdentifier({required String userId}) {
+    return PagepilotPlatform.instance.setUserIdentifier(userId: userId);
+  }
+
   Future<void> show({
     required BuildContext context,
     required String screen,

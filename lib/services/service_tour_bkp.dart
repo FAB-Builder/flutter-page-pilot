@@ -17,7 +17,7 @@ void doShow({
     var jsonResponse;
 
     var response = await http.get(
-      Uri.parse("$baseUrl/get/unacknowledged?userId=${config.userId}"),
+      Uri.parse("$baseUrl/get/unacknowledged?userId=${Config.userId}"),
     );
 
     //mock data

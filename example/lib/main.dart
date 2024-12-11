@@ -11,9 +11,9 @@ void main() {
   runApp(MyApp());
 }
 
-// TODO : Add your crdentials
+// TODO : Add your credentials
 const applicationId = "";
-const userId = "58"; //1234
+const userId = "21"; //1234
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -73,13 +73,13 @@ class _MyAppState extends State<MyApp> {
       credentials: {
         "applicationId": applicationId,
       },
-      userId: userId,
       keys: keys,
       styles:
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
     );
     try {
       await _pagepilotPlugin.init(config!); // initialize the library
+      _pagepilotPlugin.setUserIdentifier(userId: userId);
     } on PlatformException {
       // Log exception and report studio@gameolive.com
     }
@@ -88,6 +88,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       home: App(
         platformVersion: _platformVersion,
