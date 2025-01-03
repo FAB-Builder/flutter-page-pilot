@@ -1,6 +1,6 @@
 name: pagepilot
 description: "This package will be used for quick and easy integration with PagePilot in your app."
-version: 0.0.6
+version: 0.0.7
 homepage: "https://pagepilot.fabbuilder.com"
 
 environment:
@@ -8,6 +8,7 @@ environment:
   flutter: ">=2.5.0"
 
 dependencies:
+  card_swiper: ^3.0.1
   confetti: ^0.8.0
   flutter:
     sdk: flutter

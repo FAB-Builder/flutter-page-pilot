@@ -6,6 +6,7 @@ import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
 import 'app_theme.dart';
+import 'package:pagepilot/widgets/page_pilot_banner.dart';
 
 void main() {
   runApp(MyApp());
@@ -13,7 +14,7 @@ void main() {
 
 // TODO : Add your credentials
 const applicationId = "";
-const userId = "21"; //1234
+const userId = "58"; //1234
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -120,10 +121,11 @@ class App extends StatelessWidget {
             child: Text('Running on: $platformVersion\n'),
           ),
           ElevatedButton(
+            key: keyBeacon,
             onPressed: () {
               pagepilotPlugin.show(context: context, screen: "home");
             },
-            child: Text("Show"),
+            child: Text("Tap     Me!"),
           ),
           SizedBox(height: 20),
           Row(
@@ -135,7 +137,15 @@ class App extends StatelessWidget {
           ),
           SizedBox(height: 20),
           Center(
-            child: Text(key: keyBeacon, 'Beacon'),
+            child: Text('tour'),
+          ),
+          SizedBox(height: 20),
+          PagePilotBanner(
+            images: [
+              "https://picsum.photos/350/150",
+              "https://picsum.photos/350/150",
+              "https://picsum.photos/350/150",
+            ],
           ),
         ],
       ),

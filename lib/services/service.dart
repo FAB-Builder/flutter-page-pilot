@@ -64,7 +64,7 @@ void doShow({
     }
 
     if (response.body != "null") {
-      String? shape, title, body, url, position, color;
+      String? shape, title, body, url, position, color, background, textColor;
       int? scale;
       GlobalKey? key;
       bool showConfetti = false, isDraggable = false;
@@ -73,6 +73,8 @@ void doShow({
 
         title = jsonResponse["content"]["title"];
         body = jsonResponse["content"]["body"];
+        background = jsonResponse["content"]["background"];
+        textColor = jsonResponse["content"]["textColor"];
         showConfetti = jsonResponse["showConfetti"];
 
         url = jsonResponse["content"]["url"];
@@ -99,6 +101,8 @@ void doShow({
                 shape: shape ?? "rect",
                 title: title,
                 body: body,
+                background: background,
+                textColor: textColor,
                 url: url,
                 scale: scale,
                 onOkPressed: () async {
@@ -117,6 +121,8 @@ void doShow({
                 context,
                 title: title,
                 body: body,
+                background: background,
+                textColor: textColor,
                 url: url,
                 scale: scale,
                 duration:
@@ -142,6 +148,8 @@ void doShow({
                 shape: shape ?? "rect",
                 key: key,
                 scale: scale,
+                background: background,
+                textColor: textColor,
                 // title: jsonResponse["content"]["tour"][0]["title"],
                 // description: jsonResponse["content"]["tour"][0]["description"],
                 title: title,
@@ -158,6 +166,8 @@ void doShow({
                 context,
                 title: title,
                 body: body,
+                background: background,
+                textColor: textColor,
                 url: url,
                 scale: scale,
                 onOkPressed: () async {
@@ -177,6 +187,8 @@ void doShow({
                 context,
                 title: title,
                 body: body,
+                background: background,
+                textColor: textColor,
                 url: url,
                 position: position,
                 scale: scale,
@@ -202,6 +214,8 @@ void doShow({
                     position == null ? "center" : position!.toLowerCase(),
                 title: title,
                 body: body ?? "",
+                background: background,
+                textColor: textColor,
                 color: color == null
                     ? Colors.blue.withOpacity(0.5)
                     : PagePilot.hexToColor(color),

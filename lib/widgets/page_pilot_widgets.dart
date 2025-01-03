@@ -3,6 +3,7 @@ import 'dart:math';
 import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
@@ -16,6 +17,7 @@ class PagePilot {
   static double padding = 16;
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
+  static bool isDarkMode = false;
 
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
@@ -28,6 +30,9 @@ class PagePilot {
   );
 
   static void initStyles(Styles? s) {
+    var brightness =
+        SchedulerBinding.instance.platformDispatcher.platformBrightness;
+    isDarkMode = brightness == Brightness.dark;
     if (s != null) {
       styles = Styles(
         shadowColor: s.shadowColor,
@@ -105,6 +110,8 @@ class PagePilot {
     BuildContext context, {
     String? title,
     String? body,
+    String? background,
+    String? textColor,
     String? url,
     int duration = 3000,
     int? scale,
@@ -134,7 +141,9 @@ class PagePilot {
             height: 80,
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.8),
+              color: background != null
+                  ? hexToColor(background)
+                  : Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -147,7 +156,9 @@ class PagePilot {
                               ? Text(
                                   title,
                                   style: TextStyle(
-                                    color: Colors.white,
+                                    color: textColor != null
+                                        ? hexToColor(textColor)
+                                        : Colors.white,
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -163,7 +174,11 @@ class PagePilot {
                                 )
                               : Text(
                                   body,
-                                  style: TextStyle(color: Colors.white),
+                                  style: TextStyle(
+                                    color: textColor != null
+                                        ? hexToColor(textColor)
+                                        : Colors.white,
+                                  ),
                                 ),
                         ],
                       )
@@ -219,11 +234,13 @@ class PagePilot {
     BuildContext context, {
     String? title,
     required String? body,
+    String? background,
+    String? textColor,
     String? url,
     int? scale,
     required Function() onOkPressed,
   }) {
-    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     showModalBottomSheet(
       context: context,
       isDismissible: false,
@@ -238,7 +255,11 @@ class PagePilot {
                 left: padding,
                 right: padding),
             decoration: BoxDecoration(
-              color: isDarkTheme ? Colors.black : Colors.white,
+              color: background != null
+                  ? hexToColor(background)
+                  : isDarkMode
+                      ? Colors.black
+                      : Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
@@ -253,6 +274,8 @@ class PagePilot {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
+                          color:
+                              textColor != null ? hexToColor(textColor) : null,
                         ),
                       )
                     : SizedBox(),
@@ -268,7 +291,14 @@ class PagePilot {
                             // width: double.infinity,
                             child: WebViewWidget(controller: controller!),
                           )
-                        : Text(body)
+                        : Text(
+                            body,
+                            style: TextStyle(
+                              color: textColor != null
+                                  ? hexToColor(textColor)
+                                  : null,
+                            ),
+                          )
                     : Container(
                         height: 200,
                         width: 200,
@@ -307,11 +337,13 @@ class PagePilot {
     required String shape,
     String? title,
     String? body,
+    String? background,
+    String? textColor,
     String? url,
     int? scale,
     Function()? onOkPressed,
   }) {
-    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
     if (showConfetti) {
       _confettiController =
@@ -323,8 +355,19 @@ class PagePilot {
         context: context,
         builder: (BuildContext context) {
           return AlertDialog(
-            backgroundColor: isDarkTheme ? Colors.black : Colors.white,
-            title: title != null ? Text(title!) : null,
+            backgroundColor: background != null
+                ? hexToColor(background)
+                : isDarkMode
+                    ? Colors.black
+                    : Colors.white,
+            title: title != null
+                ? Text(
+                    title,
+                    style: TextStyle(
+                      color: textColor != null ? hexToColor(textColor) : null,
+                    ),
+                  )
+                : null,
             content: SingleChildScrollView(
               child: Stack(
                 children: [
@@ -335,7 +378,14 @@ class PagePilot {
                               width: 200,
                               child: WebViewWidget(controller: controller!),
                             )
-                          : Text(body)
+                          : Text(
+                              body,
+                              style: TextStyle(
+                                color: textColor != null
+                                    ? hexToColor(textColor)
+                                    : null,
+                              ),
+                            )
                       : Container(
                           height: 200,
                           width: 200,
@@ -472,10 +522,12 @@ class PagePilot {
     required GlobalKey key,
     required String shape,
     String? title,
-    int? scale,
     required String body,
+    String? background,
+    String? textColor,
+    int? scale,
   }) {
-    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
     targets.add(
       TargetFocus(
@@ -492,7 +544,11 @@ class PagePilot {
             builder: (context, coachMarkController) {
               return Container(
                 decoration: BoxDecoration(
-                  color: isDarkTheme ? Colors.black : Colors.white,
+                  color: background != null
+                      ? hexToColor(background)
+                      : isDarkMode
+                          ? Colors.black
+                          : Colors.white,
                   borderRadius: BorderRadius.circular(borderRadius),
                 ),
                 padding: EdgeInsets.all(padding),
@@ -504,6 +560,9 @@ class PagePilot {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: textColor != null
+                                  ? hexToColor(textColor)
+                                  : null,
                             ),
                           )
                         : SizedBox(),
@@ -517,6 +576,11 @@ class PagePilot {
                         : Text(
                             body,
                             overflow: TextOverflow.clip,
+                            style: TextStyle(
+                              color: textColor != null
+                                  ? hexToColor(textColor)
+                                  : null,
+                            ),
                           ),
                   ],
                 ),
@@ -539,6 +603,8 @@ class PagePilot {
     BuildContext context, {
     String? title,
     String? body,
+    String? background,
+    String? textColor,
     String? url,
     String? position,
     int? scale,
@@ -634,7 +700,11 @@ class PagePilot {
                       width: MediaQuery.of(context).size.width * 0.40,
                       padding: EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: background != null
+                            ? hexToColor(background)
+                            : isDarkMode
+                                ? Colors.black
+                                : Colors.white,
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
@@ -653,6 +723,9 @@ class PagePilot {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
+                                    color: textColor != null
+                                        ? hexToColor(textColor)
+                                        : null,
                                   ),
                                 )
                               : SizedBox(),
@@ -664,7 +737,14 @@ class PagePilot {
                                       child: WebViewWidget(
                                           controller: controller!),
                                     )
-                                  : Text(body)
+                                  : Text(
+                                      body,
+                                      style: TextStyle(
+                                        color: textColor != null
+                                            ? hexToColor(textColor)
+                                            : null,
+                                      ),
+                                    )
                               : Container(
                                   height: 200,
                                   width: 200,
@@ -700,6 +780,8 @@ class PagePilot {
     required String beaconPosition,
     String? title,
     required String body,
+    String? background,
+    String? textColor,
     required Color color,
     required Function() onBeaconClicked,
   }) {
@@ -730,6 +812,8 @@ class PagePilot {
               shape: shape,
               title: title,
               body: body,
+              background: background,
+              textColor: textColor,
             );
             onBeaconClicked();
           },
