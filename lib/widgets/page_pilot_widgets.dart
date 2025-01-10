@@ -18,6 +18,10 @@ class PagePilot {
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
   static bool isDarkMode = false;
+  static String htmlBodyStart="<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
+  // static String htmlBodyStart =
+  //     "<body style=\"margin: 0;padding: 0;width: 100vw;height: 100vh;overflow: hidden;display: flex;justify-content: center;align-items: center;\"><style>body img,body iframe,body video {max-width: 100%;max-height: 100%;object-fit: contain;}</style>";
+  static String htmlBodyEnd = "</body></html>";
 
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
@@ -766,8 +770,8 @@ class PagePilot {
       controller!.loadRequest(Uri.parse(url!));
     }
     if (body.toString().startsWith("<")) {
-      controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: scale ?? 4);
+      controller!.loadHtmlString(htmlBodyStart + body.toString() + htmlBodyEnd);
+      // adjustWebviewZoom(scale: scale ?? 4);
     }
 
     overlay.insert(entry);
