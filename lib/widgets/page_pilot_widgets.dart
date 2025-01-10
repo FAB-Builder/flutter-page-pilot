@@ -18,7 +18,9 @@ class PagePilot {
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
   static bool isDarkMode = false;
-  static String htmlBodyStart="<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
+  static String htmlBodyStart =
+      "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { background:#ffffff00;margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
+
   // static String htmlBodyStart =
   //     "<body style=\"margin: 0;padding: 0;width: 100vw;height: 100vh;overflow: hidden;display: flex;justify-content: center;align-items: center;\"><style>body img,body iframe,body video {max-width: 100%;max-height: 100%;object-fit: contain;}</style>";
   static String htmlBodyEnd = "</body></html>";
@@ -771,7 +773,7 @@ class PagePilot {
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(htmlBodyStart + body.toString() + htmlBodyEnd);
-      // adjustWebviewZoom(scale: scale ?? 4);
+      adjustWebviewZoom(scale: scale ?? 4);
     }
 
     overlay.insert(entry);
@@ -880,7 +882,11 @@ class PagePilot {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: isDarkTheme ? Colors.black : Colors.white,
+                        color: tours[i]["background"] != null
+                            ? hexToColor(tours[i]["background"])
+                            : isDarkTheme
+                                ? Colors.black
+                                : Colors.white,
                         borderRadius: BorderRadius.circular(borderRadius),
                       ),
                       padding: EdgeInsets.all(borderRadius),
@@ -892,7 +898,11 @@ class PagePilot {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: isDarkTheme ? Colors.white : Colors.black,
+                              color: tours[i]["textColor"] != null
+                                  ? hexToColor(tours[i]["textColor"])
+                                  : isDarkTheme
+                                      ? Colors.white
+                                      : Colors.black,
                             ),
                           ),
                           // Text(tours[i]["description"].toString()),
@@ -903,7 +913,16 @@ class PagePilot {
                                   child: WebViewWidget(
                                       controller: webViewController),
                                 )
-                              : Text(tours[i]["body"].toString()),
+                              : Text(
+                                  tours[i]["body"].toString(),
+                                  style: TextStyle(
+                                    color: tours[i]["textColor"] != null
+                                        ? hexToColor(tours[i]["textColor"])
+                                        : isDarkTheme
+                                            ? Colors.white
+                                            : Colors.black,
+                                  ),
+                                ),
                         ],
                       ),
                     ),
