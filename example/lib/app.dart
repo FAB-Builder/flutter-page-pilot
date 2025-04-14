@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
 import 'package:pagepilot_example/page_pilot_keys.dart';
 
-const String apiEndpoint = "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true";
+const String apiEndpoint = "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=HOME_BANNER";
 
 Future<List<PagePilotBannerItem>> fetchBannerItems() async {
   final url = Uri.parse(apiEndpoint);
@@ -20,9 +20,9 @@ Future<List<PagePilotBannerItem>> fetchBannerItems() async {
         .map((item) => PagePilotBannerItem.fromJson(item))
         .toList();
     //Only rendering HOME_BANNER
-    final filteredItems = items.where((item) => item.identifier == "HOME_BANNER").toList();
-    filteredItems.sort((a, b) => a.sequence.compareTo(b.sequence));
-    return filteredItems;
+    // final filteredItems = items.where((item) => item.identifier == "HOME_BANNER").toList();
+    // filteredItems.sort((a, b) => a.sequence.compareTo(b.sequence));
+    return items;
   } else {
     throw Exception("Failed to load banner data");
   }

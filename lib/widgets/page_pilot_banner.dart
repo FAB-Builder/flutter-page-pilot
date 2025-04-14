@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:video_player/video_player.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 // Change the PagePilotBannerItem class and .fromJson() function definition to accomodate for more attributes and flexibility
 class PagePilotBannerItem {
@@ -17,7 +18,7 @@ class PagePilotBannerItem {
     required this.mediaUrl,
     required this.identifier,
     required this.buttonText,
-    required this.sequence,
+    this.sequence = 1,
     this.buttonColor = Colors.blue,
     this.buttonTextColor = Colors.white,
     required this.link,
@@ -29,11 +30,17 @@ class PagePilotBannerItem {
       mediaUrl: json['content']['image'][0]['publicUrl'] as String,
       identifier: json['identifier'] as String,
       buttonText: json['buttonText'] as String? ?? '',
-      buttonColor: json['buttonColor'] != null ? Color(int.parse(json['buttonColor'].substring(1), radix: 16) + 0xFF000000) : Colors.blue,
-      buttonTextColor: json['buttonTextColor'] != null ? Color(int.parse(json['buttonTextColor'].substring(1), radix: 16) + 0xFF000000) : Colors.white,
+      buttonColor: json['buttonColor'] != null
+          ? Color(int.parse(json['buttonColor'].substring(1), radix: 16) +
+              0xFF000000)
+          : Colors.blue,
+      buttonTextColor: json['buttonTextColor'] != null
+          ? Color(int.parse(json['buttonTextColor'].substring(1), radix: 16) +
+              0xFF000000)
+          : Colors.white,
       link: json['link'] as String? ?? '',
       type: json['type'] as String? ?? '',
-      sequence: json['sequence'],
+      sequence: json['sequence'] ?? 1,
     );
   }
 }
@@ -100,7 +107,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   }
 
   bool _isVideo(String url) => url.toLowerCase().endsWith('.mp4');
-
+  bool _isSvg(String url) => url.toLowerCase().endsWith('.svg');
   @override
   Widget build(BuildContext context) {
     if (widget.items.isEmpty) {
@@ -115,7 +122,9 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
     return SizedBox(
       height: 300,
       child: Swiper(
-        autoplay: widget.items.length == 1 ? false : (widget.autoplay && !_autoplayPaused),
+        autoplay: widget.items.length == 1
+            ? false
+            : (widget.autoplay && !_autoplayPaused),
         autoplayDisableOnInteraction: true,
         autoplayDelay: widget.autoplayDelay,
         duration: 1000,
@@ -138,49 +147,31 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                 children: [
                   Positioned.fill(
                     child: _isVideo(item.mediaUrl)
-                        ? controller != null && controller.value.isInitialized
+                        ? controller != null &&
+                                controller.value.isInitialized
                             ? AspectRatio(
                                 aspectRatio: controller.value.aspectRatio,
                                 child: VideoPlayer(controller),
                               )
-                            : const Center(child: CircularProgressIndicator())
-                        : Image.network(
-                            item.mediaUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Center(child: Icon(Icons.broken_image)),
-                          ),
-                  ),
-                  Positioned(
-                    bottom: 20,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          item.identifier,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: item.buttonColor,
-                            foregroundColor: item.buttonTextColor,
-                          ),
-                          onPressed: () {
-                            // You can implement navigation to `item.link` here.
-                            debugPrint('Clicked: ${item.link}');
-                          },
-                          child: Text(item.buttonText),
-                        )
-                      ],
-                    ),
+                            : const Center(
+                                child: CircularProgressIndicator())
+                        : _isSvg(item.mediaUrl)
+                            ? SvgPicture.network(
+                                item.mediaUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error,
+                                        stackTrace) =>
+                                    const Center(
+                                        child: Icon(Icons.broken_image)),
+                              )
+                            : Image.network(
+                                item.mediaUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error,
+                                        stackTrace) =>
+                                    const Center(
+                                        child: Icon(Icons.broken_image)),
+                              ),
                   ),
                 ],
               ),
