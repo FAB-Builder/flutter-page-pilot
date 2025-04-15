@@ -6,7 +6,8 @@ import 'dart:convert';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
 import 'package:pagepilot_example/page_pilot_keys.dart';
 
-const String apiEndpoint = "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=HOME_BANNER";
+const String apiEndpoint =
+    "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=TEST_HOME";
 
 Future<List<PagePilotBannerItem>> fetchBannerItems() async {
   final url = Uri.parse(apiEndpoint);
@@ -14,14 +15,26 @@ Future<List<PagePilotBannerItem>> fetchBannerItems() async {
 
   if (response.statusCode == 200) {
     final apiResponse = response.body;
-
+    print(apiResponse);
     final responseJson = jsonDecode(apiResponse);
+    if (responseJson['rows'] == null || (responseJson['rows'] as List).isEmpty) {
+      throw Exception("No banner data found");
+    }
     final items = (responseJson['rows'] as List)
         .map((item) => PagePilotBannerItem.fromJson(item))
         .toList();
-    //Only rendering HOME_BANNER
+    //Only rendering banners with HOME_BANNER as identifier
     // final filteredItems = items.where((item) => item.identifier == "HOME_BANNER").toList();
-    // filteredItems.sort((a, b) => a.sequence.compareTo(b.sequence));
+    items.sort((a, b) {
+      final seqA = a.sequence;
+      final seqB = b.sequence;
+
+      if (seqA == null && seqB == null) return 0;
+      if (seqA == null) return 1;
+      if (seqB == null) return -1;
+
+      return seqA.compareTo(seqB);
+    });
     return items;
   } else {
     throw Exception("Failed to load banner data");
@@ -68,7 +81,9 @@ class _AppState extends State<App> {
               return Center(child: Text('Error: ${snapshot.error}'));
             }
 
-            final items = snapshot.data ?? [];
+            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return const Center(child: Text('No banners to display.'));
+            }
 
             return Column(
               children: [
@@ -97,7 +112,7 @@ class _AppState extends State<App> {
                 const Center(child: Text('tour')),
                 const SizedBox(height: 20),
                 PagePilotBanner(
-                  items: items,
+                  items: snapshot.data!,
                 )
               ],
             );
