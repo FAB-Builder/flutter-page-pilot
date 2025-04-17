@@ -9,6 +9,7 @@ import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:pagepilot/widgets/page_pilot_chat_bubble.dart';
 
 class PagePilot {
   static OverlayEntry? _overlayEntry;
@@ -777,6 +778,52 @@ class PagePilot {
     }
 
     overlay.insert(entry);
+  }
+
+  static void showChatBubble(
+    BuildContext context, {
+    String? text,
+    String? backgroundColor,
+    String? textColor,
+    Duration duration = const Duration(seconds: 5),
+    Function()? onDurationEnd
+  }) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          bottom: 30,
+          right: 30,
+          child: SafeArea(
+            child: Material(
+              color: Colors.transparent,
+              child: ChatBubble(
+                text: text ?? "",
+                backgroundColor: backgroundColor != null
+                            ? hexToColor(backgroundColor)
+                            : isDarkMode
+                                ? Colors.white
+                                : Colors.black,
+                textColor: textColor != null
+                            ? hexToColor(textColor)
+                            : isDarkMode
+                                ? Colors.black
+                                : Colors.white,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(duration, () {
+      onDurationEnd?.call();
+      entry.remove();
+    });
   }
 
   static void showBeacon(

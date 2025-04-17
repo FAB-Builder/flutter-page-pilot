@@ -20,7 +20,7 @@ void doShow({
     var response = await http.get(
       Uri.parse("$baseUrl/get/unacknowledged?userId=${Config.userId}"),
     );
-
+    print(response.body);
     //mock data
     if (type != null) {
       jsonResponse = {
@@ -94,7 +94,22 @@ void doShow({
           screen.toLowerCase()) {
         if (((body != null) || url != null) ||
             jsonResponse["type"].toString() == "tour") {
-          switch (jsonResponse["type"].toString().toLowerCase()) {
+          /* replace the "testing_chat_bubble" in the switch statement 
+           with jsonResponse["type"].toString().toLowerCase() to test out other nudges.*/
+          switch ("testing_chat_bubble") {
+            case "testing_chat_bubble" :
+              PagePilot.showChatBubble(context,
+                  textColor: textColor,
+                  text: title,
+                  backgroundColor: background,
+                  onDurationEnd: () async {
+                  await http.get(
+                    Uri.parse(
+                      "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+                    ),
+                  );
+                },);
+              break;
             case "dialog":
               PagePilot.showOkDialog(
                 context,
@@ -259,6 +274,6 @@ void doShow({
       }
     }
   } catch (e) {
-    print(e);
+    print("Error ${e}");
   }
 }

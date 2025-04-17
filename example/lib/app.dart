@@ -15,9 +15,9 @@ Future<List<PagePilotBannerItem>> fetchBannerItems() async {
 
   if (response.statusCode == 200) {
     final apiResponse = response.body;
-    print(apiResponse);
     final responseJson = jsonDecode(apiResponse);
-    if (responseJson['rows'] == null || (responseJson['rows'] as List).isEmpty) {
+    if (responseJson['rows'] == null ||
+        (responseJson['rows'] as List).isEmpty) {
       throw Exception("No banner data found");
     }
     final items = (responseJson['rows'] as List)
@@ -67,58 +67,59 @@ class _AppState extends State<App> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plugin example app'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<List<PagePilotBannerItem>>(
-          future: _bannerItemsFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            }
-
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('No banners to display.'));
-            }
-
-            return Column(
-              children: [
-                Center(
-                  child: Text('Running on: ${widget.platformVersion}\n'),
-                ),
-                ElevatedButton(
-                  key: PagePilotKeys.keyBeacon,
-                  onPressed: () {
-                    widget.pagepilotPlugin.show(
-                      context: context,
-                      screen: "home",
-                    );
-                  },
-                  child: const Text("Tap Me!"),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Text(key: PagePilotKeys.keyDialog, 'Dialog'),
-                    Text(key: PagePilotKeys.keyTooltip, 'Tooltip'),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                const Center(child: Text('tour')),
-                const SizedBox(height: 20),
-                PagePilotBanner(
-                  items: snapshot.data!,
-                )
-              ],
-            );
-          },
+        appBar: AppBar(
+          title: const Text('Plugin example app'),
         ),
-      ),
-    );
+        body: Stack(children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
+            child: FutureBuilder<List<PagePilotBannerItem>>(
+              future: _bannerItemsFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No banners to display.'));
+                }
+
+                return Column(
+                  children: [
+                    Center(
+                      child: Text('Running on: ${widget.platformVersion}\n'),
+                    ),
+                    ElevatedButton(
+                      key: PagePilotKeys.keyBeacon,
+                      onPressed: () {
+                        widget.pagepilotPlugin.show(
+                          context: context,
+                          screen: "home",
+                        );
+                      },
+                      child: const Text("Tap Me!"),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Text(key: PagePilotKeys.keyDialog, 'Dialog'),
+                        Text(key: PagePilotKeys.keyTooltip, 'Tooltip'),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    const Center(child: Text('tour')),
+                    const SizedBox(height: 20),
+                    PagePilotBanner(
+                      items: snapshot.data!,
+                    )
+                  ],
+                );
+              },
+            ),
+          ),
+        ]));
   }
 }
