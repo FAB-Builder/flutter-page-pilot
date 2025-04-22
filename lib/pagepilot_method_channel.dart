@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/services/service.dart';
-import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 import 'pagepilot_platform_interface.dart';
 

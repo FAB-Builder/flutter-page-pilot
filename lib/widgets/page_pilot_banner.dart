@@ -32,7 +32,7 @@ class PagePilotBannerItem {
     required this.type,
   })  : buttonColor = buttonColor ?? Colors.blue,
         buttonTextColor = buttonTextColor ?? Colors.white,
-        backgroundColor = backgroundColor ?? Colors.black.withOpacity(0.5);
+        backgroundColor = backgroundColor ?? Colors.black;
 
   factory PagePilotBannerItem.fromJson(Map<String, dynamic> json) {
     String mediaUrl = '';
