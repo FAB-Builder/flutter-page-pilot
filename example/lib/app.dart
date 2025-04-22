@@ -6,10 +6,8 @@ import 'dart:convert';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
 import 'package:pagepilot_example/page_pilot_keys.dart';
 
-const String apiEndpoint =
-    "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=TEST_HOME";
 
-Future<List<PagePilotBannerItem>> fetchBannerItems() async {
+Future<List<PagePilotBannerItem>> fetchBannerItems(String apiEndpoint) async {
   final url = Uri.parse(apiEndpoint);
   final response = await http.get(url);
 
@@ -23,8 +21,6 @@ Future<List<PagePilotBannerItem>> fetchBannerItems() async {
     final items = (responseJson['rows'] as List)
         .map((item) => PagePilotBannerItem.fromJson(item))
         .toList();
-    //Only rendering banners with HOME_BANNER as identifier
-    // final filteredItems = items.where((item) => item.identifier == "HOME_BANNER").toList();
     items.sort((a, b) {
       final seqA = a.sequence;
       final seqB = b.sequence;
@@ -56,12 +52,17 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  late Future<List<PagePilotBannerItem>> _bannerItemsFuture;
+  late Future<List<List<PagePilotBannerItem>>> _bannerItemsFuture;
 
   @override
   void initState() {
     super.initState();
-    _bannerItemsFuture = fetchBannerItems();
+    _bannerItemsFuture = Future.wait([
+      fetchBannerItems(
+          "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=TEST_HOME"),
+      fetchBannerItems(
+          "https://pagepilot.fabbuilder.com/api/tenant/6655bc2b30a6760d8f897581/client/app-banners?filter[isActive]=true&filter[identifier]=TEST_ABOUT"),
+    ]);
   }
 
   @override
@@ -73,7 +74,7 @@ class _AppState extends State<App> {
         body: Stack(children: [
           Padding(
             padding: const EdgeInsets.only(top: 16.0, bottom: 16.0),
-            child: FutureBuilder<List<PagePilotBannerItem>>(
+            child: FutureBuilder<List<List<PagePilotBannerItem>>>(
               future: _bannerItemsFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -113,7 +114,11 @@ class _AppState extends State<App> {
                     const Center(child: Text('tour')),
                     const SizedBox(height: 20),
                     PagePilotBanner(
-                      items: snapshot.data!,
+                      items: snapshot.data![0],
+                    ),
+                    const SizedBox(height: 40),
+                    PagePilotBanner(
+                      items: snapshot.data![1],
                     )
                   ],
                 );

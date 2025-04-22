@@ -96,19 +96,21 @@ void doShow({
             jsonResponse["type"].toString() == "tour") {
           /* replace the "testing_chat_bubble" in the switch statement 
            with jsonResponse["type"].toString().toLowerCase() to test out other nudges.*/
-          switch ("testing_chat_bubble") {
-            case "testing_chat_bubble" :
-              PagePilot.showChatBubble(context,
-                  textColor: textColor,
-                  text: title,
-                  backgroundColor: background,
-                  onDurationEnd: () async {
+          switch (jsonResponse["type"].toString().toLowerCase()) {
+            case "testing_chat_bubble":
+              PagePilot.showChatBubble(
+                context,
+                textColor: textColor,
+                text: title,
+                backgroundColor: background,
+                onDurationEnd: () async {
                   await http.get(
                     Uri.parse(
                       "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
                     ),
                   );
-                },);
+                },
+              );
               break;
             case "dialog":
               PagePilot.showOkDialog(
@@ -198,22 +200,22 @@ void doShow({
             //   break;
             case "pip":
             case "floatingwidget":
-              PagePilot.showFloatingWidget(
-                context,
-                title: title,
-                body: body,
-                background: background,
-                textColor: textColor,
-                url: url,
-                position: position,
-                scale: scale,
-                isDraggable: isDraggable,
-              );
-              await http.get(
-                Uri.parse(
-                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                ),
-              );
+              PagePilot.showFloatingWidget(context,
+                  title: title,
+                  body: body,
+                  background: background,
+                  textColor: textColor,
+                  url: url,
+                  position: position,
+                  scale: scale,
+                  isDraggable: isDraggable, onClose: () async {
+                await http.get(
+                  Uri.parse(
+                    "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+                  ),
+                );
+              });
+
               break;
             case "beacon":
               if (key == null) {
