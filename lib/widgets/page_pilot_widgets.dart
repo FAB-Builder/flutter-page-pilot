@@ -9,6 +9,7 @@ import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:pagepilot/widgets/page_pilot_chat_bubble.dart';
 
 class PagePilot {
   static OverlayEntry? _overlayEntry;
@@ -614,154 +615,201 @@ class PagePilot {
     String? url,
     String? position,
     int? scale,
+    String orientation = "landscape",
     bool isDraggable = false,
+    Function()? onClose,
   }) {
-    // Use an OverlayEntry to display the pulse animation
     final overlay = Overlay.of(context);
     OverlayEntry? entry;
     double margin = 30;
 
     final screenSize = MediaQuery.of(context).size;
-    Offset currentOffset = Offset(0, 0);
-    switch (position.toString().toLowerCase()) {
+    Offset currentOffset = const Offset(0, 0);
+
+    switch (position?.toLowerCase()) {
       case "topleft":
         currentOffset = Offset(margin, margin);
         break;
       case "topcenter":
       case "top":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          margin,
-        );
+        currentOffset = Offset((screenSize.width - margin * 6) / 2, margin);
         break;
       case "topright":
-        currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          margin,
-        );
+        currentOffset = Offset((screenSize.width + margin) / 2, margin);
         break;
       case "bottomleft":
-        currentOffset = Offset(
-          margin,
-          screenSize.height - margin * 6,
-        );
+        currentOffset = Offset(margin, screenSize.height - margin * 6);
         break;
       case "bottomcenter":
       case "bottom":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          screenSize.height - margin * 6,
-        );
+        currentOffset = Offset((screenSize.width - margin * 6) / 2,
+            screenSize.height - margin * 6);
         break;
       case "bottomright":
         currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          screenSize.height - margin * 6,
-        );
+            (screenSize.width + margin) / 2, screenSize.height - margin * 6);
         break;
       case "center":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          (screenSize.height - margin * 5) / 2,
-        ); // Center
+        currentOffset = Offset((screenSize.width - margin * 6) / 2,
+            (screenSize.height - margin * 5) / 2);
         break;
       case "leftcenter":
       case "left":
-        currentOffset =
-            Offset(margin, (screenSize.height - margin * 5) / 2); // Left Center
+        currentOffset = Offset(margin, (screenSize.height - margin * 5) / 2);
         break;
       case "rightcenter":
       case "right":
-        currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          (screenSize.height - margin * 5) / 2,
-        ); // Right Center
+        currentOffset = Offset((screenSize.width + margin) / 2,
+            (screenSize.height - margin * 5) / 2);
         break;
     }
+
+    bool isFullView = false;
 
     entry = OverlayEntry(
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // final screenSize = MediaQuery.of(context).size;
-            // Offset currentOffset = Offset(0, 0);
-            return Positioned(
-              top: currentOffset.dy,
-              left: currentOffset.dx,
-              child: SafeArea(
-                child: Material(
-                  elevation: 4,
-                  color: Colors.transparent,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      if (isDraggable) {
-                        setState(() {
-                          // Update position as the user drags
-                          currentOffset += details.delta;
-                          //entry?.markNeedsBuild();
-                        });
-                      }
-                    },
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.40,
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: background != null
-                            ? hexToColor(background)
-                            : isDarkMode
-                                ? Colors.black
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(2, 2),
-                          ),
-                        ],
+            return Stack(
+              children: [
+                // Blurred Background when FullView is active
+                if (isFullView)
+                  GestureDetector(
+                    onTap: () => setState(() => isFullView = false),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                      child: Container(
+                        color:
+                            Colors.black.withOpacity(0.3), // darken for depth
+                        width: double.infinity,
+                        height: double.infinity,
                       ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          title != null
-                              ? Text(
-                                  title,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor != null
-                                        ? hexToColor(textColor)
-                                        : null,
-                                  ),
-                                )
-                              : SizedBox(),
-                          body != null
-                              ? body.toString().startsWith("<")
-                                  ? Container(
-                                      height: 200,
-                                      width: 200,
-                                      child: WebViewWidget(
-                                          controller: controller!),
-                                    )
-                                  : Text(
-                                      body,
-                                      style: TextStyle(
-                                        color: textColor != null
-                                            ? hexToColor(textColor)
-                                            : null,
-                                      ),
-                                    )
-                              : Container(
-                                  height: 200,
-                                  width: 200,
-                                  child: WebViewWidget(controller: controller!),
+                    ),
+                  ),
+
+                // Positioned floating or centered full view
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 100),
+                  // curve: Curves.easeInOut,
+                  top: isFullView
+                      ? (screenSize.height - (screenSize.width * 9 / 16)) / 2
+                      : currentOffset.dy,
+                  left: isFullView
+                      ? (screenSize.width - (screenSize.width * 0.9)) / 2
+                      : currentOffset.dx,
+                  child: SafeArea(
+                    child: Material(
+                      elevation: 4,
+                      color: Colors.transparent,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          if (isDraggable && !isFullView) {
+                            setState(() {
+                              currentOffset += details.delta;
+                            });
+                          }
+                        },
+                        child: AnimatedSize(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOut,
+                          child: Container(
+                            width: isFullView
+                                ? screenSize.width * 0.9
+                                : screenSize.width * 0.4,
+                            height: isFullView
+                                ? orientation == "landscape"
+                                    ? (screenSize.width * 0.9) * 9 / 16
+                                    : (screenSize.width * 0.9) * 16 / 9
+                                : null,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: background != null
+                                  ? hexToColor(background)
+                                  : isDarkMode
+                                      ? Colors.black
+                                      : Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(2, 2),
                                 ),
-                        ],
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Top Row for Close and Fullscreen Icons
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    InkWell(
+                                      onTap: () {
+                                        onClose?.call();
+                                        entry?.remove(); // Close overlay
+                                      },
+                                      child: const Icon(Icons.close, size: 20),
+                                    ),
+                                    InkWell(
+                                      onTap: () {
+                                        setState(
+                                            () => isFullView = !isFullView);
+                                      },
+                                      child: Icon(
+                                        isFullView
+                                            ? Icons.fullscreen_exit
+                                            : Icons.fullscreen,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+
+                                if (title != null)
+                                  Text(
+                                    title,
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: textColor != null
+                                          ? hexToColor(textColor)
+                                          : null,
+                                    ),
+                                  ),
+
+                                const SizedBox(height: 8),
+
+                                if (body != null)
+                                  body.toString().startsWith("<")
+                                      ? Expanded(
+                                          child: WebViewWidget(
+                                              controller: controller!),
+                                        )
+                                      : Text(
+                                          body,
+                                          style: TextStyle(
+                                            color: textColor != null
+                                                ? hexToColor(textColor)
+                                                : null,
+                                          ),
+                                        )
+                                else
+                                  Expanded(
+                                    child:
+                                        WebViewWidget(controller: controller!),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
+              ],
             );
           },
         );
@@ -769,14 +817,58 @@ class PagePilot {
     );
 
     if (url != null) {
-      controller!.loadRequest(Uri.parse(url!));
+      controller!.loadRequest(Uri.parse(url));
     }
-    if (body.toString().startsWith("<")) {
-      controller!.loadHtmlString(htmlBodyStart + body.toString() + htmlBodyEnd);
+    if (body != null && body.toString().startsWith("<")) {
+      controller!.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
       adjustWebviewZoom(scale: scale ?? 4);
     }
 
     overlay.insert(entry);
+  }
+
+  static void showChatBubble(BuildContext context,
+      {String? text,
+      String? backgroundColor,
+      String? textColor,
+      Duration duration = const Duration(seconds: 5),
+      Function()? onDurationEnd}) {
+    final overlay = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) {
+        return Positioned(
+          bottom: 30,
+          right: 30,
+          child: SafeArea(
+            child: Material(
+              color: Colors.transparent,
+              child: ChatBubble(
+                text: text ?? "",
+                backgroundColor: backgroundColor != null
+                    ? hexToColor(backgroundColor)
+                    : isDarkMode
+                        ? Colors.white
+                        : Colors.black,
+                textColor: textColor != null
+                    ? hexToColor(textColor)
+                    : isDarkMode
+                        ? Colors.black
+                        : Colors.white,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    overlay.insert(entry);
+
+    Future.delayed(duration, () {
+      onDurationEnd?.call();
+      entry.remove();
+    });
   }
 
   static void showBeacon(
