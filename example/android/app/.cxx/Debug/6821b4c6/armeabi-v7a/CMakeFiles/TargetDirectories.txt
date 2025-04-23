@@ -1,2 +1,0 @@
-D:/PagePilot/example/android/app/.cxx/Debug/6821b4c6/armeabi-v7a/CMakeFiles/edit_cache.dir
-D:/PagePilot/example/android/app/.cxx/Debug/6821b4c6/armeabi-v7a/CMakeFiles/rebuild_cache.dir
