@@ -145,7 +145,7 @@ class PagePilot {
         child: Material(
           color: Colors.transparent,
           child: Container(
-            height: 80,
+            // height: 80,
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
               color: background != null
@@ -154,39 +154,52 @@ class PagePilot {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 body != null
                     ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           title != null
-                              ? Text(
-                                  title,
-                                  style: TextStyle(
-                                    color: textColor != null
-                                        ? hexToColor(textColor)
-                                        : Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                              ? ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: 340,),
+                                child: Text(
+                                    title,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: textColor != null
+                                          ? hexToColor(textColor)
+                                          : Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                )
+                              )
                               : SizedBox(),
                           body.toString().startsWith("<")
                               ? Container(
-                                  height: 20,
+                                  height: 50,
                                   width: 340,
                                   child: WebViewWidget(
                                     controller: controller!,
                                   ),
                                 )
-                              : Text(
-                                  body,
-                                  style: TextStyle(
-                                    color: textColor != null
-                                        ? hexToColor(textColor)
-                                        : Colors.white,
+                              : ConstrainedBox(
+                                constraints: BoxConstraints(maxWidth: 300),
+                            
+                                child: Text(
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                    body,
+                                    style: TextStyle(
+                                      color: textColor != null
+                                          ? hexToColor(textColor)
+                                          : Colors.white,
+                                    ),
                                   ),
-                                ),
+                              ),
                         ],
                       )
                     : Container(
@@ -197,14 +210,14 @@ class PagePilot {
                         ),
                       ),
                 Spacer(),
-                GestureDetector(
-                  onTap: () {
+                IconButton(
+                  onPressed: () {
                     _overlayEntry?.remove();
                     _overlayEntry = null;
 
                     controller!.clearCache();
                   },
-                  child: Icon(
+                  icon: Icon(
                     Icons.close,
                     color: Colors.white,
                   ),
@@ -220,7 +233,6 @@ class PagePilot {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       overlay.insert(_overlayEntry!);
     });
-
     // Automatically remove the snackbar after a delay
     Future.delayed(Duration(milliseconds: duration), () {
       _overlayEntry?.remove();

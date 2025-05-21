@@ -55,7 +55,7 @@ class BannerContent {
       image: List<BannerImage>.from(
           (json['image'] ?? []).map((x) => BannerImage.fromJson(x))),
       video: List<BannerVideo>.from(
-          (json['video'] ?? []).map((x) => BannerVideo.fromJson(x))), // 👈 Handle null
+          (json['video'] ?? []).map((x) => BannerVideo.fromJson(x))), 
     );
   }
 }
