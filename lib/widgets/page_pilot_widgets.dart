@@ -10,6 +10,7 @@ import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
+
 class PagePilot {
   static OverlayEntry? _overlayEntry;
   static late TutorialCoachMark tutorialCoachMark;
