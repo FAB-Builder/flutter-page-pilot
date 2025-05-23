@@ -184,9 +184,8 @@ void _initializeVideoControllers() {
           maxHeight: height.toDouble(),
           maxWidth: width.toDouble(),
         ),
-        child: PIPView(
-          builder: (context, pip) {
-            return Stack(
+        child:
+             Stack(
               alignment: Alignment.center,
               children: [
                 PageView.builder(
@@ -202,7 +201,7 @@ void _initializeVideoControllers() {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(widget.radius),
-                          color: widget.backgroundcolor ?? Colors.black,
+                          color: widget.backgroundcolor ?? Colors.grey.shade300,
                         ),
                         clipBehavior: Clip.antiAlias,
                         child: Stack(
@@ -251,18 +250,31 @@ void _initializeVideoControllers() {
                                           child: SizedBox(
                                             height: 30,
                                             width: 30,
-                                            child: CircularProgressIndicator(),
+                                            child: CircularProgressIndicator(color: Colors.white,),
                                           ),
                                         )
                                   : Image.network(
-                                      _mediaUrls[index],
-                                      fit: BoxFit.fill,
-                                      errorBuilder: (context, error,
-                                              stackTrace) =>
-                                          const Center(
-                                              child: Icon(Icons.broken_image,
-                                                  size: 40)),
-                                    ),
+  _mediaUrls[index],
+  fit: BoxFit.fill,
+  loadingBuilder: (context, child, loadingProgress) {
+    if (loadingProgress == null) return child;
+    return Center(
+      child: SizedBox(
+        width: 30,
+        height: 30,
+        child: CircularProgressIndicator(
+          color: Colors.white,
+          value: loadingProgress.expectedTotalBytes != null
+              ? loadingProgress.cumulativeBytesLoaded /
+                  (loadingProgress.expectedTotalBytes ?? 1)
+              : null,
+        ),
+      ),
+    );
+  },
+  errorBuilder: (context, error, stackTrace) =>
+    const Center(child: Icon(Icons.broken_image, size: 40)),
+),
                             ),
                             if (_fetchedTitles.length > index &&
                                 _fetchedTitles[index].isNotEmpty)
@@ -280,7 +292,7 @@ void _initializeVideoControllers() {
                                             color:
                                                 Colors.black.withOpacity(0.5),
                                             borderRadius: BorderRadius.circular(
-                                                widget.radius),
+                                                10),
                                           ),
                                           child: Padding(
                                             padding: const EdgeInsets.all(8.0),
@@ -321,43 +333,40 @@ void _initializeVideoControllers() {
                   ),
 
                 /// PIP button
-              widget.pipon!?const SizedBox(): Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.4),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: pip
-                        ? const SizedBox.shrink()
-                        : IconButton(
-                            icon: const Icon(Icons.fullscreen_exit_rounded,
-                                color: Colors.white),
-                            onPressed: () {
+              // widget.pipon!?const SizedBox(): Positioned(
+              //     top: 10,
+              //     right: 10,
+              //     child: Container(
+              //       decoration: BoxDecoration(
+              //         color: Colors.black.withOpacity(0.4),
+              //         borderRadius: BorderRadius.circular(30),
+              //       ),
+              //       child: IconButton(
+              //               icon: const Icon(Icons.fullscreen_exit_rounded,
+              //                   color: Colors.white),
+              //               onPressed: () {
 
-                              setState(() {
-                                widget.pipon!=!widget.pipon!;
-                              });
-                              //for below screen
-                              PIPView.of(context)?.presentBelow(
-                                  PagePilotBanner(pipon: true,
-                                  autoplay: widget.autoplay,
-                                  backgroundcolor: widget.backgroundcolor,
-                                  itemHeight: widget.itemHeight,
-                                  itemWidth: widget.itemWidth,
-                                  radius: widget.radius,
-                                  indicator: widget.indicator,
+              //                 setState(() {
+              //                   widget.pipon!=!widget.pipon!;
+              //                 });
+              //                 //for below screen
+              //                 PIPView.of(context)?.presentBelow(
+              //                     PagePilotBanner(pipon: true,
+              //                     autoplay: widget.autoplay,
+              //                     backgroundcolor: widget.backgroundcolor,
+              //                     itemHeight: widget.itemHeight,
+              //                     itemWidth: widget.itemWidth,
+              //                     radius: widget.radius,
+              //                     indicator: widget.indicator,
 
-                                  ) ?? const SizedBox());
-                            },
-                          ),
-                  ),
-                )
+              //                     ) ?? const SizedBox());
+              //               },
+              //             ),
+              //     ),
+              //   )
               ],
-            );
-          },
-        ),
+            )
+        
       );
     });
   }
