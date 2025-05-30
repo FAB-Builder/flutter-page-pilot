@@ -14,10 +14,26 @@ class PagePilotBanner extends StatefulWidget {
   final int duration;
   final bool indicator;
   final Color? backgroundcolor;
+  final TextStyle? descriptionstyle;
+  final TextStyle? titlestyle;
   final bool? pipon;
+  final Color?  titlebackground;
+  final Color?  descriptionbackground;
+  final bool? owncontroller;
+  final PageController? pagecontroller;
+   int? currentpage;
+   final ValueChanged<int>? onPageChanged;
 
-  const PagePilotBanner({
+   PagePilotBanner({
     super.key,
+    this.descriptionstyle,
+    this.onPageChanged,
+    this.currentpage,
+    this.pagecontroller,
+    this.owncontroller=false,
+    this.titlestyle,
+    this.descriptionbackground,
+    this.titlebackground,
     this.duration = 500,
     this.pipon = false,
     this.indicator = true,
@@ -35,6 +51,7 @@ class PagePilotBanner extends StatefulWidget {
 String appid = "68249417461de050210452b2";
 
 List<String> _fetchedTitles = [];
+List<String> _fetchedcontent = [];
 List<String> _mediaUrls = [];
 bool _isLoading = true;
 
@@ -49,29 +66,28 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
 
       if (response.statusCode == 200) {
         final jsonBody = jsonDecode(response.body);
-        print(jsonBody);
         final bannerResponse = AppBannerResponse.fromJson(jsonBody);
 
         setState(() {
+          _mediaUrls = bannerResponse.rows.map((item) {
+            if (item.content.video.isNotEmpty) {
+              return item.content.video.first.publicUrl;
+            } else if (item.content.image.isNotEmpty) {
+              return item.content.image.first.publicUrl;
+            }
+            return ''; // Fallback
+          }).toList();
 
-            _mediaUrls = bannerResponse.rows.map((item) {
-    if (item.content.video.isNotEmpty) {
-      return item.content.video.first.publicUrl;
-    } else if (item.content.image.isNotEmpty) {
-      return item.content.image.first.publicUrl;
-    }
-    return ''; // Fallback
-  }).toList();
-   
-          _fetchedTitles = bannerResponse.rows
-              .map((item) => item.content.title ?? "")
+          _fetchedTitles =
+              bannerResponse.rows.map((item) => item.content.title ?? "").toList();
+
+          _fetchedcontent = bannerResponse.rows
+              .map((item) => item.content.description ?? "")
               .toList();
-          print("Required data,${_fetchedTitles}");
-          print(_mediaUrls);
-       
+
           _isLoading = false;
         });
-        return AppBannerResponse.fromJson(jsonBody);
+        return bannerResponse;
       } else {
         print('Failed to load banners. Status code: ${response.statusCode}');
       }
@@ -96,9 +112,14 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   @override
   void initState() {
     super.initState();
-   
-    if (widget.autoplay) _startAutoPlay();
 
+    fetchAppBanners().then((_) {
+      if (widget.autoplay && widget.pipon == false) _startAutoPlay();
+      _initializeVideoControllers();
+    });
+  }
+
+  void _initializeVideoControllers() {
     for (int i = 0; i < _mediaUrls.length; i++) {
       if (isVideo(_mediaUrls[i])) {
         final controller =
@@ -113,26 +134,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
         _videoControllers[i] = controller;
       }
     }
-    fetchAppBanners().then((_) {
-    if (widget.autoplay && widget.pipon == false) _startAutoPlay();
-    _initializeVideoControllers();
-  });
   }
-void _initializeVideoControllers() {
-  for (int i = 0; i < _mediaUrls.length; i++) {
-    if (isVideo(_mediaUrls[i])) {
-      final controller = VideoPlayerController.networkUrl(Uri.parse(_mediaUrls[i]));
-      controller.setLooping(true);
-      controller.initialize().then((_) {
-        if (mounted) {
-          setState(() {});
-          controller.play();
-        }
-      });
-      _videoControllers[i] = controller;
-    }
-  }
-}
 
   @override
   void didUpdateWidget(covariant PagePilotBanner oldWidget) {
@@ -155,6 +157,7 @@ void _initializeVideoControllers() {
         duration: Duration(milliseconds: widget.duration),
         curve: Curves.easeInOut,
       );
+      setState(() {}); // update _currentPage for texts
     });
   }
 
@@ -184,33 +187,43 @@ void _initializeVideoControllers() {
           maxHeight: height.toDouble(),
           maxWidth: width.toDouble(),
         ),
-        child:
-             Stack(
-              alignment: Alignment.center,
-              children: [
-                PageView.builder(
-                  controller: pageController,
-                  itemCount: _mediaUrls.length,
-                  onPageChanged: (page) => _currentPage = page,
-                  itemBuilder: (context, index) {
-                    final isCurrentVideo = isVideo(_mediaUrls[index]);
-                    final videoController = _videoControllers[index];
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(widget.radius),
-                          color: widget.backgroundcolor ?? Colors.grey.shade300,
-                        ),
-                        clipBehavior: Clip.antiAlias,
-                        child: Stack(
-                          fit: StackFit.expand,
-                          alignment: Alignment.center,
-                          children: [
-                            ClipRRect(
-                              borderRadius:
-                                  BorderRadius.circular(widget.radius),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Media Stack with PageView and Indicator
+            Expanded(
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    height: height.toDouble(),
+                    width: width.toDouble(),
+                    child: PageView.builder(
+                      controller:widget.owncontroller!? widget.pagecontroller: pageController,
+                      itemCount: _mediaUrls.length,
+                      onPageChanged: (page) {
+                        setState(() {
+                          _currentPage = page;
+                          widget.currentpage=page;
+                          print("object");
+                          print(widget.currentpage);
+                        });
+                        widget.onPageChanged!(page);
+                      },
+                      itemBuilder: (context, index) {
+                        final isCurrentVideo = isVideo(_mediaUrls[index]);
+                        final videoController = _videoControllers[index];
+              
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(widget.radius),
+                              color: widget.backgroundcolor ?? Colors.grey.shade300,
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(widget.radius),
                               child: isCurrentVideo && videoController != null
                                   ? videoController.value.isInitialized
                                       ? AspectRatio(
@@ -224,8 +237,7 @@ void _initializeVideoControllers() {
                                                 alignment: Alignment.topLeft,
                                                 child: IconButton(
                                                   icon: Icon(
-                                                    videoController
-                                                            .value.isPlaying
+                                                    videoController.value.isPlaying
                                                         ? Icons.pause
                                                         : Icons.play_arrow,
                                                     color: Colors.white,
@@ -233,12 +245,9 @@ void _initializeVideoControllers() {
                                                   ),
                                                   onPressed: () {
                                                     setState(() {
-                                                      videoController
-                                                              .value.isPlaying
-                                                          ? videoController
-                                                              .pause()
-                                                          : videoController
-                                                              .play();
+                                                      videoController.value.isPlaying
+                                                          ? videoController.pause()
+                                                          : videoController.play();
                                                     });
                                                   },
                                                 ),
@@ -250,123 +259,104 @@ void _initializeVideoControllers() {
                                           child: SizedBox(
                                             height: 30,
                                             width: 30,
-                                            child: CircularProgressIndicator(color: Colors.white,),
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                            ),
                                           ),
                                         )
                                   : Image.network(
-  _mediaUrls[index],
-  fit: BoxFit.fill,
-  loadingBuilder: (context, child, loadingProgress) {
-    if (loadingProgress == null) return child;
-    return Center(
-      child: SizedBox(
-        width: 30,
-        height: 30,
-        child: CircularProgressIndicator(
-          color: Colors.white,
-          value: loadingProgress.expectedTotalBytes != null
-              ? loadingProgress.cumulativeBytesLoaded /
-                  (loadingProgress.expectedTotalBytes ?? 1)
-              : null,
-        ),
-      ),
-    );
-  },
-  errorBuilder: (context, error, stackTrace) =>
-    const Center(child: Icon(Icons.broken_image, size: 40)),
-),
-                            ),
-                            if (_fetchedTitles.length > index &&
-                                _fetchedTitles[index].isNotEmpty)
-                              Positioned(
-                                  bottom: 0,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 18),
-                                    child: Center(
-                                      child: ConstrainedBox(
-                                        constraints: BoxConstraints(
-                                            maxWidth: 300, maxHeight: 100),
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color:
-                                                Colors.black.withOpacity(0.5),
-                                            borderRadius: BorderRadius.circular(
-                                                10),
-                                          ),
-                                          child: Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: SingleChildScrollView(
-                                              child: Text(
-                                                softWrap: true,
-                                                textAlign: TextAlign.center,
-                                                _fetchedTitles.length > index
-                                                    ? _fetchedTitles[index]
-                                                    : "",
-                                                style: TextStyle(
-                                                    color: Colors.white),
-                                              ),
+                                      _mediaUrls[index],
+                                      fit: BoxFit.fill,
+                                      loadingBuilder:
+                                          (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Center(
+                                          child: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              value: loadingProgress
+                                                          .expectedTotalBytes !=
+                                                      null
+                                                  ? loadingProgress
+                                                          .cumulativeBytesLoaded /
+                                                      (loadingProgress
+                                                              .expectedTotalBytes ??
+                                                          1)
+                                                  : null,
                                             ),
                                           ),
-                                        ),
-                                      ),
+                                        );
+                                      },
+                                      errorBuilder: (context, error, stackTrace) =>
+                                          const Center(
+                                              child: Icon(
+                                        Icons.broken_image,
+                                        size: 40,
+                                      )),
                                     ),
-                                  )),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                /// Page indicator
-                if (widget.indicator &&
-                    !_isLoading &&
-                    _fetchedTitles.isNotEmpty)
-                  Positioned(
-                    bottom: 6,
-                    child: SmoothPageIndicator(
-                      controller: pageController,
-                      count: _fetchedTitles.length ?? 0,
-                      effect: const SwapEffect(dotHeight: 6, dotWidth: 6),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
+              
+                  if (widget.indicator &&
+                      !_isLoading &&
+                      _fetchedTitles.isNotEmpty)
+                    Positioned(
+                      bottom: 6,
+                      child: SmoothPageIndicator(
+                        controller: pageController,
+                        count: _fetchedTitles.length,
+                        effect: const SwapEffect(dotHeight: 6, dotWidth: 6),
+                      ),
+                    ),
+                ],
+              ),
+            ),
 
-                /// PIP button
-              // widget.pipon!?const SizedBox(): Positioned(
-              //     top: 10,
-              //     right: 10,
-              //     child: Container(
-              //       decoration: BoxDecoration(
-              //         color: Colors.black.withOpacity(0.4),
-              //         borderRadius: BorderRadius.circular(30),
-              //       ),
-              //       child: IconButton(
-              //               icon: const Icon(Icons.fullscreen_exit_rounded,
-              //                   color: Colors.white),
-              //               onPressed: () {
+            // Title below media
+            if (_fetchedTitles.length > _currentPage &&
+                _fetchedTitles[_currentPage].isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Container(
+                  color: widget.titlebackground,
+                  child: Text(
+                    _fetchedTitles[_currentPage],
+                    textAlign: TextAlign.center,
+                    style:widget.titlestyle?? TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black),
+                  ),
+                ),
+              ),
 
-              //                 setState(() {
-              //                   widget.pipon!=!widget.pipon!;
-              //                 });
-              //                 //for below screen
-              //                 PIPView.of(context)?.presentBelow(
-              //                     PagePilotBanner(pipon: true,
-              //                     autoplay: widget.autoplay,
-              //                     backgroundcolor: widget.backgroundcolor,
-              //                     itemHeight: widget.itemHeight,
-              //                     itemWidth: widget.itemWidth,
-              //                     radius: widget.radius,
-              //                     indicator: widget.indicator,
+            // Description below title
+            if (_fetchedcontent.length > _currentPage &&
+                _fetchedcontent[_currentPage].isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
+                child: Container(
+                  color: widget.descriptionbackground,
+                  height: 100,
+                  width: widget.itemWidth,
+                  child: SingleChildScrollView(
+                    child: Text(
 
-              //                     ) ?? const SizedBox());
-              //               },
-              //             ),
-              //     ),
-              //   )
-              ],
-            )
-        
+                      _fetchedcontent[_currentPage]
+                      .replaceAll(RegExp(r'<[^>]*>'), '') ,
+                      textAlign: TextAlign.center,
+                      ),
+                  ),
+                ),
+              ),
+          ],
+        ),
       );
     });
   }

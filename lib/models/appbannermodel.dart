@@ -41,16 +41,19 @@ class AppBanner {
 class BannerContent {
   final String title;
   final List<BannerImage> image;
-  final List<BannerVideo> video; // 👈 Added this
+  final List<BannerVideo> video;
+  final String description;
 
   BannerContent({
     required this.title,
     required this.image,
     required this.video,
+    required this.description,
   });
 
   factory BannerContent.fromJson(Map<String, dynamic> json) {
     return BannerContent(
+      description: json['content'] ?? "",
       title: json['title'] ?? '',
       image: List<BannerImage>.from(
           (json['image'] ?? []).map((x) => BannerImage.fromJson(x))),
