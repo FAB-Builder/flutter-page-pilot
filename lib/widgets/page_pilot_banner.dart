@@ -6,6 +6,7 @@ import 'package:pip_view/pip_view.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
+import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilotBanner extends StatefulWidget {
   final bool autoplay;
@@ -23,6 +24,7 @@ class PagePilotBanner extends StatefulWidget {
   final PageController? pagecontroller;
    int? currentpage;
    final ValueChanged<int>? onPageChanged;
+   
 
    PagePilotBanner({
     super.key,
@@ -42,6 +44,7 @@ class PagePilotBanner extends StatefulWidget {
     this.radius = 0,
     this.itemHeight = 150,
     this.backgroundcolor,
+
   });
 
   @override
@@ -56,6 +59,7 @@ List<String> _mediaUrls = [];
 bool _isLoading = true;
 
 class _PagePilotBannerState extends State<PagePilotBanner> {
+  
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
       "https://pagepilot.fabbuilder.com/api/tenant/64d2b934c6cfdc96aa3734c5/client/app-banners?filter[isActive]=true",
@@ -84,10 +88,14 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
           _fetchedcontent = bannerResponse.rows
               .map((item) => item.content.description ?? "")
               .toList();
+              
 
           _isLoading = false;
         });
         return bannerResponse;
+
+
+
       } else {
         print('Failed to load banners. Status code: ${response.statusCode}');
       }
@@ -108,7 +116,47 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
     final extension = filePath.split('.').last.toLowerCase();
     return videoExtensions.contains(extension);
   }
+late WebViewController controller;
+  void adjustWebviewZoom({int scale = 4}) {
+    controller!.setNavigationDelegate(NavigationDelegate(
+      onPageFinished: (String url) async {
+//document.body.style.zoom = 5; NOT SUPPORTED
+        await controller!.runJavaScript("""
+              document.body.style.transform = "scale(${scale.toString()})";
+              document.body.style.transformOrigin = "0 0";
+            """);
+      },
+    ));
+  }
+void setWebViewTextStyle(TextStyle? style) {
+  if (style == null) return;
+  final color = style.color != null
+      ? '#${style.color!.value.toRadixString(16).substring(2)}'
+      : null;
+  final fontSize = style.fontSize != null ? '${style.fontSize}px' : null;
+  final fontWeight = style.fontWeight != null ? '${style.fontWeight!.index * 100}' : null;
+  final fontFamily = style.fontFamily ?? null;
 
+  final css = '''
+    ${color != null ? 'color: $color;' : ''}
+    ${fontSize != null ? 'font-size: $fontSize;' : ''}
+    ${fontWeight != null ? 'font-weight: $fontWeight;' : ''}
+    ${fontFamily != null ? 'font-family: $fontFamily;' : ''}
+  ''';
+
+  controller.runJavaScript("""
+    document.body.style.cssText += `$css`;
+    document.documentElement.style.cssText += `$css`;
+  """);
+}
+  void setWebViewBackgroundColor(Color? color) {
+  if (color == null) return;
+  final hexColor = '#${color.value.toRadixString(16).substring(2)}';
+  controller.runJavaScript("""
+    document.body.style.background = '$hexColor';
+    document.documentElement.style.background = '$hexColor';
+  """);
+}
   @override
   void initState() {
     super.initState();
@@ -117,6 +165,31 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
       if (widget.autoplay && widget.pipon == false) _startAutoPlay();
       _initializeVideoControllers();
     });
+       controller = WebViewController()
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) async {
+            var x = await controller!.runJavaScriptReturningResult(
+                "document.documentElement.scrollHeight");
+            double? y = double.tryParse(x.toString());
+            debugPrint('parse : $y');
+          },
+          onHttpError: (HttpResponseError error) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            if (request.url.startsWith('https://www.youtube.com/')) {
+              return NavigationDecision.prevent;
+            }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
+ 
   }
 
   void _initializeVideoControllers() {
@@ -199,20 +272,36 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                     height: height.toDouble(),
                     width: width.toDouble(),
                     child: PageView.builder(
-                      controller:widget.owncontroller!? widget.pagecontroller: pageController,
+                      // controller:widget.owncontroller!? widget.pagecontroller: pageController,
+                      controller: widget.owncontroller == true ? widget.pagecontroller ?? pageController : pageController,
                       itemCount: _mediaUrls.length,
+                      // onPageChanged: (page) {
+                      //   setState(() {
+                      //     _currentPage = page;
+                      //     widget.currentpage=page;
+                      //     print("object");
+                      //     print(widget.currentpage);
+                      //   });
+                      //   widget.onPageChanged!(page);
+                      // },
                       onPageChanged: (page) {
-                        setState(() {
-                          _currentPage = page;
-                          widget.currentpage=page;
-                          print("object");
-                          print(widget.currentpage);
-                        });
-                        widget.onPageChanged!(page);
-                      },
+  setState(() {
+    _currentPage = page;
+    widget.currentpage = page;
+    print("object");
+    print(widget.currentpage);
+  });
+  if (widget.onPageChanged != null) {
+    widget.onPageChanged!(page);
+  }
+},
                       itemBuilder: (context, index) {
                         final isCurrentVideo = isVideo(_mediaUrls[index]);
                         final videoController = _videoControllers[index];
+                        controller.loadHtmlString(_fetchedcontent[index]);
+                            adjustWebviewZoom(scale: 4 ?? 4);
+                            setWebViewBackgroundColor(widget.descriptionbackground);
+                            setWebViewTextStyle(widget.descriptionstyle);
               
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -339,23 +428,41 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
             // Description below title
             if (_fetchedcontent.length > _currentPage &&
                 _fetchedcontent[_currentPage].isNotEmpty)
-              Padding(
+                  
+                 
+                Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
                 child: Container(
                   color: widget.descriptionbackground,
                   height: 100,
                   width: widget.itemWidth,
                   child: SingleChildScrollView(
-                    child: Text(
-
-                      _fetchedcontent[_currentPage]
-                      .replaceAll(RegExp(r'<[^>]*>'), '') ,
-                      textAlign: TextAlign.center,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: 100,maxWidth: 50),
+                      child: SizedBox(
+                        height: 100,
+                        width: 100,
+                        child: Text(
+                                _fetchedcontent[_currentPage] 
+                       
+                          .replaceAll(RegExp(r'<[^>]*>'), '') , 
+                          style: widget.descriptionstyle, 
+                          
+                          textAlign: TextAlign.center,
+                        ),
+                        // child: WebViewWidget(
+                        //   controller:controller,
+                        // )
+                          
+                          
+                    
+                          
                       ),
+                    ),
                   ),
                 ),
               ),
-          ],
+           ],
         ),
       );
     });
