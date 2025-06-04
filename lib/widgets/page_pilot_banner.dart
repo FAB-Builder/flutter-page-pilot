@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:pagepilot/models/appbannermodel.dart';
 import 'package:pip_view/pip_view.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
@@ -18,21 +19,23 @@ class PagePilotBanner extends StatefulWidget {
   final TextStyle? descriptionstyle;
   final TextStyle? titlestyle;
   final bool? pipon;
-  final Color?  titlebackground;
-  final Color?  descriptionbackground;
+  final Color? titlebackground;
+  final Color? descriptionbackground;
   final bool? owncontroller;
   final PageController? pagecontroller;
-   int? currentpage;
-   final ValueChanged<int>? onPageChanged;
-   
+  int? currentpage;
+  final ValueChanged<int>? onPageChanged;
+  static bool showpip = false;
+  final ValueChanged<int>? showpipfunction;
 
-   PagePilotBanner({
+  PagePilotBanner({
     super.key,
     this.descriptionstyle,
     this.onPageChanged,
     this.currentpage,
+    this.showpipfunction,
     this.pagecontroller,
-    this.owncontroller=false,
+    this.owncontroller = false,
     this.titlestyle,
     this.descriptionbackground,
     this.titlebackground,
@@ -44,7 +47,6 @@ class PagePilotBanner extends StatefulWidget {
     this.radius = 0,
     this.itemHeight = 150,
     this.backgroundcolor,
-
   });
 
   @override
@@ -59,7 +61,6 @@ List<String> _mediaUrls = [];
 bool _isLoading = true;
 
 class _PagePilotBannerState extends State<PagePilotBanner> {
-  
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
       "https://pagepilot.fabbuilder.com/api/tenant/64d2b934c6cfdc96aa3734c5/client/app-banners?filter[isActive]=true",
@@ -73,29 +74,37 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
         final bannerResponse = AppBannerResponse.fromJson(jsonBody);
 
         setState(() {
-          _mediaUrls = bannerResponse.rows.map((item) {
-            if (item.content.video.isNotEmpty) {
-              return item.content.video.first.publicUrl;
-            } else if (item.content.image.isNotEmpty) {
-              return item.content.image.first.publicUrl;
-            }
-            return ''; // Fallback
-          }).toList();
+          // _mediaUrls = bannerResponse.rows.map((item) {
+          //   if (item.content.video.isNotEmpty) {
+          //     return item.content.video.first.publicUrl;
+          //   } else if (item.content.image.isNotEmpty) {
+          //     return item.content.image.first.publicUrl;
+          //   }
+          //   return ''; // Fallback
+          // }).toList();
+          _mediaUrls = bannerResponse.rows
+              .map((item) {
+                if (item.content.video.isNotEmpty) {
+                  return item.content.video.first.publicUrl;
+                } else if (item.content.image.isNotEmpty) {
+                  return item.content.image.first.publicUrl;
+                }
+                return null;
+              })
+              .whereType<String>()
+              .toList(); // filters out nulls
 
-          _fetchedTitles =
-              bannerResponse.rows.map((item) => item.content.title ?? "").toList();
+          _fetchedTitles = bannerResponse.rows
+              .map((item) => item.content.title ?? "")
+              .toList();
 
           _fetchedcontent = bannerResponse.rows
               .map((item) => item.content.description ?? "")
               .toList();
-              
 
           _isLoading = false;
         });
         return bannerResponse;
-
-
-
       } else {
         print('Failed to load banners. Status code: ${response.statusCode}');
       }
@@ -116,7 +125,8 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
     final extension = filePath.split('.').last.toLowerCase();
     return videoExtensions.contains(extension);
   }
-late WebViewController controller;
+
+  late WebViewController controller;
   void adjustWebviewZoom({int scale = 4}) {
     controller!.setNavigationDelegate(NavigationDelegate(
       onPageFinished: (String url) async {
@@ -128,35 +138,39 @@ late WebViewController controller;
       },
     ));
   }
-void setWebViewTextStyle(TextStyle? style) {
-  if (style == null) return;
-  final color = style.color != null
-      ? '#${style.color!.value.toRadixString(16).substring(2)}'
-      : null;
-  final fontSize = style.fontSize != null ? '${style.fontSize}px' : null;
-  final fontWeight = style.fontWeight != null ? '${style.fontWeight!.index * 100}' : null;
-  final fontFamily = style.fontFamily ?? null;
 
-  final css = '''
+  void setWebViewTextStyle(TextStyle? style) {
+    if (style == null) return;
+    final color = style.color != null
+        ? '#${style.color!.value.toRadixString(16).substring(2)}'
+        : null;
+    final fontSize = style.fontSize != null ? '${style.fontSize}px' : null;
+    final fontWeight =
+        style.fontWeight != null ? '${style.fontWeight!.index * 100}' : null;
+    final fontFamily = style.fontFamily ?? null;
+
+    final css = '''
     ${color != null ? 'color: $color;' : ''}
     ${fontSize != null ? 'font-size: $fontSize;' : ''}
     ${fontWeight != null ? 'font-weight: $fontWeight;' : ''}
     ${fontFamily != null ? 'font-family: $fontFamily;' : ''}
   ''';
 
-  controller.runJavaScript("""
+    controller.runJavaScript("""
     document.body.style.cssText += `$css`;
     document.documentElement.style.cssText += `$css`;
   """);
-}
+  }
+
   void setWebViewBackgroundColor(Color? color) {
-  if (color == null) return;
-  final hexColor = '#${color.value.toRadixString(16).substring(2)}';
-  controller.runJavaScript("""
+    if (color == null) return;
+    final hexColor = '#${color.value.toRadixString(16).substring(2)}';
+    controller.runJavaScript("""
     document.body.style.background = '$hexColor';
     document.documentElement.style.background = '$hexColor';
   """);
-}
+  }
+
   @override
   void initState() {
     super.initState();
@@ -165,7 +179,7 @@ void setWebViewTextStyle(TextStyle? style) {
       if (widget.autoplay && widget.pipon == false) _startAutoPlay();
       _initializeVideoControllers();
     });
-       controller = WebViewController()
+    controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
@@ -189,7 +203,6 @@ void setWebViewTextStyle(TextStyle? style) {
           },
         ),
       );
- 
   }
 
   void _initializeVideoControllers() {
@@ -272,8 +285,13 @@ void setWebViewTextStyle(TextStyle? style) {
                     height: height.toDouble(),
                     width: width.toDouble(),
                     child: PageView.builder(
-                      // controller:widget.owncontroller!? widget.pagecontroller: pageController,
-                      controller: widget.owncontroller == true ? widget.pagecontroller ?? pageController : pageController,
+                      
+                      physics: widget.pipon!
+                          ? NeverScrollableScrollPhysics()
+                          : BouncingScrollPhysics(),
+                      controller: widget.owncontroller == true
+                          ? widget.pagecontroller ?? pageController
+                          : pageController,
                       itemCount: _mediaUrls.length,
                       // onPageChanged: (page) {
                       //   setState(() {
@@ -285,34 +303,38 @@ void setWebViewTextStyle(TextStyle? style) {
                       //   widget.onPageChanged!(page);
                       // },
                       onPageChanged: (page) {
-  setState(() {
-    _currentPage = page;
-    widget.currentpage = page;
-    print("object");
-    print(widget.currentpage);
-  });
-  if (widget.onPageChanged != null) {
-    widget.onPageChanged!(page);
-  }
-},
+                        setState(() {
+                          _currentPage = page;
+                          // widget.currentpage = page;
+                          // print("object");
+                          print(widget.currentpage);
+                        });
+                        if (widget.onPageChanged != null) {
+                          widget.onPageChanged!(page);
+                        }
+                      },
                       itemBuilder: (context, index) {
                         final isCurrentVideo = isVideo(_mediaUrls[index]);
                         final videoController = _videoControllers[index];
-                        controller.loadHtmlString(_fetchedcontent[index]);
-                            adjustWebviewZoom(scale: 4 ?? 4);
-                            setWebViewBackgroundColor(widget.descriptionbackground);
-                            setWebViewTextStyle(widget.descriptionstyle);
-              
+                        // controller.loadHtmlString(_fetchedcontent[index]);
+                        //     adjustWebviewZoom(scale: 4 ?? 4);
+                        //     setWebViewBackgroundColor(widget.descriptionbackground);
+                        //     setWebViewTextStyle(widget.descriptionstyle);
+
                         return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          padding:EdgeInsets.symmetric(horizontal: widget.pipon!
+                                                  ? 0: 6),
                           child: Container(
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(widget.radius),
-                              color: widget.backgroundcolor ?? Colors.grey.shade300,
+                              borderRadius:
+                                  BorderRadius.circular(widget.radius),
+                              color: widget.backgroundcolor ??
+                                  Colors.grey.shade300,
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(widget.radius),
+                              borderRadius:
+                                  BorderRadius.circular(widget.radius),
                               child: isCurrentVideo && videoController != null
                                   ? videoController.value.isInitialized
                                       ? AspectRatio(
@@ -324,23 +346,105 @@ void setWebViewTextStyle(TextStyle? style) {
                                               VideoPlayer(videoController),
                                               Align(
                                                 alignment: Alignment.topLeft,
-                                                child: IconButton(
-                                                  icon: Icon(
-                                                    videoController.value.isPlaying
-                                                        ? Icons.pause
-                                                        : Icons.play_arrow,
-                                                    color: Colors.white,
-                                                    size: 36,
-                                                  ),
-                                                  onPressed: () {
-                                                    setState(() {
-                                                      videoController.value.isPlaying
-                                                          ? videoController.pause()
-                                                          : videoController.play();
-                                                    });
-                                                  },
+                                                child: Row(
+                                                  children: [
+                                                    IconButton(
+                                                      icon: Icon(
+                                                        videoController
+                                                                .value.isPlaying
+                                                            ? Icons.pause
+                                                            : Icons.play_arrow,
+                                                        color: Colors.white,
+                                                      ),
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          videoController.value
+                                                                  .isPlaying
+                                                              ? videoController
+                                                                  .pause()
+                                                              : videoController
+                                                                  .play();
+                                                        });
+                                                      },
+                                                    ),
+                                                    IconButton(
+                                                      icon: Icon(
+                                                        videoController.value
+                                                                    .volume ==
+                                                                1
+                                                            ? Icons.volume_up
+                                                            : Icons
+                                                                .volume_off_outlined,
+                                                        color: Colors.white,
+                                                      ),
+                                                      onPressed: () {
+                                                        setState(() {
+                                                          final currentVolume =
+                                                              videoController
+                                                                  .value.volume;
+                                                          videoController
+                                                              .setVolume(
+                                                                  currentVolume ==
+                                                                          1
+                                                                      ? 0
+                                                                      : 1);
+                                                        });
+                                                      },
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
+                                              widget.pipon!
+                                                  ? SizedBox.shrink()
+                                                  : Align(
+                                                      alignment:
+                                                          Alignment.topRight,
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .all(8.0),
+                                                        child: GestureDetector(
+                                                          onTap: () {
+                                                            setState(() {
+                                                              PagePilotBanner
+                                                                      .showpip =
+                                                                  !PagePilotBanner
+                                                                      .showpip;
+                                                             
+                                                              if (widget
+                                                                      .showpipfunction !=
+                                                                  null) {
+                                                                widget
+                                                                    .showpipfunction!(index);
+                                                              }
+                                                              
+                                                            });
+                                                          },
+                                                          child: Container(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                    5),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              shape: BoxShape
+                                                                  .rectangle,
+                                                              color: Colors
+                                                                  .black26,
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          5),
+                                                            ),
+                                                            child: Text(
+                                                              "Showpip",
+                                                              style: TextStyle(
+                                                                  color: Colors
+                                                                      .white),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
                                             ],
                                           ),
                                         )
@@ -358,7 +462,8 @@ void setWebViewTextStyle(TextStyle? style) {
                                       fit: BoxFit.fill,
                                       loadingBuilder:
                                           (context, child, loadingProgress) {
-                                        if (loadingProgress == null) return child;
+                                        if (loadingProgress == null)
+                                          return child;
                                         return Center(
                                           child: SizedBox(
                                             width: 30,
@@ -378,9 +483,10 @@ void setWebViewTextStyle(TextStyle? style) {
                                           ),
                                         );
                                       },
-                                      errorBuilder: (context, error, stackTrace) =>
-                                          const Center(
-                                              child: Icon(
+                                      errorBuilder:
+                                          (context, error, stackTrace) =>
+                                              const Center(
+                                                  child: Icon(
                                         Icons.broken_image,
                                         size: 40,
                                       )),
@@ -391,18 +497,20 @@ void setWebViewTextStyle(TextStyle? style) {
                       },
                     ),
                   ),
-              
                   if (widget.indicator &&
                       !_isLoading &&
                       _fetchedTitles.isNotEmpty)
-                    Positioned(
-                      bottom: 6,
-                      child: SmoothPageIndicator(
-                        controller: pageController,
-                        count: _fetchedTitles.length,
-                        effect: const SwapEffect(dotHeight: 6, dotWidth: 6),
-                      ),
-                    ),
+                    widget.pipon!
+                        ? SizedBox.shrink()
+                        : Positioned(
+                            bottom: 6,
+                            child: SmoothPageIndicator(
+                              controller: pageController,
+                              count: _fetchedTitles.length,
+                              effect:
+                                  const SwapEffect(dotHeight: 6, dotWidth: 6),
+                            ),
+                          ),
                 ],
               ),
             ),
@@ -410,59 +518,59 @@ void setWebViewTextStyle(TextStyle? style) {
             // Title below media
             if (_fetchedTitles.length > _currentPage &&
                 _fetchedTitles[_currentPage].isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Container(
-                  color: widget.titlebackground,
-                  child: Text(
-                    _fetchedTitles[_currentPage],
-                    textAlign: TextAlign.center,
-                    style:widget.titlestyle?? TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.black),
-                  ),
-                ),
-              ),
-
-            // Description below title
-            if (_fetchedcontent.length > _currentPage &&
-                _fetchedcontent[_currentPage].isNotEmpty)
-                  
-                 
-                Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6),
-                child: Container(
-                  color: widget.descriptionbackground,
-                  height: 100,
-                  width: widget.itemWidth,
-                  child: SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(maxHeight: 100,maxWidth: 50),
-                      child: SizedBox(
-                        height: 100,
-                        width: 100,
+              widget.pipon!
+                  ? SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Container(
+                        color: widget.titlebackground,
                         child: Text(
-                                _fetchedcontent[_currentPage] 
-                       
-                          .replaceAll(RegExp(r'<[^>]*>'), '') , 
-                          style: widget.descriptionstyle, 
-                          
+                          _fetchedTitles[_currentPage],
                           textAlign: TextAlign.center,
+                          style: widget.titlestyle ??
+                              TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.black),
                         ),
-                        // child: WebViewWidget(
-                        //   controller:controller,
-                        // )
-                          
-                          
-                    
-                          
                       ),
                     ),
-                  ),
-                ),
-              ),
-           ],
+
+            // Description below title
+
+            if (_fetchedcontent.length > _currentPage &&
+                _fetchedcontent[_currentPage].isNotEmpty)
+              widget.pipon!
+                  ? SizedBox.shrink()
+                  : Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0, vertical: 6),
+                      child: Container(
+                        color: widget.descriptionbackground,
+                        height: 100,
+                        width: widget.itemWidth,
+                        child: SingleChildScrollView(
+                          child: ConstrainedBox(
+                            constraints:
+                                BoxConstraints(maxHeight: 100, maxWidth: 50),
+                            child: SizedBox(
+                              height: 100,
+                              width: 100,
+                              child: Text(
+                                _fetchedcontent[_currentPage]
+                                    .replaceAll(RegExp(r'<[^>]*>'), ''),
+                                style: widget.descriptionstyle,
+                                textAlign: TextAlign.center,
+                              ),
+                              // child: WebViewWidget(
+                              //   controller:controller,
+                              // )
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+          ],
         ),
       );
     });

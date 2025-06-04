@@ -68,8 +68,14 @@ class _PagePilotPiPState extends State<PagePilotPiP> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Stack(
+                    
                     children: [
-                      Positioned.fill(child: widget.pipContent),
+                      Positioned.fill(
+                        
+                        child: Container(
+                            width: widget.pipWidth,
+                                    height: widget.pipHeight,
+                          child: widget.pipContent)),
                       Positioned(
                         top: 4,
                         right: 4,
