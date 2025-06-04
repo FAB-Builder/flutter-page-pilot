@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:ionicons/ionicons.dart';
 import 'package:pagepilot/models/appbannermodel.dart';
 import 'package:pip_view/pip_view.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
