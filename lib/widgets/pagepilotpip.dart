@@ -28,6 +28,7 @@ class PagePilotPiP extends StatefulWidget {
 
 class _PagePilotPiPState extends State<PagePilotPiP> {
   Offset _position = Offset(0, 0);
+    bool isExpanded = false;
 
   @override
   void didChangeDependencies() {
@@ -44,25 +45,31 @@ class _PagePilotPiPState extends State<PagePilotPiP> {
 
   @override
   Widget build(BuildContext context) {
+       final screenSize = MediaQuery.of(context).size;
     return Stack(
       children: [
         widget.mainContent,
         if (widget.showPiP)
           Positioned(
-            left: _position.dx,
-            top: _position.dy,
+            left:isExpanded ? 0 :  _position.dx,
+            top: isExpanded ? 0 : _position.dy,
             child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  _position += details.delta;
-                });
-              },
+              onPanUpdate:isExpanded
+                  ? null
+                  : (details) {
+                      setState(() {
+                        _position += details.delta;
+                      });
+                    },
               child: Material(
                 elevation: 6,
-                borderRadius: BorderRadius.circular(12),
-                child: Container(
-                  width: widget.pipWidth,
-                  height: widget.pipHeight,
+                borderRadius: BorderRadius.circular(isExpanded ? 0 : 12),
+
+                child: AnimatedContainer(
+                  duration: Duration(milliseconds: 300),
+
+                  width: isExpanded ? screenSize.width : widget.pipWidth,
+                  height:isExpanded ? screenSize.height :  widget.pipHeight,
                   decoration: BoxDecoration(
                     color: Colors.black.withOpacity(0.8),
                     borderRadius: BorderRadius.circular(12),
@@ -77,14 +84,20 @@ class _PagePilotPiPState extends State<PagePilotPiP> {
                                     height: widget.pipHeight,
                           child: widget.pipContent)),
                       Positioned(
-                        top: 4,
+                        top:isExpanded?50: 4,
                         right: 4,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              icon: Icon(Icons.fullscreen, color: Colors.white),
-                              onPressed: widget.onExpand ?? () => print("Expand tapped"),
+                              icon: Icon(isExpanded ? Icons.fullscreen_exit : Icons.fullscreen,color: Colors.white,),
+                              onPressed: widget.onExpand ?? () {
+                                print("expanded");
+                                  setState(() {
+                                  isExpanded = !isExpanded;
+                                });
+                                 if (widget.onExpand != null) widget.onExpand!();
+                              },
                               padding: EdgeInsets.zero,
                               constraints: BoxConstraints(),
                             ),
