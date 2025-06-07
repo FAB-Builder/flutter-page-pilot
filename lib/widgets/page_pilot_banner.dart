@@ -54,12 +54,14 @@ class PagePilotBanner extends StatefulWidget {
 
 String appid = "68249417461de050210452b2";
 
+
 List<String> _fetchedTitles = [];
 List<String> _fetchedcontent = [];
 List<String> _mediaUrls = [];
 bool _isLoading = true;
 
 class _PagePilotBannerState extends State<PagePilotBanner> {
+  
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
       "https://pagepilot.fabbuilder.com/api/tenant/64d2b934c6cfdc96aa3734c5/client/app-banners?filter[isActive]=true",

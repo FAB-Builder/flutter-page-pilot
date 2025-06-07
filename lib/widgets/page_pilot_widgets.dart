@@ -36,6 +36,20 @@ class PagePilot {
     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
   );
 
+static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollController) async {
+  final context = key.currentContext;
+  if (context != null) {
+    final box = context.findRenderObject() as RenderBox;
+    final position = box.localToGlobal(Offset.zero);
+    final scrollableBox = scrollController.position.context.storageContext.findRenderObject() as RenderBox;
+    final offset = position.dy - scrollableBox.localToGlobal(Offset.zero).dy;
+    await scrollController.animateTo(
+      scrollController.offset + offset,
+      duration: Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
+}
   static void initStyles(Styles? s) {
     var brightness =
         SchedulerBinding.instance.platformDispatcher.platformBrightness;
@@ -105,6 +119,7 @@ class PagePilot {
       },
       onClickOverlay: (target) {
         print('onClickOverlay: $target');
+        
       },
       onSkip: () {
         print("skip");
@@ -848,17 +863,20 @@ class PagePilot {
     // });
   }
 
-  static void showTour(
+  static Future<void> showTour(
     BuildContext context,
     Config config, {
     required List<dynamic> tours,
+    required ScrollController scrollController
     // required Widget widget,
-  }) {
+  }) async {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
 
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i]["body"].toString();
+      final key = config.keys[tours[i]["element"].toString()];
+       await scrollToTarget(key, scrollController); 
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setNavigationDelegate(
@@ -940,7 +958,7 @@ class PagePilot {
                       ),
                     ),
                     SizedBox(height: 20),
-                    previousAndNextButtons(i, tours.length - 1),
+                    previousAndNextButtons(i, tours.length - 1,tours,config,scrollController),
                   ],
                 );
               },
@@ -952,7 +970,10 @@ class PagePilot {
         webViewController.loadRequest(Uri.parse(body));
       }
     }
-
+if (targets.isNotEmpty && tours.isNotEmpty) {
+  final firstKey = config.keys[tours[0]["element"].toString()];
+  await scrollToTarget(firstKey, scrollController);
+}
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
   }
@@ -1005,22 +1026,54 @@ class PagePilot {
     return Color(int.parse(buffer.toString(), radix: 16));
   }
 
-  static Widget previousAndNextButtons(int index, lastIndex) {
+  // static Widget previousAndNextButtons(int index, lastIndex) {
+  //   return Row(
+  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //     children: [
+  //       GestureDetector(
+  //         onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+  //         child: Text(index == 0 ? '' : 'Previous'),
+  //       ),
+  //       GestureDetector(
+  //         onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+  //         child: Text(index == lastIndex ? '' : 'Next'),
+  //       ),
+  //     ],
+  //   );
+  // }
+static Widget previousAndNextButtons(
+    int index,
+    int lastIndex,
+    List<dynamic> tours,
+    Config config,
+    ScrollController scrollController,
+  ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         GestureDetector(
-          onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+          onTap: index == 0
+              ? null
+              : () async {
+                  final prevKey = config.keys[tours[index - 1]["element"].toString()];
+                  await scrollToTarget(prevKey, scrollController);
+                  tutorialCoachMark.previous();
+                },
           child: Text(index == 0 ? '' : 'Previous'),
         ),
         GestureDetector(
-          onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+          onTap: index == lastIndex
+              ? null
+              : () async {
+                  final nextKey = config.keys[tours[index + 1]["element"].toString()];
+                  await scrollToTarget(nextKey, scrollController);
+                  tutorialCoachMark.next();
+                },
           child: Text(index == lastIndex ? '' : 'Next'),
         ),
       ],
     );
   }
-
   static void adjustWebviewZoom({int scale = 4}) {
     controller!.setNavigationDelegate(NavigationDelegate(
       onPageFinished: (String url) async {
@@ -1103,3 +1156,4 @@ class PagePilot {
     return path;
   }
 }
+
