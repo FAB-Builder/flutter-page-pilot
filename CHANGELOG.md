@@ -1,3 +1,7 @@
+## 0.0.8
+
+- Snackbar updates and app banner integration
+
 ## 0.0.7
 
 - Simplified configuration and initialization
