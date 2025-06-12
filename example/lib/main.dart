@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
+import 'package:pagepilot/widgets/pagepilotpip.dart';
 import 'app_theme.dart';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
 
@@ -14,11 +15,13 @@ void main() {
 
 // TODO : Add your credentials
 const applicationId = "";
-const userId = "58"; //1234
+const userId = "58"; 
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
 GlobalKey keyBeacon = GlobalKey();
+GlobalKey keyappbanner = GlobalKey();
+bool showpip=false;
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -67,7 +70,8 @@ class _MyAppState extends State<MyApp> {
     Map keys = {
       '#dialog': keyDialog,
       '#tooltip': keyTooltip,
-      '#beacon': keyBeacon
+      '#beacon': keyBeacon,
+      '#appbanner':keyappbanner,
     };
 
     Config config = Config(
@@ -99,7 +103,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
-class App extends StatelessWidget {
+class App extends StatefulWidget {
   String platformVersion;
   Pagepilot pagepilotPlugin;
 
@@ -110,44 +114,90 @@ class App extends StatelessWidget {
   });
 
   @override
+  State<App> createState() => _AppState();
+}
+
+class _AppState extends State<App> {
+  int _currentpage=0;
+
+  PageController pageController = PageController();
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Plugin example app'),
-      ),
-      body: Column(
-        children: [
-          Center(
-            child: Text('Running on: $platformVersion\n'),
-          ),
-          ElevatedButton(
-            key: keyBeacon,
-            onPressed: () {
-              pagepilotPlugin.show(context: context, screen: "home");
-            },
-            child: Text("Tap     Me!"),
-          ),
-          SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Text(key: keyDialog, 'Dialog'),
-              Text(key: keyTooltip, 'Tooltip'),
-            ],
-          ),
-          SizedBox(height: 20),
-          Center(
-            child: Text('tour'),
-          ),
-          SizedBox(height: 20),
+    return PagePilotPiP(
+       pipContent: PagePilotBanner(autoplay: false,pipon: true,owncontroller: true,currentpage: _currentpage,pagecontroller: pageController,itemHeight:400 ,itemWidth: double.infinity, ),
+        pipHeight: 200,
+        pipWidth: 300,
+        showPiP: showpip,
+        onClose: () {
+          setState(() {
+            showpip=false;
+          });
+        },
+      mainContent: 
+       Scaffold(
+        appBar: AppBar(
+          title: const Text('Plugin example app'),
+        ),
+        body: Column(
+          children: [
+            Center(
+              child: Text('Running on: ${widget.platformVersion}\n'),
+            ),
+            ElevatedButton(
+              key: keyBeacon,
+              onPressed: () {
+                widget.pagepilotPlugin.show(context: context, screen: "home");
+              },
+              child: Text("Tap     Me!"),
+            ),
+            SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Text(key: keyDialog, 'Dialog'),
+                Text(key: keyTooltip, 'Tooltip'),
+              ],
+            ),
+            SizedBox(height: 20),
+            Center(
+              child: Text('tour'),
+            ),
+            SizedBox(height: 20),
           PagePilotBanner(
-            images: [
-              "https://picsum.photos/350/150",
-              "https://picsum.photos/350/150",
-              "https://picsum.photos/350/150",
-            ],
-          ),
-        ],
+                
+                    showpipfunction: (index) {
+                      setState(() {
+                        showpip=!showpip;
+                        _currentpage=index;
+              
+                      print("value ${_currentpage}");
+                      });
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (pageController.hasClients) {
+                pageController.jumpToPage(index);
+              }
+            });
+                    
+                    },
+                    key: keyappbanner,
+                    backgroundcolor: Colors.transparent,
+                    
+                    titlestyle: TextStyle(color: Colors.cyan),
+                    descriptionstyle: TextStyle(color: Colors.black),
+                    
+                    // descriptionbackground: Colors.white,
+                    // descriptionstyle: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
+                    
+                    itemHeight: 400,
+                    autoplay: false,
+                    
+                    itemWidth: double.infinity,
+                    radius: 10,
+                  ),
+                  
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:pagepilot/models/styles_model.dart';
 
 class Config {
@@ -5,10 +6,12 @@ class Config {
   static String userId = "ANONYMOUS";
   Map keys;
   Styles? styles;
+  ScrollController? scrollController;
 
   Config({
     required this.credentials,
     required this.keys,
+    this.scrollController,
     this.styles,
   });
 

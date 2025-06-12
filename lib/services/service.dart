@@ -242,7 +242,7 @@ void doShow({
               }
 
               //KEYCHANGE: "description" => "body"
-              PagePilot.showTour(context, config, tours: tours);
+              PagePilot.showTour(context, config, tours: tours,scrollController:config.scrollController!);
 
               await http.get(
                 Uri.parse(
