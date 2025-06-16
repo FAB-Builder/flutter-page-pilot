@@ -1,30 +1,41 @@
 class AppBannerResponse {
-  final List<AppBanner> rows;
-  final int count;
+  List<AppBanner>? rows;
+  int? count;
 
-  AppBannerResponse({required this.rows, required this.count});
+  AppBannerResponse({this.rows, this.count});
 
   factory AppBannerResponse.fromJson(Map<String, dynamic> json) {
     return AppBannerResponse(
-      rows: List<AppBanner>.from(json['rows'].map((x) => AppBanner.fromJson(x))),
+      rows:
+          List<AppBanner>.from(json['rows'].map((x) => AppBanner.fromJson(x))),
       count: json['count'],
     );
   }
 }
 
 class AppBanner {
-  final String id;
-  final bool isActive;
-  final String identifier;
-  final int sequence;
-  final BannerContent content;
+  String? id;
+  bool? isActive;
+  String? identifier;
+  int? sequence;
+  BannerContent? content;
+  String? buttonTextColor;
+  String? buttonColor;
+  String? buttonText;
+  String? type;
+  String? link;
 
   AppBanner({
-    required this.id,
-    required this.isActive,
-    required this.identifier,
-    required this.sequence,
-    required this.content,
+    this.buttonTextColor,
+    this.buttonColor,
+    this.buttonText,
+    this.type,
+    this.id,
+    this.isActive,
+    this.identifier,
+    this.sequence,
+    this.content,
+    this.link,
   });
 
   factory AppBanner.fromJson(Map<String, dynamic> json) {
@@ -34,21 +45,26 @@ class AppBanner {
       identifier: json['identifier'],
       sequence: json['sequence'],
       content: BannerContent.fromJson(json['content']),
+      buttonTextColor: json['buttonTextColor'],
+      buttonColor: json['buttonColor'],
+      buttonText: json['buttonText'],
+      type: json['type'],
+      link: json['link'],
     );
   }
 }
 
 class BannerContent {
-  final String title;
-  final List<BannerImage> image;
-  final List<BannerVideo> video;
-  final String description;
+  String? title;
+  List<BannerImage>? image;
+  List<BannerVideo>? video;
+  String? description;
 
   BannerContent({
-    required this.title,
-    required this.image,
-    required this.video,
-    required this.description,
+    this.title,
+    this.image,
+    this.video,
+    this.description,
   });
 
   factory BannerContent.fromJson(Map<String, dynamic> json) {
@@ -58,18 +74,18 @@ class BannerContent {
       image: List<BannerImage>.from(
           (json['image'] ?? []).map((x) => BannerImage.fromJson(x))),
       video: List<BannerVideo>.from(
-          (json['video'] ?? []).map((x) => BannerVideo.fromJson(x))), 
+          (json['video'] ?? []).map((x) => BannerVideo.fromJson(x))),
     );
   }
 }
 
 class BannerImage {
-  final String publicUrl;
-  final String name;
+  String? publicUrl;
+  String? name;
 
   BannerImage({
-    required this.publicUrl,
-    required this.name,
+    this.publicUrl,
+    this.name,
   });
 
   factory BannerImage.fromJson(Map<String, dynamic> json) {
@@ -81,12 +97,12 @@ class BannerImage {
 }
 
 class BannerVideo {
-  final String publicUrl;
-  final String name;
+  String? publicUrl;
+  String? name;
 
   BannerVideo({
-    required this.publicUrl,
-    required this.name,
+    this.publicUrl,
+    this.name,
   });
 
   factory BannerVideo.fromJson(Map<String, dynamic> json) {

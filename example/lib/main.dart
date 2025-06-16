@@ -15,13 +15,13 @@ void main() {
 
 // TODO : Add your credentials
 const applicationId = "";
-const userId = "58"; 
+const userId = "656da5fce2d64e67b2b77e75";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
 GlobalKey keyBeacon = GlobalKey();
 GlobalKey keyappbanner = GlobalKey();
-bool showpip=false;
+bool showpip = false;
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -71,7 +71,7 @@ class _MyAppState extends State<MyApp> {
       '#dialog': keyDialog,
       '#tooltip': keyTooltip,
       '#beacon': keyBeacon,
-      '#appbanner':keyappbanner,
+      '#appbanner': keyappbanner,
     };
 
     Config config = Config(
@@ -83,8 +83,8 @@ class _MyAppState extends State<MyApp> {
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
     );
     try {
-      await _pagepilotPlugin.init(config!); // initialize the library
       _pagepilotPlugin.setUserIdentifier(userId: userId);
+      await _pagepilotPlugin.init(config!); // initialize the library
     } on PlatformException {
       // Log exception and report studio@gameolive.com
     }
@@ -118,24 +118,31 @@ class App extends StatefulWidget {
 }
 
 class _AppState extends State<App> {
-  int _currentpage=0;
+  int _currentpage = 0;
 
   PageController pageController = PageController();
 
   @override
   Widget build(BuildContext context) {
     return PagePilotPiP(
-       pipContent: PagePilotBanner(autoplay: false,pipon: true,owncontroller: true,currentpage: _currentpage,pagecontroller: pageController,itemHeight:400 ,itemWidth: double.infinity, ),
-        pipHeight: 200,
-        pipWidth: 300,
-        showPiP: showpip,
-        onClose: () {
-          setState(() {
-            showpip=false;
-          });
-        },
-      mainContent: 
-       Scaffold(
+      pipContent: PagePilotBanner(
+        autoplay: false,
+        pipon: true,
+        owncontroller: true,
+        currentpage: _currentpage,
+        pagecontroller: pageController,
+        itemHeight: 400,
+        itemWidth: double.infinity,
+      ),
+      pipHeight: 200,
+      pipWidth: 300,
+      showPiP: showpip,
+      onClose: () {
+        setState(() {
+          showpip = false;
+        });
+      },
+      mainContent: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
         ),
@@ -164,38 +171,35 @@ class _AppState extends State<App> {
               child: Text('tour'),
             ),
             SizedBox(height: 20),
-          PagePilotBanner(
-                
-                    showpipfunction: (index) {
-                      setState(() {
-                        showpip=!showpip;
-                        _currentpage=index;
-              
-                      print("value ${_currentpage}");
-                      });
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (pageController.hasClients) {
-                pageController.jumpToPage(index);
-              }
-            });
-                    
-                    },
-                    key: keyappbanner,
-                    backgroundcolor: Colors.transparent,
-                    
-                    titlestyle: TextStyle(color: Colors.cyan),
-                    descriptionstyle: TextStyle(color: Colors.black),
-                    
-                    // descriptionbackground: Colors.white,
-                    // descriptionstyle: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
-                    
-                    itemHeight: 400,
-                    autoplay: false,
-                    
-                    itemWidth: double.infinity,
-                    radius: 10,
-                  ),
-                  
+            PagePilotBanner(
+              showpipfunction: (index) {
+                setState(() {
+                  showpip = !showpip;
+                  _currentpage = index;
+
+                  print("value ${_currentpage}");
+                });
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (pageController.hasClients) {
+                    pageController.jumpToPage(index);
+                  }
+                });
+              },
+              key: keyappbanner,
+              backgroundcolor: Colors.transparent,
+
+              titlestyle: TextStyle(color: Colors.cyan),
+              descriptionstyle: TextStyle(color: Colors.black),
+
+              // descriptionbackground: Colors.white,
+              // descriptionstyle: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
+
+              itemHeight: 190,
+              autoplay: false,
+
+              itemWidth: double.infinity,
+              radius: 10,
+            ),
           ],
         ),
       ),
