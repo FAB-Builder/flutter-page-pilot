@@ -1,3 +1,7 @@
+## 0.0.9+1
+
+- Banner enhancement
+
 ## 0.0.8
 
 - Snackbar updates and app banner integration
