@@ -31,10 +31,10 @@ class PagePilotBanner extends StatefulWidget {
   final ValueChanged<int>? onPageChanged;
   static bool showpip = false;
   final ValueChanged<int>? showpipfunction;
-  final void Function()? onDeeplinkTap;
+  final void Function(String url)? onDeeplinkTap;
   final String? deepLinkPrefix;
 
- const PagePilotBanner({
+  const PagePilotBanner({
     super.key,
     this.descriptionstyle,
     this.onPageChanged,
@@ -332,7 +332,8 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                             cardData: (bannerResponse?.rows ?? [])[index],
                             index: index,
                             deepLinkPrefix: widget.deepLinkPrefix,
-                            onDeeplinkTap: widget.onDeeplinkTap,
+                            onDeeplinkTap: (String url) =>
+                                widget.onDeeplinkTap!(url),
                           );
                           // Padding(
                           //   padding: EdgeInsets.symmetric(
@@ -591,7 +592,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
 class StackedCard extends StatefulWidget {
   final AppBanner cardData;
   final int index;
-  final void Function()? onDeeplinkTap;
+  final void Function(String url)? onDeeplinkTap;
   final String? deepLinkPrefix;
   const StackedCard(
       {Key? key,
@@ -850,7 +851,7 @@ class _StackedCardState extends State<StackedCard> {
                       .toString()
                       .startsWith(widget.deepLinkPrefix ?? "") ??
                   false && widget.onDeeplinkTap != null)) {
-            widget.onDeeplinkTap!();
+            widget.onDeeplinkTap!(widget.cardData.link.toString());
           } else {
             var encoded = Uri.encodeFull(widget.cardData.link.toString());
             await launchUrl(
@@ -932,15 +933,22 @@ class _StackedCardState extends State<StackedCard> {
                   const Spacer(),
                   if (widget.cardData.buttonText != null)
                     InkWell(
-                      onTap: () {
-                        if (hasVideo) {
-                          isVideoPlaying.value = true;
-                          if (_isYoutubeVideo) {
-                            _youtubeController.play();
+                      onTap: () async {
+                        if (widget.cardData.link != null) {
+                          if (widget.deepLinkPrefix != null &&
+                              (widget.cardData.link.toString().startsWith(
+                                      widget.deepLinkPrefix ?? "") ??
+                                  false && widget.onDeeplinkTap != null)) {
+                            widget.onDeeplinkTap!(
+                                widget.cardData.link.toString());
                           } else {
-                            _videoController.play();
+                            var encoded =
+                                Uri.encodeFull(widget.cardData.link.toString());
+                            await launchUrl(
+                              Uri.parse(encoded),
+                              mode: LaunchMode.externalApplication,
+                            );
                           }
-                          isStackCardAutoPlayActive.value = false;
                         }
                       },
                       child: Container(

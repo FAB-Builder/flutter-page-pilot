@@ -187,7 +187,8 @@ class _AppState extends State<App> {
               },
               key: keyappbanner,
               backgroundcolor: Colors.transparent,
-
+              deepLinkPrefix: "",
+              onDeeplinkTap: (String link) => print(link),
               titlestyle: TextStyle(color: Colors.cyan),
               descriptionstyle: TextStyle(color: Colors.black),
 

@@ -1,3 +1,7 @@
+## 0.0.9+2
+
+- Deeplink support added in banner click
+
 ## 0.0.9+1
 
 - Banner enhancement
