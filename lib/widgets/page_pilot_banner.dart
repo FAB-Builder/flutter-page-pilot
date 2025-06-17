@@ -66,7 +66,6 @@ List<String> _fetchedcontent = [];
 List<String> _mediaUrls = [];
 bool _isLoading = true;
 AppBannerResponse? bannerResponse;
-ValueNotifier<bool> isStackCardAutoPlayActive = ValueNotifier(true);
 
 class _PagePilotBannerState extends State<PagePilotBanner> {
   Future<AppBannerResponse?> fetchAppBanners() async {
@@ -113,19 +112,17 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
           _isLoading = false;
         });
         return bannerResponse;
-      } else {
-        print('Failed to load banners. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      print('Error fetching banners: $e');
-    }
+      } else {}
+    } catch (e) {}
 
     return null;
   }
 
   final PageController pageController = PageController();
   Timer? _timer;
-  final ValueNotifier<int> _currentPage = ValueNotifier(0);
+  int _currentPage = 0;
+  final SwiperController swiperController = SwiperController();
+
   // final Map<int, VideoPlayerController> _videoControllers = {};
 
   bool isVideo(String filePath) {
@@ -183,7 +180,9 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   void initState() {
     super.initState();
 
-    fetchAppBanners();
+    fetchAppBanners().then((_) {
+      if (widget.autoplay && widget.pipon == false) _startAutoPlay();
+    });
     // controller = WebViewController()
     //   ..setJavaScriptMode(JavaScriptMode.unrestricted)
     //   ..setNavigationDelegate(
@@ -230,6 +229,33 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   @override
   void didUpdateWidget(covariant PagePilotBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (widget.autoplay != oldWidget.autoplay) {
+      widget.autoplay ? _startAutoPlay() : _stopAutoPlay();
+    }
+  }
+
+  void _startAutoPlay() {
+    _timer?.cancel();
+    _timer =
+        Timer.periodic(Duration(milliseconds: widget.autoplayDelay), (timer) {
+      if (_currentPage < _mediaUrls.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0;
+      }
+      // pageController.animateToPage(
+      //   _currentPage,
+      //   duration: Duration(milliseconds: widget.duration),
+      //   curve: Curves.easeInOut,
+      // );
+      swiperController.move(_currentPage);
+      setState(() {}); // update _currentPage for texts
+    });
+  }
+
+  void _stopAutoPlay() {
+    _timer?.cancel();
+    _timer = null;
   }
 
   @override
@@ -258,58 +284,52 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
           children: [
             // Media Stack with PageView and Indicator
             if (bannerResponse?.rows?.isNotEmpty ?? false)
-              ValueListenableBuilder(
-                valueListenable: isStackCardAutoPlayActive,
-                builder:
-                    (context, bool isStackCardAutoPlayActivevalue, child) =>
-                        Container(
-                  height: height.toDouble(),
-                  width: width.toDouble(),
-                  margin: const EdgeInsets.symmetric(vertical: 10),
-                  child: Swiper(
-                    itemBuilder: (BuildContext context, int index) {
-                      return GestureDetector(
-                        behavior: HitTestBehavior.translucent,
-                        onLongPress: () {
-                          isStackCardAutoPlayActive.value = false;
-                        },
-                        onLongPressEnd: (_) {
-                          isStackCardAutoPlayActive.value = true;
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: StackedCard(
-                            backgroundcolor: widget.backgroundcolor,
-                            titleStyle: widget.titleStyle,
-                            descriptionStyle: widget.descriptionStyle,
-                            cardData: (bannerResponse?.rows ?? [])[index],
-                            index: index,
-                            deepLinkPrefix: widget.deepLinkPrefix,
-                            onDeeplinkTap: (String url) =>
-                                widget.onDeeplinkTap!(url),
-                          ),
+              Container(
+                height: height.toDouble(),
+                width: width.toDouble(),
+                margin: const EdgeInsets.symmetric(vertical: 10),
+                child: Swiper(
+                  controller: swiperController,
+                  index: _currentPage,
+                  itemBuilder: (BuildContext context, int index) {
+                    return GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onLongPress: () {
+                        _stopAutoPlay();
+                      },
+                      onLongPressEnd: (_) {
+                        _startAutoPlay();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: StackedCard(
+                          backgroundcolor: widget.backgroundcolor,
+                          titleStyle: widget.titleStyle,
+                          descriptionStyle: widget.descriptionStyle,
+                          cardData: (bannerResponse?.rows ?? [])[index],
+                          index: index,
+                          deepLinkPrefix: widget.deepLinkPrefix,
+                          onDeeplinkTap: (String url) =>
+                              widget.onDeeplinkTap!(url),
+                          startAutoplay: () => _startAutoPlay(),
+                          stopAutoplay: () => _stopAutoPlay(),
                         ),
-                      );
-                    },
-                    itemCount: bannerResponse?.rows?.length ?? 0,
-                    layout: SwiperLayout.DEFAULT,
-                    autoplay: widget.autoplay
-                        ? (bannerResponse?.rows?.length ?? 0) > 1
-                            ? isStackCardAutoPlayActivevalue
-                            : false
-                        : false,
-                    autoplayDelay: widget.autoplayDelay,
-                    duration: widget.duration,
-                    pagination:
-                        const SwiperPagination(builder: SwiperPagination.rect),
-                    itemWidth:
-                        350, // Or MediaQuery.of(context).size.width * 0.85
-                    axisDirection: AxisDirection.right,
-                    onIndexChanged: (index) {
-                      _currentPage.value = index;
-                      widget.onPageChanged?.call(index);
-                    },
-                  ),
+                      ),
+                    );
+                  },
+                  itemCount: bannerResponse?.rows?.length ?? 0,
+                  layout: SwiperLayout.DEFAULT,
+                  duration: widget.duration,
+                  pagination:
+                      const SwiperPagination(builder: SwiperPagination.rect),
+                  itemWidth: 350,
+                  axisDirection: AxisDirection.right,
+                  onIndexChanged: (index) {
+                    setState(() {
+                      _currentPage = index; // Keep tracking
+                    });
+                    widget.onPageChanged?.call(index);
+                  },
                 ),
               ),
             Row(
@@ -318,21 +338,17 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                 (bannerResponse?.rows ?? []).length,
                 (i) => Padding(
                   padding: const EdgeInsets.only(right: 2),
-                  child: ValueListenableBuilder(
-                    valueListenable: _currentPage,
-                    builder: (context, int currentPageValue, child) =>
-                        AnimatedContainer(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(100),
-                        color: i == currentPageValue
-                            ? widget.bottomIndicatorColor ??
-                                const Color(0xFF3A27DF)
-                            : const Color(0xFFBDBBD0),
-                      ),
-                      duration: const Duration(milliseconds: 500),
-                      height: 4,
-                      width: i == currentPageValue ? 16 : 4,
+                  child: AnimatedContainer(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(100),
+                      color: i == _currentPage
+                          ? widget.bottomIndicatorColor ??
+                              const Color(0xFF3A27DF)
+                          : const Color(0xFFBDBBD0),
                     ),
+                    duration: const Duration(milliseconds: 500),
+                    height: 4,
+                    width: i == _currentPage ? 16 : 4,
                   ),
                 ),
               ),
@@ -408,6 +424,8 @@ class StackedCard extends StatefulWidget {
   final TextStyle? titleStyle;
   final TextStyle? descriptionStyle;
   final Color? backgroundcolor;
+  final void Function()? startAutoplay;
+  final void Function()? stopAutoplay;
   const StackedCard(
       {Key? key,
       required this.cardData,
@@ -416,7 +434,9 @@ class StackedCard extends StatefulWidget {
       this.deepLinkPrefix,
       this.titleStyle,
       this.descriptionStyle,
-      this.backgroundcolor})
+      this.backgroundcolor,
+      this.startAutoplay,
+      this.stopAutoplay})
       : super(key: key);
 
   @override
@@ -429,7 +449,6 @@ class _StackedCardState extends State<StackedCard> {
   late YoutubePlayerController _youtubeController;
   late Future<void> _initializeVideoPlayerFuture;
   final ValueNotifier<bool> _isVideoInitialized = ValueNotifier(false);
-  ValueNotifier<bool> isStackCardAutoPlayActive = ValueNotifier(true);
   bool _isYoutubeVideo = false;
 
   @override
@@ -477,12 +496,10 @@ class _StackedCardState extends State<StackedCard> {
 
     if (_videoController.value.isPlaying) {
       isVideoPlaying.value = true;
-      isStackCardAutoPlayActive.value = false;
     } else if (_videoController.value.position ==
         _videoController.value.duration) {
       // Video ended
       isVideoPlaying.value = false;
-      isStackCardAutoPlayActive.value = true;
       _videoController.seekTo(Duration.zero);
     }
   }
@@ -492,13 +509,13 @@ class _StackedCardState extends State<StackedCard> {
 
     if (_youtubeController.value.isPlaying) {
       isVideoPlaying.value = true;
-      isStackCardAutoPlayActive.value = false;
+      widget.stopAutoplay!();
     } else if (_youtubeController.value.playerState == PlayerState.ended) {
       // Video ended
       isVideoPlaying.value = false;
-      isStackCardAutoPlayActive.value = true;
+      widget.startAutoplay!();
     } else if (_youtubeController.value.playerState == PlayerState.paused) {
-      isStackCardAutoPlayActive.value = true;
+      widget.startAutoplay!();
     }
   }
 
@@ -510,7 +527,7 @@ class _StackedCardState extends State<StackedCard> {
       _videoController.pause();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      isStackCardAutoPlayActive.value = true;
+      widget.startAutoplay!();
     });
     super.deactivate();
   }
@@ -525,7 +542,7 @@ class _StackedCardState extends State<StackedCard> {
       _videoController.dispose();
     }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      isStackCardAutoPlayActive.value = true;
+      widget.startAutoplay!();
     });
     super.dispose();
   }
@@ -535,12 +552,11 @@ class _StackedCardState extends State<StackedCard> {
     final content = widget.cardData.content;
     final hasVideo = _isYoutubeVideo ||
         (content?.video != null && content!.video!.isNotEmpty);
-    final hasImage = content?.image != null && content!.image!.isNotEmpty;
 
     return ValueListenableBuilder(
       valueListenable: isVideoPlaying,
       builder: (context, bool isVideoPlayingValue, child) {
-        if (isVideoPlayingValue || hasVideo) {
+        if (isVideoPlayingValue && hasVideo) {
           return _isYoutubeVideo ? _buildYoutubeCard() : _buildVideoCard();
         } else {
           return _buildRegularCard();
@@ -621,10 +637,10 @@ class _StackedCardState extends State<StackedCard> {
               onPressed: () {
                 if (_videoController.value.isPlaying) {
                   _videoController.pause();
-                  isStackCardAutoPlayActive.value = true;
+                  widget.startAutoplay!();
                 } else {
                   _videoController.play();
-                  isStackCardAutoPlayActive.value = false;
+                  widget.stopAutoplay!();
                 }
               },
             ),
@@ -637,7 +653,7 @@ class _StackedCardState extends State<StackedCard> {
               onPressed: () {
                 _videoController.pause();
                 isVideoPlaying.value = false;
-                isStackCardAutoPlayActive.value = true;
+                widget.startAutoplay!();
               },
             ),
           ),
@@ -648,21 +664,25 @@ class _StackedCardState extends State<StackedCard> {
 
   Widget _buildRegularCard() {
     final content = widget.cardData.content;
-    final hasVideo = _isYoutubeVideo ||
-        (content?.video != null && content!.video!.isNotEmpty);
     final hasImage = content?.image != null && content!.image!.isNotEmpty;
     final imageUrl = hasImage ? content.image![0].publicUrl : null;
     final isSvg = imageUrl?.endsWith('.svg') ?? false;
 
     return GestureDetector(
+      behavior: HitTestBehavior.translucent,
       onTap: () async {
         if (widget.cardData.link != null) {
           if (widget.deepLinkPrefix != null &&
+              widget.deepLinkPrefix != "" &&
               (widget.cardData.link
                       .toString()
-                      .startsWith(widget.deepLinkPrefix ?? "") ??
-                  false && widget.onDeeplinkTap != null)) {
+                      .startsWith(widget.deepLinkPrefix ?? ""))) {
             widget.onDeeplinkTap!(widget.cardData.link.toString());
+          } else if ((widget.cardData.link
+                  .toString()
+                  .startsWith("https://www.youtube.com/watch?v="))) {
+            isVideoPlaying.value = true;
+            widget.stopAutoplay!();
           } else {
             var encoded = Uri.encodeFull(widget.cardData.link.toString());
             await launchUrl(
@@ -752,8 +772,7 @@ class _StackedCardState extends State<StackedCard> {
                         if (widget.cardData.link != null) {
                           if (widget.deepLinkPrefix != null &&
                               (widget.cardData.link.toString().startsWith(
-                                      widget.deepLinkPrefix ?? "") ??
-                                  false && widget.onDeeplinkTap != null)) {
+                                      widget.deepLinkPrefix ?? ""))) {
                             widget.onDeeplinkTap!(
                                 widget.cardData.link.toString());
                           } else {

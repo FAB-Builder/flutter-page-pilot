@@ -196,6 +196,7 @@ class _AppState extends State<App> {
               autoplay: true,
               itemWidth: double.infinity,
               radius: 10,
+              autoplayDelay: 5000,
             ),
           ],
         ),

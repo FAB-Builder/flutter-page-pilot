@@ -1,3 +1,7 @@
+## 0.0.9+4
+
+- Banner YT bug fixes 
+
 ## 0.0.9+3
 
 - Banner animation enhancement
