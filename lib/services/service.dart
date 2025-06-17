@@ -1,11 +1,10 @@
 import 'dart:convert';
 
-import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
-import 'package:http/http.dart' as http;
 
 void doShow({
   required BuildContext context,
@@ -31,7 +30,7 @@ void doShow({
           // "element": "#tooltip",
           "element": "#beacon",
           "title": "This is title",
-          "body": "this is the body of ${type}",
+          "body": "this is the body of $type",
           // "tour": [
           //   {
           //     "title": "This is title",
@@ -45,14 +44,14 @@ void doShow({
               "shape": "rect",
               "title": "This is title",
               // "description": "this is the body of ${type}",
-              "body": "this is the body of ${type}",
+              "body": "this is the body of $type",
             },
             {
               "element": "#tooltip",
               "shape": "rect",
               "title": "This is title",
               // "description": "this is the body of ${type}",
-              "body": "this is the body of ${type}",
+              "body": "this is the body of $type",
             }
           ],
         }
@@ -211,7 +210,7 @@ void doShow({
                 shape: shape ?? "rect",
                 key: key,
                 beaconPosition:
-                    position == null ? "center" : position!.toLowerCase(),
+                    position == null ? "center" : position.toLowerCase(),
                 title: title,
                 body: body ?? "",
                 background: background,
@@ -259,6 +258,6 @@ void doShow({
       }
     }
   } catch (e) {
-    print(e);
+    debugPrint(e.toString());
   }
 }

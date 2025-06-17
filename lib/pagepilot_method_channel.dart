@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/services/service.dart';
-import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 import 'pagepilot_platform_interface.dart';
 
@@ -29,8 +27,8 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   }
 
   @override
-  void setUserIdentifier({required String userId}) {
-    Config.setUserIdentifier(userId);
+  void setUserIdentifier({required String userId, required String tenantId}) {
+    Config.setUserIdentifier(userId, tenantId: tenantId);
   }
 
   @override

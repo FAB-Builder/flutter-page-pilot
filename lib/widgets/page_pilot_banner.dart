@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:http/http.dart' as http;
 import 'package:pagepilot/models/appbannermodel.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
-import 'package:webview_flutter/webview_flutter.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 import '../models/config_model.dart';
@@ -18,13 +18,12 @@ class PagePilotBanner extends StatefulWidget {
   final double itemWidth, itemHeight;
   final double radius;
   final int duration;
+  final int autoplayDelay;
   final bool indicator;
   final Color? backgroundcolor;
-  final TextStyle? descriptionstyle;
-  final TextStyle? titlestyle;
+  final TextStyle? descriptionStyle;
+  final TextStyle? titleStyle;
   final bool? pipon;
-  final Color? titlebackground;
-  final Color? descriptionbackground;
   final bool? owncontroller;
   final PageController? pagecontroller;
   final int? currentpage;
@@ -33,19 +32,19 @@ class PagePilotBanner extends StatefulWidget {
   final ValueChanged<int>? showpipfunction;
   final void Function(String url)? onDeeplinkTap;
   final String? deepLinkPrefix;
+  final Color? bottomIndicatorColor;
 
   const PagePilotBanner({
     super.key,
-    this.descriptionstyle,
+    this.descriptionStyle,
     this.onPageChanged,
     this.currentpage,
     this.showpipfunction,
     this.pagecontroller,
     this.owncontroller = false,
-    this.titlestyle,
-    this.descriptionbackground,
-    this.titlebackground,
+    this.titleStyle,
     this.duration = 500,
+    this.autoplayDelay = 5000,
     this.pipon = false,
     this.indicator = true,
     this.autoplay = true,
@@ -55,6 +54,7 @@ class PagePilotBanner extends StatefulWidget {
     this.backgroundcolor,
     this.onDeeplinkTap,
     this.deepLinkPrefix,
+    this.bottomIndicatorColor,
   });
 
   @override
@@ -66,11 +66,12 @@ List<String> _fetchedcontent = [];
 List<String> _mediaUrls = [];
 bool _isLoading = true;
 AppBannerResponse? bannerResponse;
+ValueNotifier<bool> isStackCardAutoPlayActive = ValueNotifier(true);
 
 class _PagePilotBannerState extends State<PagePilotBanner> {
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
-      "https://pagepilot.fabbuilder.com/api/tenant/${Config.userId}/client/app-banners?filter[isActive]=true",
+      "https://pagepilot.fabbuilder.com/api/tenant/${Config.tenantId}/client/app-banners?filter[isActive]=true",
     );
 
     try {
@@ -124,7 +125,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
 
   final PageController pageController = PageController();
   Timer? _timer;
-  int _currentPage = 0;
+  final ValueNotifier<int> _currentPage = ValueNotifier(0);
   // final Map<int, VideoPlayerController> _videoControllers = {};
 
   bool isVideo(String filePath) {
@@ -182,10 +183,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   void initState() {
     super.initState();
 
-    fetchAppBanners().then((_) {
-      if (widget.autoplay && widget.pipon == false) _startAutoPlay();
-      // _initializeVideoControllers();
-    });
+    fetchAppBanners();
     // controller = WebViewController()
     //   ..setJavaScriptMode(JavaScriptMode.unrestricted)
     //   ..setNavigationDelegate(
@@ -232,31 +230,6 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
   @override
   void didUpdateWidget(covariant PagePilotBanner oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.autoplay != oldWidget.autoplay) {
-      widget.autoplay ? _startAutoPlay() : _stopAutoPlay();
-    }
-  }
-
-  void _startAutoPlay() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      if (_currentPage < _mediaUrls.length - 1) {
-        _currentPage++;
-      } else {
-        _currentPage = 0;
-      }
-      pageController.animateToPage(
-        _currentPage,
-        duration: Duration(milliseconds: widget.duration),
-        curve: Curves.easeInOut,
-      );
-      setState(() {}); // update _currentPage for texts
-    });
-  }
-
-  void _stopAutoPlay() {
-    _timer?.cancel();
-    _timer = null;
   }
 
   @override
@@ -277,253 +250,91 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
 
       return ConstrainedBox(
         constraints: BoxConstraints(
-          maxHeight: height.toDouble(),
+          maxHeight: height.toDouble() * 2 + 20,
           maxWidth: width.toDouble(),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             // Media Stack with PageView and Indicator
-            Expanded(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  if (bannerResponse?.rows?.isNotEmpty ?? false)
-                    SizedBox(
-                      height: height.toDouble(),
-                      width: width.toDouble(),
-                      child: PageView.builder(
-                        physics: widget.pipon!
-                            ? const NeverScrollableScrollPhysics()
-                            : const BouncingScrollPhysics(),
-                        controller: widget.owncontroller == true
-                            ? widget.pagecontroller ?? pageController
-                            : pageController,
-                        itemCount: bannerResponse?.rows!.length,
-                        // onPageChanged: (page) {
-                        //   setState(() {
-                        //     _currentPage = page;
-                        //     widget.currentpage=page;
-                        //     print("object");
-                        //     print(widget.currentpage);
-                        //   });
-                        //   widget.onPageChanged!(page);
-                        // },
-                        onPageChanged: (page) {
-                          setState(() {
-                            _currentPage = page;
-                            // widget.currentpage = page;
-                            // print("object");
-                            print(widget.currentpage);
-                          });
-                          if (widget.onPageChanged != null) {
-                            widget.onPageChanged!(page);
-                          }
+            if (bannerResponse?.rows?.isNotEmpty ?? false)
+              ValueListenableBuilder(
+                valueListenable: isStackCardAutoPlayActive,
+                builder:
+                    (context, bool isStackCardAutoPlayActivevalue, child) =>
+                        Container(
+                  height: height.toDouble(),
+                  width: width.toDouble(),
+                  margin: const EdgeInsets.symmetric(vertical: 10),
+                  child: Swiper(
+                    itemBuilder: (BuildContext context, int index) {
+                      return GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onLongPress: () {
+                          isStackCardAutoPlayActive.value = false;
                         },
-                        itemBuilder: (context, index) {
-                          // final isCurrentVideo = isVideo(_mediaUrls[index]);
-                          // final videoController = _videoControllers[index];
-                          // controller.loadHtmlString(_fetchedcontent[index]);
-                          //     adjustWebviewZoom(scale: 4 ?? 4);
-                          //     setWebViewBackgroundColor(widget.descriptionbackground);
-                          //     setWebViewTextStyle(widget.descriptionstyle);
-
-                          return StackedCard(
+                        onLongPressEnd: (_) {
+                          isStackCardAutoPlayActive.value = true;
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: StackedCard(
+                            backgroundcolor: widget.backgroundcolor,
+                            titleStyle: widget.titleStyle,
+                            descriptionStyle: widget.descriptionStyle,
                             cardData: (bannerResponse?.rows ?? [])[index],
                             index: index,
                             deepLinkPrefix: widget.deepLinkPrefix,
                             onDeeplinkTap: (String url) =>
                                 widget.onDeeplinkTap!(url),
-                          );
-                          // Padding(
-                          //   padding: EdgeInsets.symmetric(
-                          //       horizontal: widget.pipon! ? 0 : 6),
-                          //   child: Container(
-                          //     decoration: BoxDecoration(
-                          //       borderRadius:
-                          //           BorderRadius.circular(widget.radius),
-                          //       color: widget.backgroundcolor ??
-                          //           Colors.grey.shade300,
-                          //     ),
-                          //     clipBehavior: Clip.antiAlias,
-                          //     child: ClipRRect(
-                          //       borderRadius:
-                          //           BorderRadius.circular(widget.radius),
-                          //       child: isCurrentVideo && videoController != null
-                          //           ? videoController.value.isInitialized
-                          //               ? AspectRatio(
-                          //                   aspectRatio:
-                          //                       videoController.value.aspectRatio,
-                          //                   child: Stack(
-                          //                     fit: StackFit.expand,
-                          //                     children: [
-                          //                       VideoPlayer(videoController),
-                          //                       Align(
-                          //                         alignment: Alignment.topLeft,
-                          //                         child: Row(
-                          //                           children: [
-                          //                             IconButton(
-                          //                               icon: Icon(
-                          //                                 videoController
-                          //                                         .value.isPlaying
-                          //                                     ? Icons.pause
-                          //                                     : Icons.play_arrow,
-                          //                                 color: Colors.white,
-                          //                               ),
-                          //                               onPressed: () {
-                          //                                 setState(() {
-                          //                                   videoController.value
-                          //                                           .isPlaying
-                          //                                       ? videoController
-                          //                                           .pause()
-                          //                                       : videoController
-                          //                                           .play();
-                          //                                 });
-                          //                               },
-                          //                             ),
-                          //                             IconButton(
-                          //                               icon: Icon(
-                          //                                 videoController.value
-                          //                                             .volume ==
-                          //                                         1
-                          //                                     ? Icons.volume_up
-                          //                                     : Icons
-                          //                                         .volume_off_outlined,
-                          //                                 color: Colors.white,
-                          //                               ),
-                          //                               onPressed: () {
-                          //                                 setState(() {
-                          //                                   final currentVolume =
-                          //                                       videoController
-                          //                                           .value.volume;
-                          //                                   videoController
-                          //                                       .setVolume(
-                          //                                           currentVolume ==
-                          //                                                   1
-                          //                                               ? 0
-                          //                                               : 1);
-                          //                                 });
-                          //                               },
-                          //                             ),
-                          //                           ],
-                          //                         ),
-                          //                       ),
-                          //                       widget.pipon!
-                          //                           ? SizedBox.shrink()
-                          //                           : Align(
-                          //                               alignment:
-                          //                                   Alignment.topRight,
-                          //                               child: Padding(
-                          //                                 padding:
-                          //                                     const EdgeInsets
-                          //                                         .all(8.0),
-                          //                                 child: GestureDetector(
-                          //                                   onTap: () {
-                          //                                     setState(() {
-                          //                                       PagePilotBanner
-                          //                                               .showpip =
-                          //                                           !PagePilotBanner
-                          //                                               .showpip;
-                          //                                       if (widget
-                          //                                               .showpipfunction !=
-                          //                                           null) {
-                          //                                         widget.showpipfunction!(
-                          //                                             index);
-                          //                                       }
-                          //                                     });
-                          //                                   },
-                          //                                   child: Container(
-                          //                                     padding:
-                          //                                         EdgeInsets.all(
-                          //                                             5),
-                          //                                     decoration:
-                          //                                         BoxDecoration(
-                          //                                       shape: BoxShape
-                          //                                           .rectangle,
-                          //                                       color: Colors
-                          //                                           .black26,
-                          //                                       borderRadius:
-                          //                                           BorderRadius
-                          //                                               .circular(
-                          //                                                   5),
-                          //                                     ),
-                          //                                     child: Text(
-                          //                                       "Showpip",
-                          //                                       style: TextStyle(
-                          //                                           color: Colors
-                          //                                               .white),
-                          //                                     ),
-                          //                                   ),
-                          //                                 ),
-                          //                               ),
-                          //                             ),
-                          //                     ],
-                          //                   ),
-                          //                 )
-                          //               : const Center(
-                          //                   child: SizedBox(
-                          //                     height: 30,
-                          //                     width: 30,
-                          //                     child: CircularProgressIndicator(
-                          //                       color: Colors.white,
-                          //                     ),
-                          //                   ),
-                          //                 )
-                          //           : Image.network(
-                          //               _mediaUrls[index],
-                          //               fit: BoxFit.fill,
-                          //               loadingBuilder:
-                          //                   (context, child, loadingProgress) {
-                          //                 if (loadingProgress == null)
-                          //                   return child;
-                          //                 return Center(
-                          //                   child: SizedBox(
-                          //                     width: 30,
-                          //                     height: 30,
-                          //                     child: CircularProgressIndicator(
-                          //                       color: Colors.white,
-                          //                       value: loadingProgress
-                          //                                   .expectedTotalBytes !=
-                          //                               null
-                          //                           ? loadingProgress
-                          //                                   .cumulativeBytesLoaded /
-                          //                               (loadingProgress
-                          //                                       .expectedTotalBytes ??
-                          //                                   1)
-                          //                           : null,
-                          //                     ),
-                          //                   ),
-                          //                 );
-                          //               },
-                          //               errorBuilder:
-                          //                   (context, error, stackTrace) =>
-                          //                       const Center(
-                          //                           child: Icon(
-                          //                 Icons.broken_image,
-                          //                 size: 40,
-                          //               )),
-                          //             ),
-                          //     ),
-                          //   ),
-                          // );
-                        },
+                          ),
+                        ),
+                      );
+                    },
+                    itemCount: bannerResponse?.rows?.length ?? 0,
+                    layout: SwiperLayout.DEFAULT,
+                    autoplay: widget.autoplay
+                        ? (bannerResponse?.rows?.length ?? 0) > 1
+                            ? isStackCardAutoPlayActivevalue
+                            : false
+                        : false,
+                    autoplayDelay: widget.autoplayDelay,
+                    duration: widget.duration,
+                    pagination:
+                        const SwiperPagination(builder: SwiperPagination.rect),
+                    itemWidth:
+                        350, // Or MediaQuery.of(context).size.width * 0.85
+                    axisDirection: AxisDirection.right,
+                    onIndexChanged: (index) {
+                      _currentPage.value = index;
+                      widget.onPageChanged?.call(index);
+                    },
+                  ),
+                ),
+              ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                (bannerResponse?.rows ?? []).length,
+                (i) => Padding(
+                  padding: const EdgeInsets.only(right: 2),
+                  child: ValueListenableBuilder(
+                    valueListenable: _currentPage,
+                    builder: (context, int currentPageValue, child) =>
+                        AnimatedContainer(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(100),
+                        color: i == currentPageValue
+                            ? widget.bottomIndicatorColor ??
+                                const Color(0xFF3A27DF)
+                            : const Color(0xFFBDBBD0),
                       ),
+                      duration: const Duration(milliseconds: 500),
+                      height: 4,
+                      width: i == currentPageValue ? 16 : 4,
                     ),
-                  // if (widget.indicator &&
-                  //     !_isLoading &&
-                  //     _fetchedTitles.isNotEmpty)
-                  //   widget.pipon!
-                  //       ? SizedBox.shrink()
-                  //       : Positioned(
-                  //           bottom: 6,
-                  //           child: SmoothPageIndicator(
-                  //             controller: pageController,
-                  //             count: _fetchedTitles.length,
-                  //             effect:
-                  //                 const SwapEffect(dotHeight: 6, dotWidth: 6),
-                  //           ),
-                  //         ),
-                ],
+                  ),
+                ),
               ),
             ),
 
@@ -594,12 +405,18 @@ class StackedCard extends StatefulWidget {
   final int index;
   final void Function(String url)? onDeeplinkTap;
   final String? deepLinkPrefix;
+  final TextStyle? titleStyle;
+  final TextStyle? descriptionStyle;
+  final Color? backgroundcolor;
   const StackedCard(
       {Key? key,
       required this.cardData,
       required this.index,
       this.onDeeplinkTap,
-      this.deepLinkPrefix})
+      this.deepLinkPrefix,
+      this.titleStyle,
+      this.descriptionStyle,
+      this.backgroundcolor})
       : super(key: key);
 
   @override
@@ -734,7 +551,6 @@ class _StackedCardState extends State<StackedCard> {
 
   Widget _buildYoutubeCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -757,7 +573,6 @@ class _StackedCardState extends State<StackedCard> {
 
   Widget _buildVideoCard() {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(8),
@@ -804,15 +619,13 @@ class _StackedCardState extends State<StackedCard> {
                 size: 30,
               ),
               onPressed: () {
-                setState(() {
-                  if (_videoController.value.isPlaying) {
-                    _videoController.pause();
-                    isStackCardAutoPlayActive.value = true;
-                  } else {
-                    _videoController.play();
-                    isStackCardAutoPlayActive.value = false;
-                  }
-                });
+                if (_videoController.value.isPlaying) {
+                  _videoController.pause();
+                  isStackCardAutoPlayActive.value = true;
+                } else {
+                  _videoController.play();
+                  isStackCardAutoPlayActive.value = false;
+                }
               },
             ),
           ),
@@ -822,11 +635,9 @@ class _StackedCardState extends State<StackedCard> {
             child: IconButton(
               icon: const Icon(Icons.close, color: Colors.white),
               onPressed: () {
-                setState(() {
-                  _videoController.pause();
-                  isVideoPlaying.value = false;
-                  isStackCardAutoPlayActive.value = true;
-                });
+                _videoController.pause();
+                isVideoPlaying.value = false;
+                isStackCardAutoPlayActive.value = true;
               },
             ),
           ),
@@ -862,10 +673,9 @@ class _StackedCardState extends State<StackedCard> {
         }
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
         padding: isSvg ? EdgeInsets.zero : const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: widget.backgroundcolor ?? Colors.white,
           image: hasImage && !isSvg
               ? DecorationImage(
                   image: CachedNetworkImageProvider(imageUrl ?? ""),
@@ -911,11 +721,14 @@ class _StackedCardState extends State<StackedCard> {
                       padding: const EdgeInsets.only(left: 8, bottom: 8),
                       child: Text(
                         content!.title ?? "",
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
+                        maxLines: 2,
+                        style: widget.titleStyle ??
+                            const TextStyle(
+                              overflow: TextOverflow.ellipsis,
+                              fontSize: 23,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                       ),
                     ),
                   if (content?.description != null)
@@ -923,11 +736,13 @@ class _StackedCardState extends State<StackedCard> {
                       padding: const EdgeInsets.only(left: 8, bottom: 8),
                       child: Text(
                         _stripHtmlTags(content?.description ?? ""),
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: Colors.white,
-                        ),
+                        maxLines: 2,
+                        style: widget.descriptionStyle ??
+                            const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
                       ),
                     ),
                   const Spacer(),
@@ -973,7 +788,7 @@ class _StackedCardState extends State<StackedCard> {
                           widget.cardData.buttonText ?? "",
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: FontWeight.w400,
+                            fontWeight: FontWeight.w700,
                             color: widget.cardData.buttonTextColor != null
                                 ? Color(
                                     int.parse(widget.cardData.buttonTextColor!))

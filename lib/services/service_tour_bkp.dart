@@ -30,7 +30,7 @@ void doShow({
           // "element": "#tooltip",
           "element": "#beacon",
           "title": "This is title",
-          "body": "this is the body of ${type}",
+          "body": "this is the body of $type",
           // "tour": [
           //   {
           //     "title": "This is title",
@@ -43,14 +43,14 @@ void doShow({
               "element": "#dialog",
               "shape": "rect",
               "title": "This is title",
-              "body": "this is the body of ${type}",
+              "body": "this is the body of $type",
               "type": "dialog",
             },
             {
               "element": "#tooltip",
               "shape": "rect",
               "title": "This is title",
-              "body": "this is the body of ${type}",
+              "body": "this is the body of $type",
               "type": "tooltip",
             }
           ],
@@ -79,7 +79,7 @@ void doShow({
       }
     }
   } catch (e) {
-    print(e);
+    debugPrint(e.toString());
   }
 }
 
@@ -187,7 +187,7 @@ showWidget(BuildContext context, dynamic jsonResponse, Config config) async {
         context,
         shape: shape,
         key: key,
-        beaconPosition: position == null ? "center" : position!.toLowerCase(),
+        beaconPosition: position == null ? "center" : position.toLowerCase(),
         title: title ?? "",
         body: body ?? "",
         color: color == null
@@ -219,7 +219,7 @@ showWidget(BuildContext context, dynamic jsonResponse, Config config) async {
             "content": jsonResponse["content"]["tourContent"][i],
             "type": jsonResponse["content"]["tourContent"][i]["type"],
             "timeout":
-                jsonResponse["content"]["tourContent"][i]["timeout"] ?? null,
+                jsonResponse["content"]["tourContent"][i]["timeout"],
           },
           jsonResponse["content"]["tourContent"]["element"],
         );

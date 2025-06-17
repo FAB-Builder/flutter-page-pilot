@@ -10,12 +10,13 @@ import 'app_theme.dart';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 // TODO : Add your credentials
 const applicationId = "";
-const userId = "656da5fce2d64e67b2b77e75";
+const userId = "ANNONYMOUS";
+const tenantId = "656da5fce2d64e67b2b77e75";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -52,7 +53,7 @@ class _MyAppState extends State<MyApp> {
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
     } catch (e) {
-      print(e.toString());
+      debugPrint(e.toString());
       platformVersion = 'Failed to get platform version.';
     }
 
@@ -83,8 +84,8 @@ class _MyAppState extends State<MyApp> {
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
     );
     try {
-      _pagepilotPlugin.setUserIdentifier(userId: userId);
-      await _pagepilotPlugin.init(config!); // initialize the library
+      _pagepilotPlugin.setUserIdentifier(userId: userId, tenantId: tenantId);
+      await _pagepilotPlugin.init(config); // initialize the library
     } on PlatformException {
       // Log exception and report studio@gameolive.com
     }
@@ -104,10 +105,10 @@ class _MyAppState extends State<MyApp> {
 }
 
 class App extends StatefulWidget {
-  String platformVersion;
-  Pagepilot pagepilotPlugin;
+  final String platformVersion;
+  final Pagepilot pagepilotPlugin;
 
-  App({
+  const App({
     super.key,
     required this.platformVersion,
     required this.pagepilotPlugin,
@@ -156,9 +157,9 @@ class _AppState extends State<App> {
               onPressed: () {
                 widget.pagepilotPlugin.show(context: context, screen: "home");
               },
-              child: Text("Tap     Me!"),
+              child: const Text("Tap     Me!"),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -166,18 +167,18 @@ class _AppState extends State<App> {
                 Text(key: keyTooltip, 'Tooltip'),
               ],
             ),
-            SizedBox(height: 20),
-            Center(
+            const SizedBox(height: 20),
+            const Center(
               child: Text('tour'),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             PagePilotBanner(
               showpipfunction: (index) {
                 setState(() {
                   showpip = !showpip;
                   _currentpage = index;
 
-                  print("value ${_currentpage}");
+                  debugPrint("value $_currentpage");
                 });
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (pageController.hasClients) {
@@ -188,16 +189,11 @@ class _AppState extends State<App> {
               key: keyappbanner,
               backgroundcolor: Colors.transparent,
               deepLinkPrefix: "",
-              onDeeplinkTap: (String link) => print(link),
-              titlestyle: TextStyle(color: Colors.cyan),
-              descriptionstyle: TextStyle(color: Colors.black),
-
-              // descriptionbackground: Colors.white,
-              // descriptionstyle: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),
-
-              itemHeight: 190,
-              autoplay: false,
-
+              onDeeplinkTap: (String link) => debugPrint(link),
+              titleStyle: const TextStyle(color: Colors.cyan),
+              descriptionStyle: const TextStyle(color: Colors.black),
+              itemHeight: 157,
+              autoplay: true,
               itemWidth: double.infinity,
               radius: 10,
             ),
