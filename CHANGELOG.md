@@ -1,3 +1,7 @@
+## 0.0.9+5
+
+- Banner identifier filter added 
+
 ## 0.0.9+4
 
 - Banner YT bug fixes 

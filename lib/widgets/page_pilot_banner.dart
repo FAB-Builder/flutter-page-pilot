@@ -33,6 +33,7 @@ class PagePilotBanner extends StatefulWidget {
   final void Function(String url)? onDeeplinkTap;
   final String? deepLinkPrefix;
   final Color? bottomIndicatorColor;
+  final String? identifier;
 
   const PagePilotBanner({
     super.key,
@@ -55,6 +56,7 @@ class PagePilotBanner extends StatefulWidget {
     this.onDeeplinkTap,
     this.deepLinkPrefix,
     this.bottomIndicatorColor,
+    this.identifier,
   });
 
   @override
@@ -70,7 +72,7 @@ AppBannerResponse? bannerResponse;
 class _PagePilotBannerState extends State<PagePilotBanner> {
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
-      "https://pagepilot.fabbuilder.com/api/tenant/${Config.tenantId}/client/app-banners?filter[isActive]=true",
+      "https://pagepilot.fabbuilder.com/api/tenant/${Config.tenantId}/client/app-banners?filter[isActive]=true&filter[identifier]=${identifier}",
     );
 
     try {
