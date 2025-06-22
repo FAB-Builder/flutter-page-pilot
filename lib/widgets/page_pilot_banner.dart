@@ -72,7 +72,7 @@ AppBannerResponse? bannerResponse;
 class _PagePilotBannerState extends State<PagePilotBanner> {
   Future<AppBannerResponse?> fetchAppBanners() async {
     final url = Uri.parse(
-      "https://pagepilot.fabbuilder.com/api/tenant/${Config.tenantId}/client/app-banners?filter[isActive]=true&filter[identifier]=${identifier}",
+      "https://pagepilot.fabbuilder.com/api/tenant/${Config.tenantId}/client/app-banners?filter[isActive]=true&filter[identifier]=${widget.identifier}",
     );
 
     try {
@@ -677,12 +677,12 @@ class _StackedCardState extends State<StackedCard> {
           if (widget.deepLinkPrefix != null &&
               widget.deepLinkPrefix != "" &&
               (widget.cardData.link
-                      .toString()
-                      .startsWith(widget.deepLinkPrefix ?? ""))) {
+                  .toString()
+                  .startsWith(widget.deepLinkPrefix ?? ""))) {
             widget.onDeeplinkTap!(widget.cardData.link.toString());
           } else if ((widget.cardData.link
-                  .toString()
-                  .startsWith("https://www.youtube.com/watch?v="))) {
+              .toString()
+              .startsWith("https://www.youtube.com/watch?v="))) {
             isVideoPlaying.value = true;
             widget.stopAutoplay!();
           } else {
@@ -773,8 +773,9 @@ class _StackedCardState extends State<StackedCard> {
                       onTap: () async {
                         if (widget.cardData.link != null) {
                           if (widget.deepLinkPrefix != null &&
-                              (widget.cardData.link.toString().startsWith(
-                                      widget.deepLinkPrefix ?? ""))) {
+                              (widget.cardData.link
+                                  .toString()
+                                  .startsWith(widget.deepLinkPrefix ?? ""))) {
                             widget.onDeeplinkTap!(
                                 widget.cardData.link.toString());
                           } else {
