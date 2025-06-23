@@ -10,7 +10,6 @@ import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
-
 class PagePilot {
   static OverlayEntry? _overlayEntry;
   static late TutorialCoachMark tutorialCoachMark;
@@ -36,20 +35,23 @@ class PagePilot {
     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
   );
 
-static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollController) async {
-  final context = key.currentContext;
-  if (context != null) {
-    final box = context.findRenderObject() as RenderBox;
-    final position = box.localToGlobal(Offset.zero);
-    final scrollableBox = scrollController.position.context.storageContext.findRenderObject() as RenderBox;
-    final offset = position.dy - scrollableBox.localToGlobal(Offset.zero).dy;
-    await scrollController.animateTo(
-      scrollController.offset + offset,
-      duration: Duration(milliseconds: 500),
-      curve: Curves.easeInOut,
-    );
+  static Future<void> scrollToTarget(
+      GlobalKey key, ScrollController scrollController) async {
+    final context = key.currentContext;
+    if (context != null) {
+      final box = context.findRenderObject() as RenderBox;
+      final position = box.localToGlobal(Offset.zero);
+      final scrollableBox = scrollController.position.context.storageContext
+          .findRenderObject() as RenderBox;
+      final offset = position.dy - scrollableBox.localToGlobal(Offset.zero).dy;
+      await scrollController.animateTo(
+        scrollController.offset + offset,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    }
   }
-}
+
   static void initStyles(Styles? s) {
     var brightness =
         SchedulerBinding.instance.platformDispatcher.platformBrightness;
@@ -119,7 +121,6 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
       },
       onClickOverlay: (target) {
         print('onClickOverlay: $target');
-        
       },
       onSkip: () {
         print("skip");
@@ -138,16 +139,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
     int duration = 3000,
     int? scale,
   }) {
-    if (context == null) {
-      print("No Overlay widget found in the current context.");
-      return;
-    }
-
     final overlay = Overlay.of(context);
-    if (overlay == null) {
-      print("No Overlay available in current context.");
-      return;
-    }
 
     // Prevent multiple snackbars from appearing at the same time
     if (_overlayEntry != null) return;
@@ -178,8 +170,10 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                         children: [
                           title != null
                               ? ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: 340,),
-                                child: Text(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 340,
+                                  ),
+                                  child: Text(
                                     title,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -191,10 +185,10 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
-                              )
-                              : SizedBox(),
+                                )
+                              : const SizedBox(),
                           body.toString().startsWith("<")
-                              ? Container(
+                              ? SizedBox(
                                   height: 50,
                                   width: 340,
                                   child: WebViewWidget(
@@ -202,11 +196,11 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                   ),
                                 )
                               : ConstrainedBox(
-                                constraints: BoxConstraints(maxWidth: 300),
-                            
-                                child: Text(
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 300),
+                                  child: Text(
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                     body,
                                     style: TextStyle(
                                       color: textColor != null
@@ -214,17 +208,17 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                           : Colors.white,
                                     ),
                                   ),
-                              ),
+                                ),
                         ],
                       )
-                    : Container(
+                    : SizedBox(
                         height: 80,
                         width: 340,
                         child: WebViewWidget(
                           controller: controller!,
                         ),
                       ),
-                Spacer(),
+                const Spacer(),
                 IconButton(
                   onPressed: () {
                     _overlayEntry?.remove();
@@ -232,7 +226,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
 
                     controller!.clearCache();
                   },
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.close,
                     color: Colors.white,
                   ),
@@ -294,7 +288,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                   : isDarkMode
                       ? Colors.black
                       : Colors.white,
-              borderRadius: BorderRadius.only(
+              borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(8),
                 topRight: Radius.circular(8),
               ),
@@ -312,13 +306,13 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                               textColor != null ? hexToColor(textColor) : null,
                         ),
                       )
-                    : SizedBox(),
-                SizedBox(height: 16),
+                    : const SizedBox(),
+                const SizedBox(height: 16),
                 body != null
                     ? body.toString().startsWith("<")
                         ? Container(
                             height: 200,
-                            constraints: BoxConstraints(
+                            constraints: const BoxConstraints(
                               minHeight: 200, // Minimum height
                               maxHeight: 500, // Maximum height
                             ),
@@ -333,20 +327,20 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                   : null,
                             ),
                           )
-                    : Container(
+                    : SizedBox(
                         height: 200,
                         width: 200,
                         child: WebViewWidget(controller: controller!),
                       ),
                 Row(
                   children: [
-                    Spacer(),
+                    const Spacer(),
                     ElevatedButton(
                       onPressed: () {
                         Navigator.pop(context);
                         onOkPressed();
                       },
-                      child: Text("OK"),
+                      child: const Text("OK"),
                     ),
                   ],
                 )
@@ -358,7 +352,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
     );
 
     if (url != null) {
-      controller!.loadRequest(Uri.parse(url!));
+      controller!.loadRequest(Uri.parse(url));
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
@@ -407,7 +401,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                 children: [
                   body != null
                       ? body.toString().startsWith("<")
-                          ? Container(
+                          ? SizedBox(
                               height: 200,
                               width: 200,
                               child: WebViewWidget(controller: controller!),
@@ -420,13 +414,13 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                     : null,
                               ),
                             )
-                      : Container(
+                      : SizedBox(
                           height: 200,
                           width: 200,
                           child: WebViewWidget(controller: controller!),
                         ),
                   showConfetti
-                      ? Container(
+                      ? SizedBox(
                           height: 250,
                           width: 250,
                           child: ConfettiWidget(
@@ -446,7 +440,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                             createParticlePath: drawStar,
                           ),
                         )
-                      : SizedBox(),
+                      : const SizedBox(),
                 ],
               ),
             ),
@@ -475,7 +469,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
           );
         });
     if (url != null) {
-      controller!.loadRequest(Uri.parse(url!));
+      controller!.loadRequest(Uri.parse(url));
     }
     if (body.toString().startsWith("<")) {
       controller!.loadHtmlString(body.toString());
@@ -599,8 +593,8 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                   : null,
                             ),
                           )
-                        : SizedBox(),
-                    SizedBox(height: 10),
+                        : const SizedBox(),
+                    const SizedBox(height: 10),
                     body.toString().startsWith("<")
                         ? SizedBox(
                             height: 200,
@@ -643,116 +637,97 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
     String? position,
     int? scale,
     bool isDraggable = false,
+    Widget? customWidget,
+    void Function()? onTap,
+    bool? isVisible = false,
   }) {
-    // Use an OverlayEntry to display the pulse animation
     final overlay = Overlay.of(context);
+
     OverlayEntry? entry;
     double margin = 30;
-
     final screenSize = MediaQuery.of(context).size;
-    Offset currentOffset = Offset(0, 0);
-    switch (position.toString().toLowerCase()) {
-      case "topleft":
-        currentOffset = Offset(margin, margin);
-        break;
-      case "topcenter":
-      case "top":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          margin,
-        );
-        break;
-      case "topright":
-        currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          margin,
-        );
-        break;
-      case "bottomleft":
-        currentOffset = Offset(
-          margin,
-          screenSize.height - margin * 6,
-        );
-        break;
-      case "bottomcenter":
-      case "bottom":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          screenSize.height - margin * 6,
-        );
-        break;
-      case "bottomright":
-        currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          screenSize.height - margin * 6,
-        );
-        break;
-      case "center":
-        currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2,
-          (screenSize.height - margin * 5) / 2,
-        ); // Center
-        break;
-      case "leftcenter":
-      case "left":
-        currentOffset =
-            Offset(margin, (screenSize.height - margin * 5) / 2); // Left Center
-        break;
-      case "rightcenter":
-      case "right":
-        currentOffset = Offset(
-          (screenSize.width + margin) / 2,
-          (screenSize.height - margin * 5) / 2,
-        ); // Right Center
-        break;
+
+    Offset currentOffset;
+
+    if (position?.toLowerCase() == "topleft") {
+      currentOffset = Offset(margin, margin);
+    } else if (position?.toLowerCase() == "topcenter" ||
+        position?.toLowerCase() == "top") {
+      currentOffset = Offset((screenSize.width - margin * 6) / 2, margin);
+    } else if (position?.toLowerCase() == "topright") {
+      currentOffset = Offset(screenSize.width - margin * 6, margin);
+    } else if (position?.toLowerCase() == "bottomleft") {
+      currentOffset = Offset(margin, screenSize.height - margin * 6);
+    } else if (position?.toLowerCase() == "bottomcenter" ||
+        position?.toLowerCase() == "bottom") {
+      currentOffset = Offset(
+          (screenSize.width - margin * 6) / 2, screenSize.height - margin * 6);
+    } else if (position?.toLowerCase() == "bottomright") {
+      currentOffset =
+          Offset(screenSize.width - margin * 6, screenSize.height - margin * 6);
+    } else if (position?.toLowerCase() == "center") {
+      currentOffset = Offset((screenSize.width - margin * 6) / 2,
+          (screenSize.height - margin * 5) / 2);
+    } else if (position?.toLowerCase() == "leftcenter" ||
+        position?.toLowerCase() == "left") {
+      currentOffset = Offset(margin, (screenSize.height - margin * 5) / 2);
+    } else if (position?.toLowerCase() == "rightcenter" ||
+        position?.toLowerCase() == "right") {
+      currentOffset = Offset(
+          screenSize.width - margin * 6, (screenSize.height - margin * 5) / 2);
+    } else {
+      currentOffset = Offset(
+          (screenSize.width - margin * 6) / 2, screenSize.height - margin * 6);
     }
 
     entry = OverlayEntry(
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            // final screenSize = MediaQuery.of(context).size;
-            // Offset currentOffset = Offset(0, 0);
             return Positioned(
               top: currentOffset.dy,
               left: currentOffset.dx,
               child: SafeArea(
                 child: Material(
-                  elevation: 4,
+                  elevation: 0,
                   color: Colors.transparent,
                   child: GestureDetector(
+                    onTap: () {
+                      if (onTap != null) {
+                        onTap();
+                      }
+                    },
                     onPanUpdate: (details) {
                       if (isDraggable) {
                         setState(() {
-                          // Update position as the user drags
                           currentOffset += details.delta;
-                          //entry?.markNeedsBuild();
                         });
                       }
                     },
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * 0.40,
-                      padding: EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: background != null
-                            ? hexToColor(background)
-                            : isDarkMode
-                                ? Colors.black
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black26,
-                            blurRadius: 10,
-                            offset: Offset(2, 2),
+                    child: customWidget ??
+                        Container(
+                          width: screenSize.width * 0.40,
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: background != null
+                                ? hexToColor(background)
+                                : isDarkMode
+                                    ? Colors.black
+                                    : Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Colors.black26,
+                                blurRadius: 10,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          title != null
-                              ? Text(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (title != null)
+                                Text(
                                   title,
                                   style: TextStyle(
                                     fontSize: 18,
@@ -761,32 +736,36 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                                         ? hexToColor(textColor)
                                         : null,
                                   ),
-                                )
-                              : SizedBox(),
-                          body != null
-                              ? body.toString().startsWith("<")
-                                  ? Container(
-                                      height: 200,
-                                      width: 200,
-                                      child: WebViewWidget(
-                                          controller: controller!),
-                                    )
-                                  : Text(
-                                      body,
-                                      style: TextStyle(
-                                        color: textColor != null
-                                            ? hexToColor(textColor)
-                                            : null,
-                                      ),
-                                    )
-                              : Container(
-                                  height: 200,
-                                  width: 200,
-                                  child: WebViewWidget(controller: controller!),
                                 ),
-                        ],
-                      ),
-                    ),
+                              const SizedBox(height: 8),
+                              if (controller != null) ...{
+                                if (body != null && body.startsWith("<"))
+                                  SizedBox(
+                                    height: 200,
+                                    width: 200,
+                                    child:
+                                        WebViewWidget(controller: controller!),
+                                  )
+                                else if (body != null)
+                                  Text(
+                                    body,
+                                    style: TextStyle(
+                                      color: textColor != null
+                                          ? hexToColor(textColor)
+                                          : null,
+                                    ),
+                                  )
+                                else
+                                  SizedBox(
+                                    height: 200,
+                                    width: 200,
+                                    child:
+                                        WebViewWidget(controller: controller!),
+                                  ),
+                              }
+                            ],
+                          ),
+                        ),
                   ),
                 ),
               ),
@@ -796,15 +775,19 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
       },
     );
 
-    if (url != null) {
-      controller!.loadRequest(Uri.parse(url!));
+    if (!isVisible!) {
+      overlay.dispose();
+    } else {
+      overlay.insert(entry);
     }
-    if (body.toString().startsWith("<")) {
-      controller!.loadHtmlString(htmlBodyStart + body.toString() + htmlBodyEnd);
-      adjustWebviewZoom(scale: scale ?? 4);
+    if (controller != null) {
+      if (body != null && body.startsWith("<")) {
+        controller?.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
+        adjustWebviewZoom(scale: scale ?? 4);
+      } else if (url != null) {
+        controller?.loadRequest(Uri.parse(url));
+      }
     }
-
-    overlay.insert(entry);
   }
 
   static void showBeacon(
@@ -863,20 +846,17 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
     // });
   }
 
-  static Future<void> showTour(
-    BuildContext context,
-    Config config, {
-    required List<dynamic> tours,
-    required ScrollController scrollController
-    // required Widget widget,
-  }) async {
+  static Future<void> showTour(BuildContext context, Config config,
+      {required List<dynamic> tours, required ScrollController scrollController
+      // required Widget widget,
+      }) async {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
 
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i]["body"].toString();
       final key = config.keys[tours[i]["element"].toString()];
-       await scrollToTarget(key, scrollController); 
+      await scrollToTarget(key, scrollController);
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setNavigationDelegate(
@@ -938,7 +918,7 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                           ),
                           // Text(tours[i]["description"].toString()),
                           body.startsWith("http")
-                              ? Container(
+                              ? SizedBox(
                                   height: 200,
                                   width: 200,
                                   child: WebViewWidget(
@@ -957,8 +937,9 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
                         ],
                       ),
                     ),
-                    SizedBox(height: 20),
-                    previousAndNextButtons(i, tours.length - 1,tours,config,scrollController),
+                    const SizedBox(height: 20),
+                    previousAndNextButtons(
+                        i, tours.length - 1, tours, config, scrollController),
                   ],
                 );
               },
@@ -970,10 +951,10 @@ static Future<void> scrollToTarget(GlobalKey key, ScrollController scrollControl
         webViewController.loadRequest(Uri.parse(body));
       }
     }
-if (targets.isNotEmpty && tours.isNotEmpty) {
-  final firstKey = config.keys[tours[0]["element"].toString()];
-  await scrollToTarget(firstKey, scrollController);
-}
+    if (targets.isNotEmpty && tours.isNotEmpty) {
+      final firstKey = config.keys[tours[0]["element"].toString()];
+      await scrollToTarget(firstKey, scrollController);
+    }
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
   }
@@ -1041,7 +1022,7 @@ if (targets.isNotEmpty && tours.isNotEmpty) {
   //     ],
   //   );
   // }
-static Widget previousAndNextButtons(
+  static Widget previousAndNextButtons(
     int index,
     int lastIndex,
     List<dynamic> tours,
@@ -1055,7 +1036,8 @@ static Widget previousAndNextButtons(
           onTap: index == 0
               ? null
               : () async {
-                  final prevKey = config.keys[tours[index - 1]["element"].toString()];
+                  final prevKey =
+                      config.keys[tours[index - 1]["element"].toString()];
                   await scrollToTarget(prevKey, scrollController);
                   tutorialCoachMark.previous();
                 },
@@ -1065,7 +1047,8 @@ static Widget previousAndNextButtons(
           onTap: index == lastIndex
               ? null
               : () async {
-                  final nextKey = config.keys[tours[index + 1]["element"].toString()];
+                  final nextKey =
+                      config.keys[tours[index + 1]["element"].toString()];
                   await scrollToTarget(nextKey, scrollController);
                   tutorialCoachMark.next();
                 },
@@ -1074,6 +1057,7 @@ static Widget previousAndNextButtons(
       ],
     );
   }
+
   static void adjustWebviewZoom({int scale = 4}) {
     controller!.setNavigationDelegate(NavigationDelegate(
       onPageFinished: (String url) async {
@@ -1156,4 +1140,3 @@ static Widget previousAndNextButtons(
     return path;
   }
 }
-

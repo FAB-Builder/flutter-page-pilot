@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
+import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 import 'package:pagepilot/widgets/pagepilotpip.dart';
 import 'app_theme.dart';
 import 'package:pagepilot/widgets/page_pilot_banner.dart';
@@ -122,6 +123,64 @@ class _AppState extends State<App> {
   int _currentpage = 0;
 
   PageController pageController = PageController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Call your method that uses screenSize or Overlay.of(context)
+      PagePilot.showFloatingWidget(
+        context,
+        isVisible: true,
+        position: "bottomleft",
+        isDraggable: true,
+        onTap: () {
+          print("ok");
+        },
+        customWidget: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF874DFF), Color(0xFF2885FF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              transform: GradientRotation(87.61 * 3.1415927 / 180),
+            ),
+            borderRadius: BorderRadius.horizontal(
+              left: Radius.circular(0),
+              right: Radius.circular(20),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Image.asset(
+              //   AssetUrl.verify,
+              //   width: 16,
+              //   height: 16,
+              //   color: Colors.white,
+              // ),
+              SizedBox(width: 4),
+              Text(
+                "Hello",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(width: 4),
+              Icon(
+                Icons.keyboard_arrow_right_rounded,
+                color: const Color(0xFF0069CA),
+                size: 16,
+              ),
+            ],
+          ),
+        ),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

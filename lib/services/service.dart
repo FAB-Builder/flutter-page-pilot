@@ -192,6 +192,7 @@ void doShow({
                 position: position,
                 scale: scale,
                 isDraggable: isDraggable,
+                isVisible: true,
               );
               await http.get(
                 Uri.parse(
@@ -241,7 +242,8 @@ void doShow({
               }
 
               //KEYCHANGE: "description" => "body"
-              PagePilot.showTour(context, config, tours: tours,scrollController:config.scrollController!);
+              PagePilot.showTour(context, config,
+                  tours: tours, scrollController: config.scrollController!);
 
               await http.get(
                 Uri.parse(
