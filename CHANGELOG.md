@@ -1,3 +1,7 @@
+## 0.0.9+7
+
+- Custom widget support added Floater
+
 ## 0.0.9+6
 
 - Bug fixes
