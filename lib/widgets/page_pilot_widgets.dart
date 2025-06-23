@@ -627,6 +627,8 @@ class PagePilot {
     }
   }
 
+  static OverlayEntry? _entry;
+
   static void showFloatingWidget(
     BuildContext context, {
     String? title,
@@ -641,46 +643,60 @@ class PagePilot {
     void Function()? onTap,
     bool? isVisible = false,
   }) {
-    final overlay = Overlay.of(context);
+    // Remove existing widget if any
+    _entry?.remove();
+    _entry = null;
 
-    OverlayEntry? entry;
-    double margin = 30;
+    if (!(isVisible ?? false)) return;
+
+    final overlay = Overlay.of(context);
     final screenSize = MediaQuery.of(context).size;
+    const double margin = 30;
 
     Offset currentOffset;
 
-    if (position?.toLowerCase() == "topleft") {
-      currentOffset = Offset(margin, margin);
-    } else if (position?.toLowerCase() == "topcenter" ||
-        position?.toLowerCase() == "top") {
-      currentOffset = Offset((screenSize.width - margin * 6) / 2, margin);
-    } else if (position?.toLowerCase() == "topright") {
-      currentOffset = Offset(screenSize.width - margin * 6, margin);
-    } else if (position?.toLowerCase() == "bottomleft") {
-      currentOffset = Offset(margin, screenSize.height - margin * 6);
-    } else if (position?.toLowerCase() == "bottomcenter" ||
-        position?.toLowerCase() == "bottom") {
-      currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2, screenSize.height - margin * 6);
-    } else if (position?.toLowerCase() == "bottomright") {
-      currentOffset =
-          Offset(screenSize.width - margin * 6, screenSize.height - margin * 6);
-    } else if (position?.toLowerCase() == "center") {
-      currentOffset = Offset((screenSize.width - margin * 6) / 2,
-          (screenSize.height - margin * 5) / 2);
-    } else if (position?.toLowerCase() == "leftcenter" ||
-        position?.toLowerCase() == "left") {
-      currentOffset = Offset(margin, (screenSize.height - margin * 5) / 2);
-    } else if (position?.toLowerCase() == "rightcenter" ||
-        position?.toLowerCase() == "right") {
-      currentOffset = Offset(
-          screenSize.width - margin * 6, (screenSize.height - margin * 5) / 2);
-    } else {
-      currentOffset = Offset(
-          (screenSize.width - margin * 6) / 2, screenSize.height - margin * 6);
+    switch (position?.toLowerCase()) {
+      case "topleft":
+        currentOffset = const Offset(margin, margin);
+        break;
+      case "topcenter":
+      case "top":
+        currentOffset = Offset((screenSize.width - margin * 6) / 2, margin);
+        break;
+      case "topright":
+        currentOffset = Offset(screenSize.width - margin * 6, margin);
+        break;
+      case "bottomleft":
+        currentOffset = Offset(margin, screenSize.height - margin * 6);
+        break;
+      case "bottomcenter":
+      case "bottom":
+        currentOffset = Offset((screenSize.width - margin * 6) / 2,
+            screenSize.height - margin * 6);
+        break;
+      case "bottomright":
+        currentOffset = Offset(
+            screenSize.width - margin * 6, screenSize.height - margin * 6);
+        break;
+      case "center":
+        currentOffset = Offset((screenSize.width - margin * 6) / 2,
+            (screenSize.height - margin * 5) / 2);
+        break;
+      case "leftcenter":
+      case "left":
+        currentOffset = Offset(margin, (screenSize.height - margin * 5) / 2);
+        break;
+      case "rightcenter":
+      case "right":
+        currentOffset = Offset(screenSize.width - margin * 6,
+            (screenSize.height - margin * 5) / 2);
+        break;
+      default:
+        currentOffset = Offset((screenSize.width - margin * 6) / 2,
+            screenSize.height - margin * 6);
     }
 
-    entry = OverlayEntry(
+    _entry = OverlayEntry(
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
@@ -692,11 +708,7 @@ class PagePilot {
                   elevation: 0,
                   color: Colors.transparent,
                   child: GestureDetector(
-                    onTap: () {
-                      if (onTap != null) {
-                        onTap();
-                      }
-                    },
+                    onTap: onTap,
                     onPanUpdate: (details) {
                       if (isDraggable) {
                         setState(() {
@@ -706,7 +718,7 @@ class PagePilot {
                     },
                     child: customWidget ??
                         Container(
-                          width: screenSize.width * 0.40,
+                          width: screenSize.width * 0.4,
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: background != null
@@ -738,31 +750,29 @@ class PagePilot {
                                   ),
                                 ),
                               const SizedBox(height: 8),
-                              if (controller != null) ...{
-                                if (body != null && body.startsWith("<"))
-                                  SizedBox(
-                                    height: 200,
-                                    width: 200,
-                                    child:
-                                        WebViewWidget(controller: controller!),
-                                  )
-                                else if (body != null)
-                                  Text(
-                                    body,
-                                    style: TextStyle(
-                                      color: textColor != null
-                                          ? hexToColor(textColor)
-                                          : null,
-                                    ),
-                                  )
-                                else
-                                  SizedBox(
-                                    height: 200,
-                                    width: 200,
-                                    child:
-                                        WebViewWidget(controller: controller!),
-                                  ),
-                              }
+                              if (controller != null)
+                                body != null && body.startsWith("<")
+                                    ? SizedBox(
+                                        height: 200,
+                                        width: 200,
+                                        child: WebViewWidget(
+                                            controller: controller!),
+                                      )
+                                    : body != null
+                                        ? Text(
+                                            body,
+                                            style: TextStyle(
+                                              color: textColor != null
+                                                  ? hexToColor(textColor)
+                                                  : null,
+                                            ),
+                                          )
+                                        : SizedBox(
+                                            height: 200,
+                                            width: 200,
+                                            child: WebViewWidget(
+                                                controller: controller!),
+                                          ),
                             ],
                           ),
                         ),
@@ -775,19 +785,21 @@ class PagePilot {
       },
     );
 
-    if (!isVisible!) {
-      overlay.dispose();
-    } else {
-      overlay.insert(entry);
-    }
+    overlay.insert(_entry!);
+
     if (controller != null) {
       if (body != null && body.startsWith("<")) {
-        controller?.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
+        controller!.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
         adjustWebviewZoom(scale: scale ?? 4);
       } else if (url != null) {
-        controller?.loadRequest(Uri.parse(url));
+        controller!.loadRequest(Uri.parse(url));
       }
     }
+  }
+
+  static void hideFloatingWidget() {
+    _entry?.remove();
+    _entry = null;
   }
 
   static void showBeacon(

@@ -183,6 +183,12 @@ class _AppState extends State<App> {
   }
 
   @override
+  void dispose() {
+    PagePilot.hideFloatingWidget();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return PagePilotPiP(
       pipContent: PagePilotBanner(
