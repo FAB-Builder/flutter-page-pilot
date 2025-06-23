@@ -1,3 +1,7 @@
+## 0.0.9+9
+
+- More Banner customization added
+
 ## 0.0.9+8
 
 - Floater bug fixes

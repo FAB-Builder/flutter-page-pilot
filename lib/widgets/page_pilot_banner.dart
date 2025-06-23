@@ -34,6 +34,11 @@ class PagePilotBanner extends StatefulWidget {
   final String? deepLinkPrefix;
   final Color? bottomIndicatorColor;
   final String? identifier;
+  final double? dotHeight;
+  final double? dotWidth;
+  final double? activeDotWidth;
+  final EdgeInsets? margin;
+  final EdgeInsets? padding;
 
   const PagePilotBanner({
     super.key,
@@ -57,6 +62,11 @@ class PagePilotBanner extends StatefulWidget {
     this.deepLinkPrefix,
     this.bottomIndicatorColor,
     this.identifier,
+    this.dotHeight,
+    this.activeDotWidth,
+    this.dotWidth,
+    this.margin,
+    this.padding,
   });
 
   @override
@@ -289,7 +299,8 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
               Container(
                 height: height.toDouble(),
                 width: width.toDouble(),
-                margin: const EdgeInsets.symmetric(vertical: 10),
+                margin:
+                    widget.margin ?? const EdgeInsets.symmetric(vertical: 10),
                 child: Swiper(
                   controller: swiperController,
                   index: _currentPage,
@@ -303,7 +314,8 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                         _startAutoPlay();
                       },
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        padding: widget.padding ??
+                            const EdgeInsets.symmetric(horizontal: 12),
                         child: StackedCard(
                           backgroundcolor: widget.backgroundcolor,
                           titleStyle: widget.titleStyle,
@@ -324,7 +336,7 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                   duration: widget.duration,
                   pagination:
                       const SwiperPagination(builder: SwiperPagination.rect),
-                  itemWidth: 350,
+                  itemWidth: widget.itemWidth,
                   axisDirection: AxisDirection.right,
                   onIndexChanged: (index) {
                     setState(() {
@@ -349,8 +361,10 @@ class _PagePilotBannerState extends State<PagePilotBanner> {
                           : const Color(0xFFBDBBD0),
                     ),
                     duration: const Duration(milliseconds: 500),
-                    height: 4,
-                    width: i == _currentPage ? 16 : 4,
+                    height: widget.dotHeight ?? 4,
+                    width: i == _currentPage
+                        ? (widget.activeDotWidth ?? 16)
+                        : (widget.dotWidth ?? 4),
                   ),
                 ),
               ),
