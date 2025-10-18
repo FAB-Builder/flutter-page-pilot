@@ -17,7 +17,7 @@ void main() {
 // TODO : Add your credentials
 const applicationId = "";
 const userId = "ANNONYMOUS";
-const tenantId = "656da5fce2d64e67b2b77e75";
+const tenantId = "";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
@@ -71,8 +71,8 @@ class _MyAppState extends State<MyApp> {
   initPagePilot() async {
     Map keys = {
       '#dialog': keyDialog,
-      '#tooltip': keyTooltip,
-      '#beacon': keyBeacon,
+      '#liveTooltip': keyTooltip,
+      '#filter-content': keyBeacon,
       '#appbanner': keyappbanner,
     };
 
@@ -85,7 +85,8 @@ class _MyAppState extends State<MyApp> {
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
     );
     try {
-      _pagepilotPlugin.setUserIdentifier(userId: userId, tenantId: tenantId);
+      _pagepilotPlugin.setUserIdentifier(
+          userId: userId, tenantId: tenantId, language: "en");
       await _pagepilotPlugin.init(config); // initialize the library
     } on PlatformException {
       // Log exception and report studio@gameolive.com

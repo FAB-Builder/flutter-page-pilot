@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 void doShow({
@@ -79,7 +80,23 @@ void doShow({
           showWidget(
             "tooltip",
             tooltip["id"],
-            tooltip["step"],
+            [StepModel.fromJson(tooltip["step"])],
+            config,
+            context,
+          );
+        }
+      });
+      tours.forEach((tour) async {
+        String slug = tour["slug"];
+        List<StepModel> steps = [];
+        for (int i = 0; i < tour["steps"].length; i++) {
+          steps.add(StepModel.fromJson(tour["steps"][i]));
+        }
+        if (slug == screen) {
+          showWidget(
+            "tour",
+            tour["id"],
+            steps,
             config,
             context,
           );
@@ -91,7 +108,14 @@ void doShow({
   }
 }
 
-void showWidget(type, id, data, config, context) async {
+acknowledge(id) async {
+  await http.get(
+    Uri.parse("$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=${id}"),
+  );
+}
+
+void showWidget(String type, String id, List<StepModel> data, Config config,
+    BuildContext context) async {
   String? shape,
       title,
       body,
@@ -105,23 +129,23 @@ void showWidget(type, id, data, config, context) async {
   GlobalKey? key;
   bool showConfetti = false, isDraggable = false;
   if (type != "tour") {
-    shape = data["shape"] ?? "rect";
+    shape = data[0].shape ?? "rect";
 
-    // title = data["step"]["title"];
-    // body = data["step"]["body"];
-    background = data["background"];
-    textColor = data["textColor"];
-    showConfetti = data["showConfetti"] || false;
+    title = data[0].title;
+    body = data[0].content;
+    background = data[0].background ?? "#ffffff";
+    textColor = data[0].textColor ?? "#000000";
+    showConfetti = data[0].showConfetti ?? false;
 
-    url = data["url"];
+    url = data[0].url;
     //TODO adjust scale from frontend(cs) first
     scale = null;
     // scale =
     //     int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
-    isDraggable = data["draggable"] ?? false;
-    position = data["position"];
-    color = data["color"];
-    selector = data["selector"];
+    isDraggable = data[0].draggable ?? false;
+    position = data[0].position;
+    color = data[0].color;
+    selector = data[0].selector;
     key = config.keys[selector.toString()];
   }
 
@@ -149,31 +173,17 @@ void showWidget(type, id, data, config, context) async {
           title: title,
           body: body ?? "",
         );
-        await http.get(
-          Uri.parse(
-            "$baseUrl/acknowledge?id=${id}",
-          ),
-        );
+        await acknowledge(id);
         break;
-      // case "tour":
-      // case "walktrough":
-      //   List<dynamic> tours = [];
-      //   for (int i = 0; i < jsonResponse["tourContent"].length; i++) {
-      //     tours.add(
-      //       jsonResponse["tourContent"][i],
-      //     );
-      //   }
+      case "tour":
+      case "walktrough":
 
-      //   //KEYCHANGE: "description" => "body"
-      //   PagePilot.showTour(context, config,
-      //       tours: tours, scrollController: config.scrollController!);
+        //KEYCHANGE: "description" => "body"
+        PagePilot.showTour(context, config,
+            tours: data, scrollController: config.scrollController);
 
-      //   await http.get(
-      //     Uri.parse(
-      //       "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-      //     ),
-      //   );
-      //   break;
+        await acknowledge(id);
+        break;
 
       /*case "dialog":
         PagePilot.showOkDialog(
@@ -288,7 +298,7 @@ void showWidget(type, id, data, config, context) async {
     }
   } else {
     throw Exception(
-      "PagePilotPluginError: Either provide title & body or html for ${type}  and key: ${data["selector"].toString()}",
+      "PagePilotPluginError: Either provide title & body or html for ${type}  and key: ${data[0].selector.toString()}",
     );
   }
 }

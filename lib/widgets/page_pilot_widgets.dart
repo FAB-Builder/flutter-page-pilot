@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -18,6 +20,7 @@ class PagePilot {
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
   static bool isDarkMode = false;
+  static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
   static String htmlBodyStart =
       "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { background:#ffffff00;margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
 
@@ -129,6 +132,16 @@ class PagePilot {
     );
   }
 
+  static void loadHtmlStringIntoWebview(String body) {
+    // String htmlString = body.toString().replaceAllMapped(
+    //       RegExp(r'\\u([0-9a-fA-F]{4})'),
+    //       (match) => String.fromCharCode(int.parse(match.group(1)!, radix: 16)),
+    //     );
+    // String bodyTemp =
+    //     '''<html><body><div style="color:#262626;font-family:&quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;, &quot;Nimbus Sans&quot;, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0.15008px;line-height:1.5;margin:0;min-height:100%;width:100%"><table align="center" width="100%" style="margin:0 auto;max-width:320px;background-color:#FFFFFF;border:1px solid #000000;border-collapse:separate" role="presentation" cellSpacing="0" cellPadding="0" border="0"><tbody><tr style="width:100%"><td class="email-layout-content"><h2 class="heading-block" style="font-weight:bold;text-align:center;margin:0;font-size:24px;padding:16px 24px 16px 24px">Hello friend</h2></td></tr></tbody></table></div></div></body></html>''';
+    controller!.loadHtmlString(body.toString());
+  }
+
   static void showSnackbar(
     BuildContext context, {
     String? title,
@@ -187,7 +200,7 @@ class PagePilot {
                                   ),
                                 )
                               : const SizedBox(),
-                          body.toString().startsWith("<")
+                          body.toString().startsWith(bodyStartsWithHtmlString)
                               ? SizedBox(
                                   height: 50,
                                   width: 340,
@@ -252,7 +265,7 @@ class PagePilot {
     if (url != null) {
       controller!.loadRequest(Uri.parse(url));
     }
-    if (body.toString().startsWith("<")) {
+    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
       controller!.loadHtmlString(body.toString());
       adjustWebviewZoom(scale: scale ?? 2);
     }
@@ -309,7 +322,7 @@ class PagePilot {
                     : const SizedBox(),
                 const SizedBox(height: 16),
                 body != null
-                    ? body.toString().startsWith("<")
+                    ? body.toString().startsWith(bodyStartsWithHtmlString)
                         ? Container(
                             height: 200,
                             constraints: const BoxConstraints(
@@ -354,7 +367,7 @@ class PagePilot {
     if (url != null) {
       controller!.loadRequest(Uri.parse(url));
     }
-    if (body.toString().startsWith("<")) {
+    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
       controller!.loadHtmlString(body.toString());
       adjustWebviewZoom(scale: scale ?? 4);
     }
@@ -400,7 +413,7 @@ class PagePilot {
               child: Stack(
                 children: [
                   body != null
-                      ? body.toString().startsWith("<")
+                      ? body.toString().startsWith(bodyStartsWithHtmlString)
                           ? SizedBox(
                               height: 200,
                               width: 200,
@@ -471,7 +484,7 @@ class PagePilot {
     if (url != null) {
       controller!.loadRequest(Uri.parse(url));
     }
-    if (body.toString().startsWith("<")) {
+    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
       controller!.loadHtmlString(body.toString());
       adjustWebviewZoom(scale: scale ?? 4);
     }
@@ -595,7 +608,7 @@ class PagePilot {
                           )
                         : const SizedBox(),
                     const SizedBox(height: 10),
-                    body.toString().startsWith("<")
+                    body.toString().startsWith(bodyStartsWithHtmlString)
                         ? SizedBox(
                             height: 200,
                             width: MediaQuery.of(context).size.width * 0.8,
@@ -621,9 +634,9 @@ class PagePilot {
 
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
-    if (body.toString().startsWith("<")) {
-      controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: scale ?? 4);
+    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
+      loadHtmlStringIntoWebview(body);
+      adjustWebviewZoom(scale: scale ?? 2);
     }
   }
 
@@ -751,7 +764,9 @@ class PagePilot {
                                 ),
                               const SizedBox(height: 8),
                               if (controller != null)
-                                body != null && body.startsWith("<")
+                                body != null &&
+                                        body.startsWith(
+                                            bodyStartsWithHtmlString)
                                     ? SizedBox(
                                         height: 200,
                                         width: 200,
@@ -788,7 +803,7 @@ class PagePilot {
     overlay.insert(_entry!);
 
     if (controller != null) {
-      if (body != null && body.startsWith("<")) {
+      if (body != null && body.startsWith(bodyStartsWithHtmlString)) {
         controller!.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
         adjustWebviewZoom(scale: scale ?? 4);
       } else if (url != null) {
@@ -859,16 +874,18 @@ class PagePilot {
   }
 
   static Future<void> showTour(BuildContext context, Config config,
-      {required List<dynamic> tours, required ScrollController scrollController
+      {required List<StepModel> tours, ScrollController? scrollController
       // required Widget widget,
       }) async {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
 
     for (int i = 0; i < tours.length; i++) {
-      String body = tours[i]["body"].toString();
-      final key = config.keys[tours[i]["element"].toString()];
-      await scrollToTarget(key, scrollController);
+      String body = tours[i].content.toString();
+      final key = config.keys[tours[i].selector.toString()];
+      if (scrollController != null) {
+        await scrollToTarget(key, scrollController);
+      }
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
         ..setNavigationDelegate(
@@ -891,10 +908,10 @@ class PagePilot {
       targets.add(
         TargetFocus(
           identify: "",
-          shape: tours[i]["shape"].toString().toLowerCase() == "rect"
+          shape: tours[i].shape.toString().toLowerCase() == "rect"
               ? ShapeLightFocus.RRect
               : ShapeLightFocus.Circle,
-          keyTarget: config.keys[tours[i]["element"].toString()],
+          keyTarget: config.keys[tours[i].selector.toString()],
           alignSkip: Alignment.topRight,
           enableOverlayTab: true,
           contents: [
@@ -905,8 +922,8 @@ class PagePilot {
                   children: [
                     Container(
                       decoration: BoxDecoration(
-                        color: tours[i]["background"] != null
-                            ? hexToColor(tours[i]["background"])
+                        color: tours[i].background != null
+                            ? hexToColor(tours[i].background ?? "#ffffff")
                             : isDarkTheme
                                 ? Colors.black
                                 : Colors.white,
@@ -917,33 +934,33 @@ class PagePilot {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            tours[i]["title"].toString(),
+                            tours[i].title.toString(),
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: tours[i]["textColor"] != null
-                                  ? hexToColor(tours[i]["textColor"])
+                              color: tours[i].textColor != null
+                                  ? hexToColor(tours[i].textColor ?? "#000000")
                                   : isDarkTheme
                                       ? Colors.white
                                       : Colors.black,
                             ),
                           ),
                           // Text(tours[i]["description"].toString()),
-                          body.startsWith("http")
+                          body.toString().startsWith(bodyStartsWithHtmlString)
                               ? SizedBox(
                                   height: 200,
-                                  width: 200,
-                                  child: WebViewWidget(
-                                      controller: webViewController),
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.8,
+                                  child: WebViewWidget(controller: controller!),
                                 )
                               : Text(
-                                  tours[i]["body"].toString(),
+                                  body,
+                                  overflow: TextOverflow.clip,
                                   style: TextStyle(
-                                    color: tours[i]["textColor"] != null
-                                        ? hexToColor(tours[i]["textColor"])
-                                        : isDarkTheme
-                                            ? Colors.white
-                                            : Colors.black,
+                                    color: tours[i].textColor != null
+                                        ? hexToColor(
+                                            tours[i].textColor ?? "#000")
+                                        : null,
                                   ),
                                 ),
                         ],
@@ -962,10 +979,16 @@ class PagePilot {
       if (body.startsWith("http")) {
         webViewController.loadRequest(Uri.parse(body));
       }
+      if (body.toString().startsWith(bodyStartsWithHtmlString)) {
+        loadHtmlStringIntoWebview(body);
+        // adjustWebviewZoom(scale: tours[i].scale ?? 2);
+      }
     }
-    if (targets.isNotEmpty && tours.isNotEmpty) {
-      final firstKey = config.keys[tours[0]["element"].toString()];
-      await scrollToTarget(firstKey, scrollController);
+    if (scrollController != null) {
+      if (targets.isNotEmpty && tours.isNotEmpty) {
+        final firstKey = config.keys[tours[0].selector.toString()];
+        await scrollToTarget(firstKey, scrollController);
+      }
     }
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
@@ -1039,35 +1062,38 @@ class PagePilot {
     int lastIndex,
     List<dynamic> tours,
     Config config,
-    ScrollController scrollController,
+    ScrollController? scrollController,
   ) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: index == 0
-              ? null
-              : () async {
-                  final prevKey =
-                      config.keys[tours[index - 1]["element"].toString()];
-                  await scrollToTarget(prevKey, scrollController);
-                  tutorialCoachMark.previous();
-                },
-          child: Text(index == 0 ? '' : 'Previous'),
-        ),
-        GestureDetector(
-          onTap: index == lastIndex
-              ? null
-              : () async {
-                  final nextKey =
-                      config.keys[tours[index + 1]["element"].toString()];
-                  await scrollToTarget(nextKey, scrollController);
-                  tutorialCoachMark.next();
-                },
-          child: Text(index == lastIndex ? '' : 'Next'),
-        ),
-      ],
-    );
+    if (scrollController != null)
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: index == 0
+                ? null
+                : () async {
+                    final prevKey =
+                        config.keys[tours[index - 1]["element"].toString()];
+                    await scrollToTarget(prevKey, scrollController);
+                    tutorialCoachMark.previous();
+                  },
+            child: Text(index == 0 ? '' : 'Previous'),
+          ),
+          GestureDetector(
+            onTap: index == lastIndex
+                ? null
+                : () async {
+                    final nextKey =
+                        config.keys[tours[index + 1]["element"].toString()];
+                    await scrollToTarget(nextKey, scrollController);
+                    tutorialCoachMark.next();
+                  },
+            child: Text(index == lastIndex ? '' : 'Next'),
+          ),
+        ],
+      );
+    else
+      return SizedBox();
   }
 
   static void adjustWebviewZoom({int scale = 4}) {
