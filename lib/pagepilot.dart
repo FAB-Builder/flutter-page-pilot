@@ -19,9 +19,12 @@ class Pagepilot {
     return PagepilotPlatform.instance.init(config);
   }
 
-  void setUserIdentifier({required String userId, required String tenantId}) {
-    return PagepilotPlatform.instance
-        .setUserIdentifier(userId: userId, tenantId: tenantId);
+  void setUserIdentifier(
+      {required String userId,
+      required String tenantId,
+      String? language = "en"}) {
+    return PagepilotPlatform.instance.setUserIdentifier(
+        userId: userId, tenantId: tenantId, language: language);
   }
 
   Future<void> show({

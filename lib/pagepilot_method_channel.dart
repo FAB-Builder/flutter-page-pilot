@@ -27,8 +27,11 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   }
 
   @override
-  void setUserIdentifier({required String userId, required String tenantId}) {
-    Config.setUserIdentifier(userId, tenantId: tenantId);
+  void setUserIdentifier(
+      {required String userId,
+      required String tenantId,
+      String? language = "en"}) {
+    Config.setUserIdentifier(userId, tenantId: tenantId, language: language);
   }
 
   @override
