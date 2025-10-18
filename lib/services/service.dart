@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
 void doShow({
@@ -17,7 +18,8 @@ void doShow({
     var jsonResponse;
 
     var response = await http.get(
-      Uri.parse("$baseUrl/get/unacknowledged?userId=${Config.userId}"),
+      Uri.parse(
+          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}"),
     );
 
     //mock data
@@ -63,203 +65,240 @@ void doShow({
     }
 
     if (response.body != "null") {
-      String? shape, title, body, url, position, color, background, textColor;
-      int? scale;
-      GlobalKey? key;
-      bool showConfetti = false, isDraggable = false;
-      if (jsonResponse["type"].toString() != "tour") {
-        shape = jsonResponse["content"]["shape"] ?? "rect";
-
-        title = jsonResponse["content"]["title"];
-        body = jsonResponse["content"]["body"];
-        background = jsonResponse["content"]["background"];
-        textColor = jsonResponse["content"]["textColor"];
-        showConfetti = jsonResponse["showConfetti"];
-
-        url = jsonResponse["content"]["url"];
-        //TODO adjust scale from frontend(cs) first
-        scale = null;
-        // scale =
-        //     int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
-        isDraggable = jsonResponse["content"]["draggable"] ?? false;
-        position = jsonResponse["content"]["position"];
-        color = jsonResponse["content"]["color"];
-        key = config.keys[jsonResponse["content"]["element"].toString()];
+      List<dynamic> tours = [];
+      List<dynamic> tooltips = [];
+      if (jsonResponse["tooltips"].length > 0) {
+        tooltips = jsonResponse["tooltips"];
+      }
+      if (jsonResponse["tours"].length > 0) {
+        tours = jsonResponse["tours"];
       }
 
-      PagePilot.showConfetti = showConfetti;
-
-      if (jsonResponse["screen"].toString().toLowerCase() ==
-          screen.toLowerCase()) {
-        if (((body != null) || url != null) ||
-            jsonResponse["type"].toString() == "tour") {
-          switch (jsonResponse["type"].toString().toLowerCase()) {
-            case "dialog":
-              PagePilot.showOkDialog(
-                context,
-                shape: shape ?? "rect",
-                title: title,
-                body: body,
-                background: background,
-                textColor: textColor,
-                url: url,
-                scale: scale,
-                onOkPressed: () async {
-                  await http.get(
-                    Uri.parse(
-                      "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                    ),
-                  );
-                },
-              );
-              break;
-            case "snackbar":
-            case "snack":
-            case "toast":
-              PagePilot.showSnackbar(
-                context,
-                title: title,
-                body: body,
-                background: background,
-                textColor: textColor,
-                url: url,
-                scale: scale,
-                duration:
-                    int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
-              );
-              //acknowledge
-              await http.get(
-                Uri.parse(
-                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                ),
-              );
-              break;
-            case "tooltip":
-            case "i":
-            case "?":
-              if (key == null) {
-                throw Exception(
-                  "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
-                );
-              }
-              PagePilot.showTooltip(
-                context,
-                shape: shape ?? "rect",
-                key: key,
-                scale: scale,
-                background: background,
-                textColor: textColor,
-                // title: jsonResponse["content"]["tour"][0]["title"],
-                // description: jsonResponse["content"]["tour"][0]["description"],
-                title: title,
-                body: body ?? "",
-              );
-              await http.get(
-                Uri.parse(
-                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                ),
-              );
-              break;
-            case "bottomsheet":
-              PagePilot.showBottomSheet(
-                context,
-                title: title,
-                body: body,
-                background: background,
-                textColor: textColor,
-                url: url,
-                scale: scale,
-                onOkPressed: () async {
-                  await http.get(
-                    Uri.parse(
-                      "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                    ),
-                  );
-                },
-              );
-              break;
-            // case "spotlight":
-            //   break;
-            case "pip":
-            case "floatingwidget":
-              PagePilot.showFloatingWidget(
-                context,
-                title: title,
-                body: body,
-                background: background,
-                textColor: textColor,
-                url: url,
-                position: position,
-                scale: scale,
-                isDraggable: isDraggable,
-                isVisible: true,
-              );
-              await http.get(
-                Uri.parse(
-                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                ),
-              );
-              break;
-            case "beacon":
-              if (key == null) {
-                throw Exception(
-                  "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
-                );
-              }
-              PagePilot.showBeacon(
-                context,
-                shape: shape ?? "rect",
-                key: key,
-                beaconPosition:
-                    position == null ? "center" : position.toLowerCase(),
-                title: title,
-                body: body ?? "",
-                background: background,
-                textColor: textColor,
-                color: color == null
-                    ? Colors.blue.withOpacity(0.5)
-                    : PagePilot.hexToColor(color),
-                onBeaconClicked: () async {
-                  //acknowledge
-                  await http.get(
-                    Uri.parse(
-                      "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                    ),
-                  );
-                },
-                // title: jsonResponse["content"]["tour"][0]["title"],
-                // description: jsonResponse["content"]["tour"][0]["description"],
-              );
-
-              break;
-            case "tour":
-            case "walktrough":
-              List<dynamic> tours = [];
-              for (int i = 0; i < jsonResponse["tourContent"].length; i++) {
-                tours.add(
-                  jsonResponse["tourContent"][i],
-                );
-              }
-
-              //KEYCHANGE: "description" => "body"
-              PagePilot.showTour(context, config,
-                  tours: tours, scrollController: config.scrollController!);
-
-              await http.get(
-                Uri.parse(
-                  "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
-                ),
-              );
-              break;
-          }
-        } else {
-          throw Exception(
-            "PagePilotPluginError: Either provide title & body or html for ${jsonResponse["type"].toString()}  and key: ${jsonResponse["content"]["element"].toString()}",
+      tooltips.forEach((tooltip) async {
+        String slug = tooltip["slug"];
+        if (slug == screen) {
+          showWidget(
+            "tooltip",
+            tooltip["id"],
+            [StepModel.fromJson(tooltip["step"])],
+            config,
+            context,
           );
         }
-      }
+      });
+      tours.forEach((tour) async {
+        String slug = tour["slug"];
+        List<StepModel> steps = [];
+        for (int i = 0; i < tour["steps"].length; i++) {
+          steps.add(StepModel.fromJson(tour["steps"][i]));
+        }
+        if (slug == screen) {
+          showWidget(
+            "tour",
+            tour["id"],
+            steps,
+            config,
+            context,
+          );
+        }
+      });
     }
   } catch (e) {
     debugPrint(e.toString());
+  }
+}
+
+acknowledge(id) async {
+  await http.get(
+    Uri.parse("$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=${id}"),
+  );
+}
+
+void showWidget(String type, String id, List<StepModel> data, Config config,
+    BuildContext context) async {
+  String? shape,
+      title,
+      body,
+      url,
+      position,
+      color,
+      background,
+      textColor,
+      selector;
+  int? scale;
+  GlobalKey? key;
+  bool showConfetti = false, isDraggable = false;
+  if (type != "tour") {
+    shape = data[0].shape ?? "rect";
+
+    title = data[0].title;
+    body = data[0].content;
+    background = data[0].background ?? "#ffffff";
+    textColor = data[0].textColor ?? "#000000";
+    showConfetti = data[0].showConfetti ?? false;
+
+    url = data[0].url;
+    //TODO adjust scale from frontend(cs) first
+    scale = null;
+    // scale =
+    //     int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
+    isDraggable = data[0].draggable ?? false;
+    position = data[0].position;
+    color = data[0].color;
+    selector = data[0].selector;
+    key = config.keys[selector.toString()];
+  }
+
+  PagePilot.showConfetti = showConfetti;
+
+  if (((body != null) || url != null) || type == "tour") {
+    switch (type) {
+      case "tooltip":
+      case "i":
+      case "?":
+        if (key == null) {
+          throw Exception(
+            "PagePilotPluginError: Key not found for ${selector.toString()}",
+          );
+        }
+        PagePilot.showTooltip(
+          context,
+          shape: shape ?? "rect",
+          key: key,
+          scale: scale,
+          background: background,
+          textColor: textColor,
+          // title: jsonResponse["content"]["tour"][0]["title"],
+          // description: jsonResponse["content"]["tour"][0]["description"],
+          title: title,
+          body: body ?? "",
+        );
+        await acknowledge(id);
+        break;
+      case "tour":
+      case "walktrough":
+
+        //KEYCHANGE: "description" => "body"
+        PagePilot.showTour(context, config,
+            tours: data, scrollController: config.scrollController);
+
+        await acknowledge(id);
+        break;
+
+      /*case "dialog":
+        PagePilot.showOkDialog(
+          context,
+          shape: shape ?? "rect",
+          title: title,
+          body: body,
+          background: background,
+          textColor: textColor,
+          url: url,
+          scale: scale,
+          onOkPressed: () async {
+            await http.get(
+              Uri.parse(
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+          },
+        );
+        break;
+      case "snackbar":
+      case "snack":
+      case "toast":
+        PagePilot.showSnackbar(
+          context,
+          title: title,
+          body: body,
+          background: background,
+          textColor: textColor,
+          url: url,
+          scale: scale,
+          duration: int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
+        );
+        //acknowledge
+        await http.get(
+          Uri.parse(
+            "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+          ),
+        );
+        break;
+      case "bottomsheet":
+        PagePilot.showBottomSheet(
+          context,
+          title: title,
+          body: body,
+          background: background,
+          textColor: textColor,
+          url: url,
+          scale: scale,
+          onOkPressed: () async {
+            await http.get(
+              Uri.parse(
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+          },
+        );
+        break;
+      // case "spotlight":
+      //   break;
+      case "pip":
+      case "floatingwidget":
+        PagePilot.showFloatingWidget(
+          context,
+          title: title,
+          body: body,
+          background: background,
+          textColor: textColor,
+          url: url,
+          position: position,
+          scale: scale,
+          isDraggable: isDraggable,
+          isVisible: true,
+        );
+        await http.get(
+          Uri.parse(
+            "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+          ),
+        );
+        break;
+      case "beacon":
+        if (key == null) {
+          throw Exception(
+            "PagePilotPluginError: Key not found for ${jsonResponse["content"]["element"].toString()}",
+          );
+        }
+        PagePilot.showBeacon(
+          context,
+          shape: shape ?? "rect",
+          key: key,
+          beaconPosition: position == null ? "center" : position.toLowerCase(),
+          title: title,
+          body: body ?? "",
+          background: background,
+          textColor: textColor,
+          color: color == null
+              ? Colors.blue.withOpacity(0.5)
+              : PagePilot.hexToColor(color),
+          onBeaconClicked: () async {
+            //acknowledge
+            await http.get(
+              Uri.parse(
+                "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
+              ),
+            );
+          },
+          // title: jsonResponse["content"]["tour"][0]["title"],
+          // description: jsonResponse["content"]["tour"][0]["description"],
+        );
+
+        break;*/
+    }
+  } else {
+    throw Exception(
+      "PagePilotPluginError: Either provide title & body or html for ${type}  and key: ${data[0].selector.toString()}",
+    );
   }
 }
