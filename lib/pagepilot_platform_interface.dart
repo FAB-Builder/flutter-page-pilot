@@ -33,7 +33,10 @@ abstract class PagepilotPlatform extends PlatformInterface {
     throw UnimplementedError('init() has not been implemented.');
   }
 
-  void setUserIdentifier({required String userId, required String tenantId}) {
+  void setUserIdentifier(
+      {required String userId,
+      required String tenantId,
+      String? language = "en"}) {
     throw UnimplementedError('setUserIdentifier() has not been implemented.');
   }
 

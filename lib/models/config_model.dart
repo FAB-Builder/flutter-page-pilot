@@ -9,6 +9,8 @@ class Config {
   Styles? styles;
   ScrollController? scrollController;
 
+  static String language = "en";
+
   Config({
     required this.credentials,
     required this.keys,
@@ -16,9 +18,13 @@ class Config {
     this.styles,
   });
 
-  static setUserIdentifier(String uId, {required String tenantId}) {
+  static setUserIdentifier(String uId,
+      {required String tenantId, String? language}) {
     userId = uId;
     Config.tenantId = tenantId;
+    if (language != null) {
+      Config.language = language;
+    }
   }
 
   factory Config.fromJson(Map<String, String> json) {
@@ -33,6 +39,9 @@ class Config {
     }
     if (json["keys"] != null) {
       config.keys = json["keys"] as Map;
+    }
+    if (json["language"] != null) {
+      language = json["language"] as String;
     }
     return config;
   }
