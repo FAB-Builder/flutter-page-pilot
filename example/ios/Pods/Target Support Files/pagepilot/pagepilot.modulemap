@@ -1,0 +1,6 @@
+framework module pagepilot {
+  umbrella header "pagepilot-umbrella.h"
+
+  export *
+  module * { export * }
+}

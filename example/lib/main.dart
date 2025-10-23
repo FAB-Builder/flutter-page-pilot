@@ -15,14 +15,15 @@ void main() {
 }
 
 // TODO : Add your credentials
-const applicationId = "";
+const applicationId = "com.thefatmoney";
 const userId = "ANNONYMOUS";
-const tenantId = "";
+const tenantId = "656da5fce2d64e67b2b77e75";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
 GlobalKey keyBeacon = GlobalKey();
 GlobalKey keyappbanner = GlobalKey();
+GlobalKey keyAccTransaction = GlobalKey();
 bool showpip = false;
 
 class MyApp extends StatefulWidget {
@@ -70,6 +71,7 @@ class _MyAppState extends State<MyApp> {
 
   initPagePilot() async {
     Map keys = {
+      "#keyAccTransaction": keyAccTransaction,
       '#dialog': keyDialog,
       '#liveTooltip': keyTooltip,
       '#filter-content': keyBeacon,
@@ -221,7 +223,8 @@ class _AppState extends State<App> {
             ElevatedButton(
               key: keyBeacon,
               onPressed: () {
-                widget.pagepilotPlugin.show(context: context, screen: "home");
+                widget.pagepilotPlugin
+                    .show(context: context, screen: "/new_bottom-bar");
               },
               child: const Text("Tap     Me!"),
             ),
@@ -252,7 +255,7 @@ class _AppState extends State<App> {
                   }
                 });
               },
-              key: keyappbanner,
+              key: keyAccTransaction,
               backgroundcolor: Colors.transparent,
               deepLinkPrefix: "",
               onDeeplinkTap: (String link) => debugPrint(link),
