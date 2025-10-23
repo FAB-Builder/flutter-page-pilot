@@ -1,3 +1,7 @@
+## 0.0.9+10
+
+- Tour enhancements
+
 ## 0.0.9+9
 
 - More Banner customization added
