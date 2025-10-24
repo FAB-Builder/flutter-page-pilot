@@ -15,9 +15,9 @@
     "http": "https://github.com/flutter/packages/tree/main/packages/webview_flutter/webview_flutter_wkwebview"
   },
   "documentation_url": "https://pub.dev/packages/webview_flutter",
-  "source_files": "webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/**/*.{h,m}",
-  "public_header_files": "webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/include/**/*.h",
-  "module_map": "webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/include/FlutterWebView.modulemap",
+  "source_files": "Classes/**/*.{h,m}",
+  "public_header_files": "Classes/**/*.h",
+  "module_map": "Classes/FlutterWebView.modulemap",
   "dependencies": {
     "Flutter": [
 
@@ -31,7 +31,7 @@
   },
   "resource_bundles": {
     "webview_flutter_wkwebview_privacy": [
-      "webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/Resources/PrivacyInfo.xcprivacy"
+      "Resources/PrivacyInfo.xcprivacy"
     ]
   }
 }
