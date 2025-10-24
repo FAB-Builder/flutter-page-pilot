@@ -1,3 +1,7 @@
+## 0.0.9+13
+
+- Tour package updated
+
 ## 0.0.9+12
 
 - Tour bug fixes

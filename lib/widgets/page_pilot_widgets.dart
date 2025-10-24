@@ -139,17 +139,7 @@ class PagePilot {
     //     );
     // String bodyTemp =
     //     '''<html><body><div style="color:#262626;font-family:&quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;, &quot;Nimbus Sans&quot;, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0.15008px;line-height:1.5;margin:0;min-height:100%;width:100%"><table align="center" width="100%" style="margin:0 auto;max-width:320px;background-color:#FFFFFF;border:1px solid #000000;border-collapse:separate" role="presentation" cellSpacing="0" cellPadding="0" border="0"><tbody><tr style="width:100%"><td class="email-layout-content"><h2 class="heading-block" style="font-weight:bold;text-align:center;margin:0;font-size:24px;padding:16px 24px 16px 24px">Hello friend</h2></td></tr></tbody></table></div></div></body></html>''';
-    await controller!.loadHtmlString(fixHtml(body));
-  }
-
-  static String fixHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'max-width:\s*\d+px'), 'width:100%')
-        .replaceAll(RegExp(r'width:\s*320px'), 'width:100%')
-        .replaceFirst(
-          '</head>',
-          '<meta name="viewport" content="width=device-width, initial-scale=1.0"></head>',
-        );
+    await controller!.loadHtmlString(body);
   }
 
   static void showSnackbar(
@@ -898,6 +888,7 @@ class PagePilot {
       }
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..enableZoom(false)
         ..setNavigationDelegate(
           NavigationDelegate(
             onProgress: (int progress) {
@@ -926,6 +917,7 @@ class PagePilot {
           enableOverlayTab: true,
           contents: [
             TargetContent(
+              padding: EdgeInsets.zero,
               align: tours[i].position.toString() == "bottom"
                   ? ContentAlign.bottom
                   : tours[i].position.toString() == "top"
@@ -945,7 +937,6 @@ class PagePilot {
                                 : Colors.white,
                         borderRadius: BorderRadius.circular(borderRadius),
                       ),
-                      padding: EdgeInsets.all(borderRadius),
                       // Text(
                       //   tours[i].title.toString(),
                       //   style: TextStyle(
@@ -993,7 +984,7 @@ class PagePilot {
       }
       if (body.toString().startsWith(bodyStartsWithHtmlString)) {
         loadHtmlStringIntoWebview(body);
-        await webViewController.loadHtmlString(fixHtml(body));
+        await webViewController.loadHtmlString(body);
         // adjustWebviewZoom(scale: tours[i].scale ?? 2);
       }
     }

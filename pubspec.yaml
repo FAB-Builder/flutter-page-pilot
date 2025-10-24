@@ -1,6 +1,6 @@
 name: pagepilot
 description: "This package will be used for quick and easy integration with PagePilot in your app."
-version: 0.0.9+12
+version: 0.0.9+13
 homepage: "https://pagepilot.fabbuilder.com"
 
 environment:
@@ -14,7 +14,7 @@ dependencies:
     sdk: flutter
   http: ^1.2.2
   plugin_platform_interface: ^2.0.2
-  tutorial_coach_mark: ^1.2.11
+  tutorial_coach_mark: ^1.3.3
   webview_flutter: ^4.8.0
   smooth_page_indicator: ^1.2.1
   carousel_slider: ^4.2.1

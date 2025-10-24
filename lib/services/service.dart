@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -108,9 +109,10 @@ void doShow({
   }
 }
 
-acknowledge(id) async {
+acknowledge(id, userId) async {
   await http.get(
-    Uri.parse("$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=${id}"),
+    Uri.parse(
+        "$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=$id&userId=$userId&device=${Platform.operatingSystem}"),
   );
 }
 
@@ -173,7 +175,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
           title: title,
           body: body ?? "",
         );
-        await acknowledge(id);
+        await acknowledge(id, Config.userId);
         break;
       case "tour":
       case "walktrough":
@@ -182,7 +184,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
         PagePilot.showTour(context, config,
             tours: data, scrollController: config.scrollController);
 
-        await acknowledge(id);
+        await acknowledge(id, Config.userId);
         break;
 
       /*case "dialog":
@@ -298,7 +300,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
     }
   } else {
     throw Exception(
-      "PagePilotPluginError: Either provide title & body or html for ${type}  and key: ${data[0].selector.toString()}",
+      "PagePilotPluginError: Either provide title & body or html for $type  and key: ${data[0].selector.toString()}",
     );
   }
 }
