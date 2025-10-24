@@ -1,3 +1,7 @@
+## 0.0.9+11
+
+- Tour position fixes
+
 ## 0.0.9+10
 
 - Tour enhancements
