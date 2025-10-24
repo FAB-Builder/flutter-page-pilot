@@ -965,7 +965,8 @@ class PagePilot {
                           ? SizedBox(
                               height: 200,
                               width: MediaQuery.of(context).size.width * 0.8,
-                              child: WebViewWidget(controller: controller!),
+                              child:
+                                  WebViewWidget(controller: webViewController),
                             )
                           : Text(
                               body,
@@ -992,6 +993,7 @@ class PagePilot {
       }
       if (body.toString().startsWith(bodyStartsWithHtmlString)) {
         loadHtmlStringIntoWebview(body);
+        await webViewController.loadHtmlString(fixHtml(body));
         // adjustWebviewZoom(scale: tours[i].scale ?? 2);
       }
     }

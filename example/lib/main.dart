@@ -15,9 +15,9 @@ void main() {
 }
 
 // TODO : Add your credentials
-const applicationId = "com.thefatmoney";
+const applicationId = "";
 const userId = "ANNONYMOUS";
-const tenantId = "656da5fce2d64e67b2b77e75";
+const tenantId = "";
 
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();

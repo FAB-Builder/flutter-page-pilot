@@ -1,3 +1,7 @@
+## 0.0.9+12
+
+- Tour bug fixes
+
 ## 0.0.9+11
 
 - Tour position fixes
