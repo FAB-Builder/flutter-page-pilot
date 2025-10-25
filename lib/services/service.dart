@@ -20,7 +20,7 @@ void doShow({
 
     var response = await http.get(
       Uri.parse(
-          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}"),
+          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}"),
     );
 
     //mock data
