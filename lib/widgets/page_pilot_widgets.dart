@@ -943,75 +943,77 @@ class PagePilot {
                           ? ContentAlign.left
                           : ContentAlign.right,
               builder: (context, TCMcontroller) {
-                return Column(
-                  children: [
-                    Container(
-                      margin: EdgeInsets.zero,
-                      padding: EdgeInsets.zero,
-                      // decoration: BoxDecoration(
-                      //   color: tours[i].background != null
-                      //       ? hexToColor(tours[i].background ?? "#ffffff")
-                      //       : isDarkTheme
-                      //           ? Colors.black
-                      //           : Colors.white,
-                      //   borderRadius: BorderRadius.circular(borderRadius),
-                      // ),
-                      // Text(
-                      //   tours[i].title.toString(),
-                      //   style: TextStyle(
-                      //     fontSize: 18,
-                      //     fontWeight: FontWeight.bold,
-                      //     color: tours[i].textColor != null
-                      //         ? hexToColor(tours[i].textColor ?? "#000000")
-                      //         : isDarkTheme
-                      //             ? Colors.white
-                      //             : Colors.black,
-                      //   ),
-                      // ),
-                      // Text(tours[i]["description"].toString()),
-                      child: body
-                              .toString()
-                              .startsWith(bodyStartsWithHtmlString)
-                          ? contentHeight == null
-                              ? ValueListenableBuilder<double>(
-                                  valueListenable: heightNotifier,
-                                  builder: (context, height, child) {
-                                    return SizedBox(
-                                      height: height,
-                                      // width:
-                                      //     MediaQuery.of(context).size.width * 0.8,
-                                      child: WebViewWidget(
-                                          controller: webViewController),
-                                    );
-                                  },
-                                )
-                              : SizedBox(
-                                  height: double.tryParse(contentHeight
-                                          .toString()
-                                          .replaceAll("px", "replace")) ??
-                                      200,
-                                  // width:
-                                  //     MediaQuery.of(context).size.width * 0.8,
-                                  child: WebViewWidget(
-                                      controller: webViewController),
-                                )
-                          // HtmlWidget(body)
-                          : Text(
-                              body,
-                              overflow: TextOverflow.clip,
-                              style: TextStyle(
-                                color: tours[i].textColor != null
-                                    ? hexToColor(tours[i].textColor ?? "#000")
-                                    : null,
+                return SafeArea(
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: EdgeInsets.zero,
+                        padding: EdgeInsets.zero,
+                        // decoration: BoxDecoration(
+                        //   color: tours[i].background != null
+                        //       ? hexToColor(tours[i].background ?? "#ffffff")
+                        //       : isDarkTheme
+                        //           ? Colors.black
+                        //           : Colors.white,
+                        //   borderRadius: BorderRadius.circular(borderRadius),
+                        // ),
+                        // Text(
+                        //   tours[i].title.toString(),
+                        //   style: TextStyle(
+                        //     fontSize: 18,
+                        //     fontWeight: FontWeight.bold,
+                        //     color: tours[i].textColor != null
+                        //         ? hexToColor(tours[i].textColor ?? "#000000")
+                        //         : isDarkTheme
+                        //             ? Colors.white
+                        //             : Colors.black,
+                        //   ),
+                        // ),
+                        // Text(tours[i]["description"].toString()),
+                        child: body
+                                .toString()
+                                .startsWith(bodyStartsWithHtmlString)
+                            ? contentHeight == null
+                                ? ValueListenableBuilder<double>(
+                                    valueListenable: heightNotifier,
+                                    builder: (context, height, child) {
+                                      return SizedBox(
+                                        height: height,
+                                        // width:
+                                        //     MediaQuery.of(context).size.width * 0.8,
+                                        child: WebViewWidget(
+                                            controller: webViewController),
+                                      );
+                                    },
+                                  )
+                                : SizedBox(
+                                    height: double.tryParse(contentHeight
+                                            .toString()
+                                            .replaceAll("px", "replace")) ??
+                                        200,
+                                    // width:
+                                    //     MediaQuery.of(context).size.width * 0.8,
+                                    child: WebViewWidget(
+                                        controller: webViewController),
+                                  )
+                            // HtmlWidget(body)
+                            : Text(
+                                body,
+                                overflow: TextOverflow.clip,
+                                style: TextStyle(
+                                  color: tours[i].textColor != null
+                                      ? hexToColor(tours[i].textColor ?? "#000")
+                                      : null,
+                                ),
                               ),
-                            ),
-                    ),
-                    const SizedBox(height: 20),
-                    previousAndNextButtons(
-                      i,
-                      tours.length - 1,
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 20),
+                      previousAndNextButtons(
+                        i,
+                        tours.length - 1,
+                      ),
+                    ],
+                  ),
                 );
               },
             ),
@@ -1085,18 +1087,21 @@ class PagePilot {
   }
 
   static Widget previousAndNextButtons(int index, lastIndex) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        GestureDetector(
-          onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
-          child: Text(index == 0 ? '' : 'Previous'),
-        ),
-        GestureDetector(
-          onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
-          child: Text(index == lastIndex ? '' : 'Next'),
-        ),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          GestureDetector(
+            onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+            child: Text(index == 0 ? '' : 'Previous'),
+          ),
+          GestureDetector(
+            onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+            child: Text(index == lastIndex ? '' : 'Next'),
+          ),
+        ],
+      ),
     );
   }
 

@@ -1,3 +1,7 @@
+## 0.0.9+15
+
+- Tour UI enhancement
+
 ## 0.0.9+14
 
 - Tour package auto sizing added
