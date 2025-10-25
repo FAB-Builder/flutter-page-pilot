@@ -882,36 +882,53 @@ class PagePilot {
 
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i].content.toString();
+      String? contentHeight = tours[i].height;
       final key = config.keys[tours[i].selector.toString()];
       if (scrollController != null) {
         await scrollToTarget(key, scrollController);
       }
+      ValueNotifier<double> heightNotifier = ValueNotifier<double>(100);
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..enableZoom(false)
-        ..setNavigationDelegate(
-          NavigationDelegate(
-            onProgress: (int progress) {
-              // Update loading bar.
-            },
-            onPageStarted: (String url) {},
-            onPageFinished: (String url) {},
-            onHttpError: (HttpResponseError error) {},
-            onWebResourceError: (WebResourceError error) {},
-            onNavigationRequest: (NavigationRequest request) {
-              if (request.url.startsWith('https://www.youtube.com/')) {
-                return NavigationDecision.prevent;
+        ..setBackgroundColor(
+            const Color(0x00000000)) // ✅ Transparent background
+        ..enableZoom(false);
+      webViewController.setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            // Update loading bar.
+          },
+          onPageStarted: (String url) {},
+          onPageFinished: (String url) async {
+            if (contentHeight == null) {
+              await Future.delayed(Duration(milliseconds: 300));
+              try {
+                final height =
+                    await webViewController.runJavaScriptReturningResult(
+                  'document.documentElement.scrollHeight',
+                );
+                heightNotifier.value = double.parse(height.toString());
+              } catch (e) {
+                print('Error getting height: $e');
               }
-              return NavigationDecision.navigate;
-            },
-          ),
-        );
+            }
+          },
+          onHttpError: (HttpResponseError error) {},
+          onWebResourceError: (WebResourceError error) {},
+          onNavigationRequest: (NavigationRequest request) {
+            // if (request.url.startsWith('https://www.youtube.com/')) {
+            //   return NavigationDecision.prevent;
+            // }
+            return NavigationDecision.navigate;
+          },
+        ),
+      );
       targets.add(
         TargetFocus(
           identify: "",
-          shape: tours[i].shape.toString().toLowerCase() == "rect"
-              ? ShapeLightFocus.RRect
-              : ShapeLightFocus.Circle,
+          shape: tours[i].shape.toString().toLowerCase() == "circle"
+              ? ShapeLightFocus.Circle
+              : ShapeLightFocus.RRect,
           keyTarget: config.keys[tours[i].selector.toString()],
           alignSkip: Alignment.topRight,
           enableOverlayTab: true,
@@ -929,14 +946,16 @@ class PagePilot {
                 return Column(
                   children: [
                     Container(
-                      decoration: BoxDecoration(
-                        color: tours[i].background != null
-                            ? hexToColor(tours[i].background ?? "#ffffff")
-                            : isDarkTheme
-                                ? Colors.black
-                                : Colors.white,
-                        borderRadius: BorderRadius.circular(borderRadius),
-                      ),
+                      margin: EdgeInsets.zero,
+                      padding: EdgeInsets.zero,
+                      // decoration: BoxDecoration(
+                      //   color: tours[i].background != null
+                      //       ? hexToColor(tours[i].background ?? "#ffffff")
+                      //       : isDarkTheme
+                      //           ? Colors.black
+                      //           : Colors.white,
+                      //   borderRadius: BorderRadius.circular(borderRadius),
+                      // ),
                       // Text(
                       //   tours[i].title.toString(),
                       //   style: TextStyle(
@@ -953,12 +972,30 @@ class PagePilot {
                       child: body
                               .toString()
                               .startsWith(bodyStartsWithHtmlString)
-                          ? SizedBox(
-                              height: 200,
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              child:
-                                  WebViewWidget(controller: webViewController),
-                            )
+                          ? contentHeight == null
+                              ? ValueListenableBuilder<double>(
+                                  valueListenable: heightNotifier,
+                                  builder: (context, height, child) {
+                                    return SizedBox(
+                                      height: height,
+                                      // width:
+                                      //     MediaQuery.of(context).size.width * 0.8,
+                                      child: WebViewWidget(
+                                          controller: webViewController),
+                                    );
+                                  },
+                                )
+                              : SizedBox(
+                                  height: double.tryParse(contentHeight
+                                          .toString()
+                                          .replaceAll("px", "replace")) ??
+                                      200,
+                                  // width:
+                                  //     MediaQuery.of(context).size.width * 0.8,
+                                  child: WebViewWidget(
+                                      controller: webViewController),
+                                )
+                          // HtmlWidget(body)
                           : Text(
                               body,
                               overflow: TextOverflow.clip,
@@ -971,7 +1008,9 @@ class PagePilot {
                     ),
                     const SizedBox(height: 20),
                     previousAndNextButtons(
-                        i, tours.length - 1, tours, config, scrollController),
+                      i,
+                      tours.length - 1,
+                    ),
                   ],
                 );
               },
@@ -983,7 +1022,6 @@ class PagePilot {
         webViewController.loadRequest(Uri.parse(body));
       }
       if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-        loadHtmlStringIntoWebview(body);
         await webViewController.loadHtmlString(body);
         // adjustWebviewZoom(scale: tours[i].scale ?? 2);
       }
@@ -1046,58 +1084,60 @@ class PagePilot {
     return Color(int.parse(buffer.toString(), radix: 16));
   }
 
-  // static Widget previousAndNextButtons(int index, lastIndex) {
-  //   return Row(
-  //     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //     children: [
-  //       GestureDetector(
-  //         onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
-  //         child: Text(index == 0 ? '' : 'Previous'),
-  //       ),
-  //       GestureDetector(
-  //         onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
-  //         child: Text(index == lastIndex ? '' : 'Next'),
-  //       ),
-  //     ],
-  //   );
-  // }
-  static Widget previousAndNextButtons(
+  static Widget previousAndNextButtons(int index, lastIndex) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+          child: Text(index == 0 ? '' : 'Previous'),
+        ),
+        GestureDetector(
+          onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+          child: Text(index == lastIndex ? '' : 'Next'),
+        ),
+      ],
+    );
+  }
+
+  static Widget previousAndNextButtonsWithScroll(
     int index,
     int lastIndex,
     List<dynamic> tours,
     Config config,
     ScrollController? scrollController,
   ) {
-    if (scrollController != null)
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          GestureDetector(
-            onTap: index == 0
-                ? null
-                : () async {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        GestureDetector(
+          onTap: index == 0
+              ? null
+              : () async {
+                  if (scrollController != null) {
                     final prevKey =
-                        config.keys[tours[index - 1]["element"].toString()];
+                        config.keys[tours[index - 1]["selector"].toString()];
                     await scrollToTarget(prevKey, scrollController);
-                    tutorialCoachMark.previous();
-                  },
-            child: Text(index == 0 ? '' : 'Previous'),
-          ),
-          GestureDetector(
-            onTap: index == lastIndex
-                ? null
-                : () async {
+                  }
+                  tutorialCoachMark.previous();
+                },
+          child: Text(index == 0 ? '' : 'Previous'),
+        ),
+        GestureDetector(
+          onTap: index == lastIndex
+              ? null
+              : () async {
+                  if (scrollController != null) {
                     final nextKey =
-                        config.keys[tours[index + 1]["element"].toString()];
+                        config.keys[tours[index + 1]["selector"].toString()];
                     await scrollToTarget(nextKey, scrollController);
-                    tutorialCoachMark.next();
-                  },
-            child: Text(index == lastIndex ? '' : 'Next'),
-          ),
-        ],
-      );
-    else
-      return SizedBox();
+                  }
+                  tutorialCoachMark.next();
+                },
+          child: Text(index == lastIndex ? '' : 'Next'),
+        ),
+      ],
+    );
   }
 
   static void adjustWebviewZoom({int scale = 4}) {

@@ -21,30 +21,35 @@ class StepModel {
   bool? draggable;
   String? url;
   String? color;
+  String? width;
+  String? height;
 
-  StepModel(
-      {this.triggerIcon,
-      this.triggerLabel,
-      this.trigger,
-      this.dismissalSetting,
-      this.title,
-      this.selector,
-      this.language,
-      this.content,
-      this.animationType,
-      this.delay,
-      this.isBackdrop,
-      this.isCaret,
-      this.position,
-      this.triggerMode,
-      this.id,
-      this.shape,
-      this.background,
-      this.textColor,
-      this.showConfetti,
-      this.draggable,
-      this.url,
-      this.color});
+  StepModel({
+    this.triggerIcon,
+    this.triggerLabel,
+    this.trigger,
+    this.dismissalSetting,
+    this.title,
+    this.selector,
+    this.language,
+    this.content,
+    this.animationType,
+    this.delay,
+    this.isBackdrop,
+    this.isCaret,
+    this.position,
+    this.triggerMode,
+    this.id,
+    this.shape,
+    this.background,
+    this.textColor,
+    this.showConfetti,
+    this.draggable,
+    this.url,
+    this.color,
+    this.height,
+    this.width,
+  });
 
   StepModel.fromJson(Map<String, dynamic> json) {
     triggerIcon = json['triggerIcon'] != null
@@ -73,6 +78,8 @@ class StepModel {
     draggable = json['draggable'];
     url = json['url'];
     color = json['color'];
+    height = json['height'];
+    width = json['width'];
   }
 
   Map<String, dynamic> toJson() {
@@ -103,6 +110,8 @@ class StepModel {
     data['draggable'] = this.draggable;
     data['url'] = this.url;
     data['color'] = this.color;
+    data['height'] = this.height;
+    data['width'] = this.width;
     return data;
   }
 }
