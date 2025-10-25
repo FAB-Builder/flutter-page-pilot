@@ -1,3 +1,7 @@
+## 0.0.9+14
+
+- Tour package auto sizing added
+
 ## 0.0.9+13
 
 - Tour package updated
