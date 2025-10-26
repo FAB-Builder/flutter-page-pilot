@@ -1,3 +1,7 @@
+## 0.0.9+16
+
+- Tour UI space reduced
+
 ## 0.0.9+15
 
 - Tour UI enhancement

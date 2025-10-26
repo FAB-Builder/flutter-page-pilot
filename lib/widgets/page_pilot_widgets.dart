@@ -900,17 +900,59 @@ class PagePilot {
           },
           onPageStarted: (String url) {},
           onPageFinished: (String url) async {
-            if (contentHeight == null) {
-              await Future.delayed(Duration(milliseconds: 300));
-              try {
-                final height =
-                    await webViewController.runJavaScriptReturningResult(
-                  'document.documentElement.scrollHeight',
-                );
-                heightNotifier.value = double.parse(height.toString());
-              } catch (e) {
-                print('Error getting height: $e');
-              }
+            try {
+              // Wait for layout (especially images/fonts)
+              await Future.delayed(const Duration(milliseconds: 400));
+
+              final jsResult =
+                  await webViewController.runJavaScriptReturningResult('''
+      (function() {
+        const body = document.body;
+        const html = document.documentElement;
+
+        html.style.margin = '0';
+        html.style.padding = '0';
+        html.style.overflow = 'hidden';
+        body.style.margin = '0';
+        body.style.padding = '0';
+        body.style.overflow = 'hidden';
+
+        // Ensure all images loaded
+        const imgs = document.images;
+        for (let i = 0; i < imgs.length; i++) {
+          if (!imgs[i].complete) return -1;
+        }
+
+        let height = Math.max(
+          body.scrollHeight, body.offsetHeight,
+          html.clientHeight, html.scrollHeight, html.offsetHeight
+        );
+
+        return height.toString();
+      })();
+    ''');
+
+              // if (jsResult.toString().contains('-1')) {
+              //   await Future.delayed(const Duration(milliseconds: 300));
+              //   return onPageFinished(url);
+              // }
+
+              final heightStr =
+                  jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+              final heightVal = double.tryParse(heightStr) ?? 0;
+
+              final pixelRatioJs = await webViewController
+                  .runJavaScriptReturningResult('window.devicePixelRatio');
+              final pixelRatio =
+                  double.tryParse(pixelRatioJs.toString()) ?? 1.0;
+
+              final adjustedHeight = (heightVal / pixelRatio) + 75;
+
+              heightNotifier.value = adjustedHeight;
+              print('WebView height set to: ${heightNotifier.value}');
+            } catch (e) {
+              print('Error getting height: $e');
+              heightNotifier.value = 400;
             }
           },
           onHttpError: (HttpResponseError error) {},
