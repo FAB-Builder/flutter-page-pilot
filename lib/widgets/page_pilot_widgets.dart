@@ -9,8 +9,9 @@ import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
+import 'package:pagepilot/widgets/utils.dart';
+import 'package:pagepilot/widgets/webview_util.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
@@ -21,17 +22,16 @@ class PagePilot {
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
   static bool isDarkMode = false;
-  static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
+
   static String htmlBodyStart =
       "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { background:#ffffff00;margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
-  static ValueNotifier<double> heightNotifier = ValueNotifier<double>(200);
+
   // static String htmlBodyStart =
   //     "<body style=\"margin: 0;padding: 0;width: 100vw;height: 100vh;overflow: hidden;display: flex;justify-content: center;align-items: center;\"><style>body img,body iframe,body video {max-width: 100%;max-height: 100%;object-fit: contain;}</style>";
   static String htmlBodyEnd = "</body></html>";
-
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
-  static WebViewController? controller;
+
   static Styles styles = Styles(
     shadowColor: Colors.red,
     shadowOpacity: 0.5,
@@ -76,105 +76,6 @@ class PagePilot {
     //     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
     //   );
     // }
-
-    controller = WebViewController()
-      ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000)) // ✅ Transparent background
-      ..enableZoom(false);
-
-    controller!.setNavigationDelegate(
-      NavigationDelegate(
-        onProgress: (int progress) {
-          // Update loading bar.
-        },
-        onPageStarted: (String url) {},
-        onPageFinished: (String url) async {
-          try {
-            // Wait for layout (especially images/fonts)
-            await Future.delayed(const Duration(milliseconds: 400));
-
-            // Inject JS to intercept clicks on buttons with
-            //data-action="onNextStep"
-            //data-action="onPrevStep"
-            //data-action="link"
-            //data-action="onCloseStep"
-            await controller!.runJavaScript('''
-                document.querySelectorAll('button[data-action="link"]').forEach(btn => {
-                  btn.addEventListener('click', (event) => {
-                    event.preventDefault(); // Prevent navigation
-                    const anchor = btn.closest('a');
-                    if (anchor) {
-                      // Send URL to Flutter
-                      FlutterChannel.postMessage(JSON.stringify({action: 'openLink', url: anchor.href}));
-                    }
-                  });
-                });
-                document.querySelectorAll('button[data-action="onCloseStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onCloseStepClicked'}));
-                  });
-                });
-              ''');
-
-            final jsResult = await controller!.runJavaScriptReturningResult('''
-      (function() {
-        const body = document.body;
-        const html = document.documentElement;
-
-        html.style.margin = '0';
-        html.style.padding = '0';
-        html.style.overflow = 'hidden';
-        body.style.margin = '0';
-        body.style.padding = '0';
-        body.style.overflow = 'hidden';
-
-        // Ensure all images loaded
-        const imgs = document.images;
-        for (let i = 0; i < imgs.length; i++) {
-          if (!imgs[i].complete) return -1;
-        }
-
-        let height = Math.max(
-          body.scrollHeight, body.offsetHeight,
-          html.clientHeight, html.scrollHeight, html.offsetHeight
-        );
-
-        return height.toString();
-      })();
-    ''');
-
-            // if (jsResult.toString().contains('-1')) {
-            //   await Future.delayed(const Duration(milliseconds: 300));
-            //   return onPageFinished(url);
-            // }
-
-            final heightStr =
-                jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
-            final heightVal = double.tryParse(heightStr) ?? 0;
-
-            final pixelRatioJs = await controller!
-                .runJavaScriptReturningResult('window.devicePixelRatio');
-            final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
-
-            final adjustedHeight = (heightVal / pixelRatio) + 75;
-
-            heightNotifier.value = adjustedHeight;
-            print('WebView height set to: ${heightNotifier.value}');
-          } catch (e) {
-            print('Error getting height: $e');
-            heightNotifier.value = 400;
-          }
-        },
-        onHttpError: (HttpResponseError error) {},
-        onWebResourceError: (WebResourceError error) {},
-        onNavigationRequest: (NavigationRequest request) {
-          // if (request.url.startsWith('https://www.youtube.com/')) {
-          //   return NavigationDecision.prevent;
-          // }
-          return NavigationDecision.navigate;
-        },
-      ),
-    );
   }
 
   static void initTutorialCoachMark(List<TargetFocus> targets) {
@@ -234,7 +135,7 @@ class PagePilot {
             padding: EdgeInsets.all(padding),
             decoration: BoxDecoration(
               color: background != null
-                  ? hexToColor(background)
+                  ? Util.hexToColor(background)
                   : Colors.black.withOpacity(0.8),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -257,7 +158,7 @@ class PagePilot {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       color: textColor != null
-                                          ? hexToColor(textColor)
+                                          ? Util.hexToColor(textColor)
                                           : Colors.white,
                                       fontSize: 18,
                                       fontWeight: FontWeight.bold,
@@ -265,13 +166,12 @@ class PagePilot {
                                   ),
                                 )
                               : const SizedBox(),
-                          body.toString().startsWith(bodyStartsWithHtmlString)
+                          body.toString().startsWith(
+                                  WebviewUtil.bodyStartsWithHtmlString)
                               ? SizedBox(
                                   height: 50,
                                   width: 340,
-                                  child: WebViewWidget(
-                                    controller: controller!,
-                                  ),
+                                  child: WebviewUtil.getWebView(),
                                 )
                               : ConstrainedBox(
                                   constraints:
@@ -282,7 +182,7 @@ class PagePilot {
                                     body,
                                     style: TextStyle(
                                       color: textColor != null
-                                          ? hexToColor(textColor)
+                                          ? Util.hexToColor(textColor)
                                           : Colors.white,
                                     ),
                                   ),
@@ -292,9 +192,7 @@ class PagePilot {
                     : SizedBox(
                         height: 80,
                         width: 340,
-                        child: WebViewWidget(
-                          controller: controller!,
-                        ),
+                        child: WebviewUtil.getWebView(),
                       ),
                 const Spacer(),
                 IconButton(
@@ -302,7 +200,7 @@ class PagePilot {
                     _overlayEntry?.remove();
                     _overlayEntry = null;
 
-                    controller!.clearCache();
+                    WebviewUtil.clearCache();
                   },
                   icon: const Icon(
                     Icons.close,
@@ -324,16 +222,10 @@ class PagePilot {
     Future.delayed(Duration(milliseconds: duration), () {
       _overlayEntry?.remove();
       _overlayEntry = null;
-      controller!.clearCache();
+      WebviewUtil.clearCache();
     });
 
-    if (url != null) {
-      controller!.loadRequest(Uri.parse(url));
-    }
-    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: scale ?? 2);
-    }
+    WebviewUtil.load(url, body, null);
   }
 
   static void showBottomSheet(
@@ -362,7 +254,7 @@ class PagePilot {
                 right: padding),
             decoration: BoxDecoration(
               color: background != null
-                  ? hexToColor(background)
+                  ? Util.hexToColor(background)
                   : isDarkMode
                       ? Colors.black
                       : Colors.white,
@@ -380,14 +272,17 @@ class PagePilot {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color:
-                              textColor != null ? hexToColor(textColor) : null,
+                          color: textColor != null
+                              ? Util.hexToColor(textColor)
+                              : null,
                         ),
                       )
                     : const SizedBox(),
                 const SizedBox(height: 16),
                 body != null
-                    ? body.toString().startsWith(bodyStartsWithHtmlString)
+                    ? body
+                            .toString()
+                            .startsWith(WebviewUtil.bodyStartsWithHtmlString)
                         ? Container(
                             height: 200,
                             constraints: const BoxConstraints(
@@ -395,20 +290,20 @@ class PagePilot {
                               maxHeight: 500, // Maximum height
                             ),
                             // width: double.infinity,
-                            child: WebViewWidget(controller: controller!),
+                            child: WebviewUtil.getWebView(),
                           )
                         : Text(
                             body,
                             style: TextStyle(
                               color: textColor != null
-                                  ? hexToColor(textColor)
+                                  ? Util.hexToColor(textColor)
                                   : null,
                             ),
                           )
                     : SizedBox(
                         height: 200,
                         width: 200,
-                        child: WebViewWidget(controller: controller!),
+                        child: WebviewUtil.getWebView(),
                       ),
                 Row(
                   children: [
@@ -429,13 +324,7 @@ class PagePilot {
       },
     );
 
-    if (url != null) {
-      controller!.loadRequest(Uri.parse(url));
-    }
-    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: scale ?? 4);
-    }
+    WebviewUtil.load(url, body, null);
   }
 
   static void showOkDialog(
@@ -462,7 +351,7 @@ class PagePilot {
         builder: (BuildContext context) {
           return AlertDialog(
             backgroundColor: background != null
-                ? hexToColor(background)
+                ? Util.hexToColor(background)
                 : isDarkMode
                     ? Colors.black
                     : Colors.white,
@@ -470,7 +359,8 @@ class PagePilot {
                 ? Text(
                     title,
                     style: TextStyle(
-                      color: textColor != null ? hexToColor(textColor) : null,
+                      color:
+                          textColor != null ? Util.hexToColor(textColor) : null,
                     ),
                   )
                 : null,
@@ -478,24 +368,26 @@ class PagePilot {
               child: Stack(
                 children: [
                   body != null
-                      ? body.toString().startsWith(bodyStartsWithHtmlString)
+                      ? body
+                              .toString()
+                              .startsWith(WebviewUtil.bodyStartsWithHtmlString)
                           ? SizedBox(
                               height: 200,
                               width: 200,
-                              child: WebViewWidget(controller: controller!),
+                              child: WebviewUtil.getWebView(),
                             )
                           : Text(
                               body,
                               style: TextStyle(
                                 color: textColor != null
-                                    ? hexToColor(textColor)
+                                    ? Util.hexToColor(textColor)
                                     : null,
                               ),
                             )
                       : SizedBox(
                           height: 200,
                           width: 200,
-                          child: WebViewWidget(controller: controller!),
+                          child: WebviewUtil.getWebView(),
                         ),
                   showConfetti
                       ? SizedBox(
@@ -533,7 +425,7 @@ class PagePilot {
                       }
                     : () {
                         Navigator.pop(context);
-                        controller!.clearCache();
+                        WebviewUtil.clearCache();
                         if (showConfetti) {
                           _confettiController.stop();
                         }
@@ -546,13 +438,7 @@ class PagePilot {
             ],
           );
         });
-    if (url != null) {
-      controller!.loadRequest(Uri.parse(url));
-    }
-    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      controller!.loadHtmlString(body.toString());
-      adjustWebviewZoom(scale: scale ?? 4);
-    }
+    WebviewUtil.load(url, body, null);
   }
 
   static void showInfoDialog(BuildContext context,
@@ -657,39 +543,18 @@ class PagePilot {
                         ? ContentAlign.left
                         : ContentAlign.right,
             builder: (context, coachMarkController) {
-              return Container(
-                margin: EdgeInsets.zero,
-                padding: EdgeInsets.zero,
-                child: body.toString().startsWith(bodyStartsWithHtmlString)
-                    ? contentHeight == null
-                        ? ValueListenableBuilder<double>(
-                            valueListenable: heightNotifier,
-                            builder: (context, height, child) {
-                              return SizedBox(
-                                height: height,
-                                // width:
-                                //     MediaQuery.of(context).size.width * 0.8,
-                                child: WebViewWidget(controller: controller!),
-                              );
-                            },
-                          )
-                        : SizedBox(
-                            height: double.tryParse(contentHeight
-                                    .toString()
-                                    .replaceAll("px", "replace")) ??
-                                200,
-                            // width:
-                            //     MediaQuery.of(context).size.width * 0.8,
-                            child: WebViewWidget(controller: controller!),
-                          )
-                    : Text(
-                        body,
-                        overflow: TextOverflow.clip,
-                        style: TextStyle(
-                          color:
-                              textColor != null ? hexToColor(textColor) : null,
-                        ),
-                      ),
+              return SafeArea(
+                child: SingleChildScrollView(
+                  child: Container(
+                    margin: EdgeInsets.zero,
+                    padding: EdgeInsets.zero,
+                    child: WebviewUtil.getWebViewWidget(
+                      body,
+                      textColor,
+                      contentHeight,
+                    ),
+                  ),
+                ),
               );
             },
           ),
@@ -699,24 +564,8 @@ class PagePilot {
 
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
-    if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      controller!.loadHtmlString(body);
-      controller!.addJavaScriptChannel(
-        'FlutterChannel',
-        onMessageReceived: (JavaScriptMessage message) {
-          final data = jsonDecode(message.message);
-          switch (data['action']) {
-            case 'openLink':
-              final url = data['url'] as String;
-              launchInBrowser(url);
-              break;
-            case 'onCloseStepClicked':
-              tutorialCoachMark.finish();
-              break;
-          }
-        },
-      );
-    }
+
+    WebviewUtil.load(null, body, tutorialCoachMark);
   }
 
   static OverlayEntry? _entry;
@@ -814,7 +663,7 @@ class PagePilot {
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             color: background != null
-                                ? hexToColor(background)
+                                ? Util.hexToColor(background)
                                 : isDarkMode
                                     ? Colors.black
                                     : Colors.white,
@@ -837,36 +686,17 @@ class PagePilot {
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                     color: textColor != null
-                                        ? hexToColor(textColor)
+                                        ? Util.hexToColor(textColor)
                                         : null,
                                   ),
                                 ),
                               const SizedBox(height: 8),
-                              if (controller != null)
-                                body != null &&
-                                        body.startsWith(
-                                            bodyStartsWithHtmlString)
-                                    ? SizedBox(
-                                        height: 200,
-                                        width: 200,
-                                        child: WebViewWidget(
-                                            controller: controller!),
-                                      )
-                                    : body != null
-                                        ? Text(
-                                            body,
-                                            style: TextStyle(
-                                              color: textColor != null
-                                                  ? hexToColor(textColor)
-                                                  : null,
-                                            ),
-                                          )
-                                        : SizedBox(
-                                            height: 200,
-                                            width: 200,
-                                            child: WebViewWidget(
-                                                controller: controller!),
-                                          ),
+                              if (WebviewUtil.controller != null)
+                                WebviewUtil.getWebViewWidget(
+                                  body,
+                                  textColor,
+                                  null,
+                                )
                             ],
                           ),
                         ),
@@ -881,13 +711,12 @@ class PagePilot {
 
     overlay.insert(_entry!);
 
-    if (controller != null) {
-      if (body != null && body.startsWith(bodyStartsWithHtmlString)) {
-        controller!.loadHtmlString(htmlBodyStart + body + htmlBodyEnd);
-        adjustWebviewZoom(scale: scale ?? 4);
-      } else if (url != null) {
-        controller!.loadRequest(Uri.parse(url));
-      }
+    if (WebviewUtil.controller != null) {
+      WebviewUtil.load(
+        url,
+        htmlBodyStart + body.toString() + htmlBodyEnd,
+        tutorialCoachMark,
+      );
     }
   }
 
@@ -952,15 +781,6 @@ class PagePilot {
     // });
   }
 
-  static Future<void> launchInBrowser(String url) async {
-    Uri uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      print("ErrOr launching ${url}");
-    }
-  }
-
   static Future<void> showTour(BuildContext context, Config config,
       {required List<StepModel> tours, ScrollController? scrollController
       // required Widget widget,
@@ -992,7 +812,7 @@ class PagePilot {
                 break;
               case 'openLink':
                 final url = data['url'] as String;
-                launchInBrowser(url);
+                Util.launchInBrowser(url);
                 break;
               case 'onCloseStepClicked':
                 tutorialCoachMark.finish();
@@ -1155,9 +975,8 @@ class PagePilot {
                         //   ),
                         // ),
                         // Text(tours[i]["description"].toString()),
-                        child: body
-                                .toString()
-                                .startsWith(bodyStartsWithHtmlString)
+                        child: body.toString().startsWith(
+                                WebviewUtil.bodyStartsWithHtmlString)
                             ? contentHeight == null
                                 ? ValueListenableBuilder<double>(
                                     valueListenable: heightNotifier,
@@ -1187,7 +1006,8 @@ class PagePilot {
                                 overflow: TextOverflow.clip,
                                 style: TextStyle(
                                   color: tours[i].textColor != null
-                                      ? hexToColor(tours[i].textColor ?? "#000")
+                                      ? Util.hexToColor(
+                                          tours[i].textColor ?? "#000")
                                       : null,
                                 ),
                               ),
@@ -1208,7 +1028,7 @@ class PagePilot {
       if (body.startsWith("http")) {
         webViewController.loadRequest(Uri.parse(body));
       }
-      if (body.toString().startsWith(bodyStartsWithHtmlString)) {
+      if (body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)) {
         await webViewController.loadHtmlString(body);
         // adjustWebviewZoom(scale: tours[i].scale ?? 2);
       }
@@ -1260,15 +1080,6 @@ class PagePilot {
       default:
         return widgetPosition;
     }
-  }
-
-  static Color hexToColor(String hexString) {
-    final buffer = StringBuffer();
-    if (hexString.length == 6 || hexString.length == 7) {
-      buffer.write('ff'); // Adds 'ff' for opacity if alpha is missing
-    }
-    buffer.write(hexString.replaceFirst('#', '')); // Removes the # if present
-    return Color(int.parse(buffer.toString(), radix: 16));
   }
 
   static Widget previousAndNextButtons(int index, lastIndex) {
@@ -1328,18 +1139,6 @@ class PagePilot {
         ),
       ],
     );
-  }
-
-  static void adjustWebviewZoom({int scale = 4}) {
-    controller!.setNavigationDelegate(NavigationDelegate(
-      onPageFinished: (String url) async {
-//document.body.style.zoom = 5; NOT SUPPORTED
-        await controller!.runJavaScript("""
-              document.body.style.transform = "scale(${scale.toString()})";
-              document.body.style.transformOrigin = "0 0";
-            """);
-      },
-    ));
   }
 
 //   static Widget AdjustedWebView(
