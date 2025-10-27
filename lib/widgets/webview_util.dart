@@ -10,7 +10,7 @@ class WebviewUtil {
   static ValueNotifier<double> heightNotifier = ValueNotifier<double>(200);
   static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
 
-  init() {
+  static init() {
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000)) // ✅ Transparent background

@@ -76,6 +76,8 @@ class PagePilot {
     //     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
     //   );
     // }
+
+    WebviewUtil.init();
   }
 
   static void initTutorialCoachMark(List<TargetFocus> targets) {
