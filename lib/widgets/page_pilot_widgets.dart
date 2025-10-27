@@ -24,7 +24,7 @@ class PagePilot {
   static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
   static String htmlBodyStart =
       "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { background:#ffffff00;margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
-
+  static ValueNotifier<double> heightNotifier = ValueNotifier<double>(200);
   // static String htmlBodyStart =
   //     "<body style=\"margin: 0;padding: 0;width: 100vw;height: 100vh;overflow: hidden;display: flex;justify-content: center;align-items: center;\"><style>body img,body iframe,body video {max-width: 100%;max-height: 100%;object-fit: contain;}</style>";
   static String htmlBodyEnd = "</body></html>";
@@ -79,28 +79,102 @@ class PagePilot {
 
     controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) async {
-            var x = await controller!.runJavaScriptReturningResult(
-                "document.documentElement.scrollHeight");
-            double? y = double.tryParse(x.toString());
-            debugPrint('parse : $y');
-          },
-          onHttpError: (HttpResponseError error) {},
-          onWebResourceError: (WebResourceError error) {},
-          onNavigationRequest: (NavigationRequest request) {
-            if (request.url.startsWith('https://www.youtube.com/')) {
-              return NavigationDecision.prevent;
-            }
-            return NavigationDecision.navigate;
-          },
-        ),
-      );
+      ..setBackgroundColor(const Color(0x00000000)) // ✅ Transparent background
+      ..enableZoom(false);
+
+    controller!.setNavigationDelegate(
+      NavigationDelegate(
+        onProgress: (int progress) {
+          // Update loading bar.
+        },
+        onPageStarted: (String url) {},
+        onPageFinished: (String url) async {
+          try {
+            // Wait for layout (especially images/fonts)
+            await Future.delayed(const Duration(milliseconds: 400));
+
+            // Inject JS to intercept clicks on buttons with
+            //data-action="onNextStep"
+            //data-action="onPrevStep"
+            //data-action="link"
+            //data-action="onCloseStep"
+            await controller!.runJavaScript('''
+                document.querySelectorAll('button[data-action="link"]').forEach(btn => {
+                  btn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Prevent navigation
+                    const anchor = btn.closest('a');
+                    if (anchor) {
+                      // Send URL to Flutter
+                      FlutterChannel.postMessage(JSON.stringify({action: 'openLink', url: anchor.href}));
+                    }
+                  });
+                });
+                document.querySelectorAll('button[data-action="onCloseStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onCloseStepClicked'}));
+                  });
+                });
+              ''');
+
+            final jsResult = await controller!.runJavaScriptReturningResult('''
+      (function() {
+        const body = document.body;
+        const html = document.documentElement;
+
+        html.style.margin = '0';
+        html.style.padding = '0';
+        html.style.overflow = 'hidden';
+        body.style.margin = '0';
+        body.style.padding = '0';
+        body.style.overflow = 'hidden';
+
+        // Ensure all images loaded
+        const imgs = document.images;
+        for (let i = 0; i < imgs.length; i++) {
+          if (!imgs[i].complete) return -1;
+        }
+
+        let height = Math.max(
+          body.scrollHeight, body.offsetHeight,
+          html.clientHeight, html.scrollHeight, html.offsetHeight
+        );
+
+        return height.toString();
+      })();
+    ''');
+
+            // if (jsResult.toString().contains('-1')) {
+            //   await Future.delayed(const Duration(milliseconds: 300));
+            //   return onPageFinished(url);
+            // }
+
+            final heightStr =
+                jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+            final heightVal = double.tryParse(heightStr) ?? 0;
+
+            final pixelRatioJs = await controller!
+                .runJavaScriptReturningResult('window.devicePixelRatio');
+            final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
+
+            final adjustedHeight = (heightVal / pixelRatio) + 75;
+
+            heightNotifier.value = adjustedHeight;
+            print('WebView height set to: ${heightNotifier.value}');
+          } catch (e) {
+            print('Error getting height: $e');
+            heightNotifier.value = 400;
+          }
+        },
+        onHttpError: (HttpResponseError error) {},
+        onWebResourceError: (WebResourceError error) {},
+        onNavigationRequest: (NavigationRequest request) {
+          // if (request.url.startsWith('https://www.youtube.com/')) {
+          //   return NavigationDecision.prevent;
+          // }
+          return NavigationDecision.navigate;
+        },
+      ),
+    );
   }
 
   static void initTutorialCoachMark(List<TargetFocus> targets) {
@@ -131,16 +205,6 @@ class PagePilot {
         return true;
       },
     );
-  }
-
-  static void loadHtmlStringIntoWebview(String body) async {
-    // String htmlString = body.toString().replaceAllMapped(
-    //       RegExp(r'\\u([0-9a-fA-F]{4})'),
-    //       (match) => String.fromCharCode(int.parse(match.group(1)!, radix: 16)),
-    //     );
-    // String bodyTemp =
-    //     '''<html><body><div style="color:#262626;font-family:&quot;Helvetica Neue&quot;, &quot;Arial Nova&quot;, &quot;Nimbus Sans&quot;, Arial, sans-serif;font-size:16px;font-weight:400;letter-spacing:0.15008px;line-height:1.5;margin:0;min-height:100%;width:100%"><table align="center" width="100%" style="margin:0 auto;max-width:320px;background-color:#FFFFFF;border:1px solid #000000;border-collapse:separate" role="presentation" cellSpacing="0" cellPadding="0" border="0"><tbody><tr style="width:100%"><td class="email-layout-content"><h2 class="heading-block" style="font-weight:bold;text-align:center;margin:0;font-size:24px;padding:16px 24px 16px 24px">Hello friend</h2></td></tr></tbody></table></div></div></body></html>''';
-    await controller!.loadHtmlString(body);
   }
 
   static void showSnackbar(
@@ -568,6 +632,9 @@ class PagePilot {
     String? background,
     String? textColor,
     int? scale,
+    String? contentHeight,
+    String? contentWidth,
+    String? position,
   }) {
     // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
     List<TargetFocus> targets = [];
@@ -582,50 +649,47 @@ class PagePilot {
         enableOverlayTab: true,
         contents: [
           TargetContent(
-            align: ContentAlign.bottom,
+            align: position.toString() == "bottom"
+                ? ContentAlign.bottom
+                : position.toString() == "top"
+                    ? ContentAlign.top
+                    : position.toString() == "left"
+                        ? ContentAlign.left
+                        : ContentAlign.right,
             builder: (context, coachMarkController) {
               return Container(
-                decoration: BoxDecoration(
-                  color: background != null
-                      ? hexToColor(background)
-                      : isDarkMode
-                          ? Colors.black
-                          : Colors.white,
-                  borderRadius: BorderRadius.circular(borderRadius),
-                ),
-                padding: EdgeInsets.all(padding),
-                child: Column(
-                  children: [
-                    title != null
-                        ? Text(
-                            title,
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: textColor != null
-                                  ? hexToColor(textColor)
-                                  : null,
-                            ),
+                margin: EdgeInsets.zero,
+                padding: EdgeInsets.zero,
+                child: body.toString().startsWith(bodyStartsWithHtmlString)
+                    ? contentHeight == null
+                        ? ValueListenableBuilder<double>(
+                            valueListenable: heightNotifier,
+                            builder: (context, height, child) {
+                              return SizedBox(
+                                height: height,
+                                // width:
+                                //     MediaQuery.of(context).size.width * 0.8,
+                                child: WebViewWidget(controller: controller!),
+                              );
+                            },
                           )
-                        : const SizedBox(),
-                    const SizedBox(height: 10),
-                    body.toString().startsWith(bodyStartsWithHtmlString)
-                        ? SizedBox(
-                            height: 200,
-                            width: MediaQuery.of(context).size.width * 0.8,
+                        : SizedBox(
+                            height: double.tryParse(contentHeight
+                                    .toString()
+                                    .replaceAll("px", "replace")) ??
+                                200,
+                            // width:
+                            //     MediaQuery.of(context).size.width * 0.8,
                             child: WebViewWidget(controller: controller!),
                           )
-                        : Text(
-                            body,
-                            overflow: TextOverflow.clip,
-                            style: TextStyle(
-                              color: textColor != null
-                                  ? hexToColor(textColor)
-                                  : null,
-                            ),
-                          ),
-                  ],
-                ),
+                    : Text(
+                        body,
+                        overflow: TextOverflow.clip,
+                        style: TextStyle(
+                          color:
+                              textColor != null ? hexToColor(textColor) : null,
+                        ),
+                      ),
               );
             },
           ),
@@ -636,8 +700,22 @@ class PagePilot {
     PagePilot.initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
     if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      loadHtmlStringIntoWebview(body);
-      adjustWebviewZoom(scale: scale ?? 2);
+      controller!.loadHtmlString(body);
+      controller!.addJavaScriptChannel(
+        'FlutterChannel',
+        onMessageReceived: (JavaScriptMessage message) {
+          final data = jsonDecode(message.message);
+          switch (data['action']) {
+            case 'openLink':
+              final url = data['url'] as String;
+              launchInBrowser(url);
+              break;
+            case 'onCloseStepClicked':
+              tutorialCoachMark.finish();
+              break;
+          }
+        },
+      );
     }
   }
 
@@ -1114,7 +1192,7 @@ class PagePilot {
                                 ),
                               ),
                       ),
-                      // const SizedBox(height: 20),
+                      const SizedBox(height: 5),
                       // previousAndNextButtons(
                       //   i,
                       //   tours.length - 1,

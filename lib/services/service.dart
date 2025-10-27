@@ -121,6 +121,8 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
   String? shape,
       title,
       body,
+      height,
+      width,
       url,
       position,
       color,
@@ -135,6 +137,8 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
 
     title = data[0].title;
     body = data[0].content;
+    height = data[0].height;
+    width = data[0].width;
     background = data[0].background ?? "#ffffff";
     textColor = data[0].textColor ?? "#000000";
     showConfetti = data[0].showConfetti ?? false;
@@ -174,6 +178,9 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
           // description: jsonResponse["content"]["tour"][0]["description"],
           title: title,
           body: body ?? "",
+          contentHeight: height,
+          contentWidth: width,
+          position: position,
         );
         await acknowledge(id, Config.userId, type);
         break;
