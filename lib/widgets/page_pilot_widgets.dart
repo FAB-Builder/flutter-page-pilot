@@ -10,6 +10,7 @@ import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
@@ -873,6 +874,15 @@ class PagePilot {
     // });
   }
 
+  static Future<void> launchInBrowser(String url) async {
+    Uri uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      print("ErrOr launching ${url}");
+    }
+  }
+
   static Future<void> showTour(BuildContext context, Config config,
       {required List<StepModel> tours, ScrollController? scrollController
       // required Widget widget,
@@ -890,6 +900,28 @@ class PagePilot {
       ValueNotifier<double> heightNotifier = ValueNotifier<double>(100);
       WebViewController webViewController = WebViewController()
         ..setJavaScriptMode(JavaScriptMode.unrestricted)
+        ..addJavaScriptChannel(
+          'FlutterChannel',
+          onMessageReceived: (JavaScriptMessage message) {
+            final data = jsonDecode(message.message);
+
+            switch (data['action']) {
+              case 'onNextStepClicked':
+                tutorialCoachMark.next();
+                break;
+              case 'onPrevStepClicked':
+                tutorialCoachMark.previous();
+                break;
+              case 'openLink':
+                final url = data['url'] as String;
+                launchInBrowser(url);
+                break;
+              case 'onCloseStepClicked':
+                tutorialCoachMark.finish();
+                break;
+            }
+          },
+        )
         ..setBackgroundColor(
             const Color(0x00000000)) // ✅ Transparent background
         ..enableZoom(false);
@@ -903,6 +935,39 @@ class PagePilot {
             try {
               // Wait for layout (especially images/fonts)
               await Future.delayed(const Duration(milliseconds: 400));
+
+              // Inject JS to intercept clicks on buttons with
+              //data-action="onNextStep"
+              //data-action="onPrevStep"
+              //data-action="link"
+              //data-action="onCloseStep"
+              await webViewController.runJavaScript('''
+                document.querySelectorAll('button[data-action="onNextStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onNextStepClicked'}));
+                  });
+                });
+                document.querySelectorAll('button[data-action="onPrevStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onPrevStepClicked'}));
+                  });
+                });
+                document.querySelectorAll('button[data-action="link"]').forEach(btn => {
+                  btn.addEventListener('click', (event) => {
+                    event.preventDefault(); // Prevent navigation
+                    const anchor = btn.closest('a');
+                    if (anchor) {
+                      // Send URL to Flutter
+                      FlutterChannel.postMessage(JSON.stringify({action: 'openLink', url: anchor.href}));
+                    }
+                  });
+                });
+                document.querySelectorAll('button[data-action="onCloseStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onCloseStepClicked'}));
+                  });
+                });
+              ''');
 
               final jsResult =
                   await webViewController.runJavaScriptReturningResult('''
@@ -1049,11 +1114,11 @@ class PagePilot {
                                 ),
                               ),
                       ),
-                      const SizedBox(height: 20),
-                      previousAndNextButtons(
-                        i,
-                        tours.length - 1,
-                      ),
+                      // const SizedBox(height: 20),
+                      // previousAndNextButtons(
+                      //   i,
+                      //   tours.length - 1,
+                      // ),
                     ],
                   ),
                 );

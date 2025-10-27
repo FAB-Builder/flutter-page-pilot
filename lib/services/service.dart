@@ -20,7 +20,7 @@ void doShow({
 
     var response = await http.get(
       Uri.parse(
-          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}"),
+          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}&slug=${screen}"),
     );
 
     //mock data
@@ -109,10 +109,10 @@ void doShow({
   }
 }
 
-acknowledge(id, userId) async {
+acknowledge(id, userId, type) async {
   await http.get(
     Uri.parse(
-        "$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=$id&userId=$userId&device=${Platform.operatingSystem}"),
+        "$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=$id&userId=$userId&device=${Platform.operatingSystem}&type=$type"),
   );
 }
 
@@ -175,7 +175,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
           title: title,
           body: body ?? "",
         );
-        await acknowledge(id, Config.userId);
+        await acknowledge(id, Config.userId, type);
         break;
       case "tour":
       case "walktrough":
@@ -184,7 +184,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
         PagePilot.showTour(context, config,
             tours: data, scrollController: config.scrollController);
 
-        await acknowledge(id, Config.userId);
+        await acknowledge(id, Config.userId, type);
         break;
 
       /*case "dialog":
