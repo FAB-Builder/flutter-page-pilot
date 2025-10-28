@@ -15,7 +15,7 @@ void doShow({
   String? type,
 }) async {
   try {
-    PagePilot.initStyles(config.styles);
+    PagePilot.init(tourStyles: config.styles);
     var jsonResponse;
 
     var response = await http.get(
@@ -167,21 +167,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
             "PagePilotPluginError: Key not found for ${selector.toString()}",
           );
         }
-        PagePilot.showTooltip(
-          context,
-          shape: shape ?? "rect",
-          key: key,
-          scale: scale,
-          background: background,
-          textColor: textColor,
-          // title: jsonResponse["content"]["tour"][0]["title"],
-          // description: jsonResponse["content"]["tour"][0]["description"],
-          title: title,
-          body: body ?? "",
-          contentHeight: height,
-          contentWidth: width,
-          position: position,
-        );
+        PagePilot.showTooltip(context, key: key, data: data[0]);
         await acknowledge(id, Config.userId, type);
         break;
       case "tour":

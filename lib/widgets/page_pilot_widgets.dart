@@ -1,27 +1,24 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
-import 'dart:ui';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
+import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
-import 'package:pagepilot/widgets/utils.dart';
-import 'package:pagepilot/widgets/webview_util.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:pagepilot/utils/utils.dart';
+import 'package:pagepilot/utils/webview_util.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
   static OverlayEntry? _overlayEntry;
-  static late TutorialCoachMark tutorialCoachMark;
+
   static double borderRadius = 20;
   static double padding = 16;
   static bool showConfetti = false;
   static late ConfettiController _confettiController;
-  static bool isDarkMode = false;
 
   static String htmlBodyStart =
       "<!DOCTYPE html> <html lang=\"en\"> <head> <meta name=\"viewport\" content=\"width=device-width, height=device-height, initial-scale=1.0, user-scalable=no\" /> <style> html, body { background:#ffffff00;margin: 0; padding: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden; } img, iframe, video { max-width: 100%; max-height: 100%; object-fit: contain; } </style> </head> <body>";
@@ -31,13 +28,6 @@ class PagePilot {
   static String htmlBodyEnd = "</body></html>";
   // static double webViewHeight = 200;
   // static double webViewWidth = 200;
-
-  static Styles styles = Styles(
-    shadowColor: Colors.red,
-    shadowOpacity: 0.5,
-    textSkip: "SKIP",
-    imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-  );
 
   static Future<void> scrollToTarget(
       GlobalKey key, ScrollController scrollController) async {
@@ -56,58 +46,9 @@ class PagePilot {
     }
   }
 
-  static void initStyles(Styles? s) {
-    var brightness =
-        SchedulerBinding.instance.platformDispatcher.platformBrightness;
-    isDarkMode = brightness == Brightness.dark;
-    if (s != null) {
-      styles = Styles(
-        shadowColor: s.shadowColor,
-        shadowOpacity: s.shadowOpacity,
-        textSkip: s.textSkip,
-        imageFilter: s.imageFilter,
-      );
-    }
-    // else {
-    //   styles = Styles(
-    //     shadowColor: Colors.red,
-    //     shadowOpacity: 0.5,
-    //     textSkip: "SKIP",
-    //     imageFilter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-    //   );
-    // }
-
+  static void init({Styles? tourStyles}) {
+    TourUtil.initStyles(tourStyles);
     WebviewUtil.init();
-  }
-
-  static void initTutorialCoachMark(List<TargetFocus> targets) {
-    tutorialCoachMark = TutorialCoachMark(
-      targets: targets,
-      colorShadow: styles.shadowColor ?? Colors.red,
-      textSkip: styles.textSkip ?? "SKIP",
-      alignSkip: Alignment.bottomRight,
-      paddingFocus: 5,
-      opacityShadow: styles.shadowOpacity ?? 0.5,
-      imageFilter: styles.imageFilter ?? ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-      onFinish: () {
-        print("finish");
-      },
-      onClickTarget: (target) {
-        print('onClickTarget: $target');
-      },
-      onClickTargetWithTapPosition: (target, tapDetails) {
-        print("target: $target");
-        print(
-            "clicked at position local: ${tapDetails.localPosition} - global: ${tapDetails.globalPosition}");
-      },
-      onClickOverlay: (target) {
-        print('onClickOverlay: $target');
-      },
-      onSkip: () {
-        print("skip");
-        return true;
-      },
-    );
   }
 
   static void showSnackbar(
@@ -227,7 +168,7 @@ class PagePilot {
       WebviewUtil.clearCache();
     });
 
-    WebviewUtil.load(url, body, null);
+    WebviewUtil.load(url, body);
   }
 
   static void showBottomSheet(
@@ -257,7 +198,7 @@ class PagePilot {
             decoration: BoxDecoration(
               color: background != null
                   ? Util.hexToColor(background)
-                  : isDarkMode
+                  : Util.isDarkMode
                       ? Colors.black
                       : Colors.white,
               borderRadius: const BorderRadius.only(
@@ -326,7 +267,7 @@ class PagePilot {
       },
     );
 
-    WebviewUtil.load(url, body, null);
+    WebviewUtil.load(url, body);
   }
 
   static void showOkDialog(
@@ -354,7 +295,7 @@ class PagePilot {
           return AlertDialog(
             backgroundColor: background != null
                 ? Util.hexToColor(background)
-                : isDarkMode
+                : Util.isDarkMode
                     ? Colors.black
                     : Colors.white,
             title: title != null
@@ -440,134 +381,88 @@ class PagePilot {
             ],
           );
         });
-    WebviewUtil.load(url, body, null);
+    WebviewUtil.load(url, body);
   }
 
   static void showInfoDialog(BuildContext context,
       {required GlobalKey key,
-      required String shape,
-      required String title,
-      required String body,
+      required StepModel data,
       Function()? onOkPressed}) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    List<TargetFocus> targets = [];
-    targets.add(
-      TargetFocus(
-        shape: shape.toString().toLowerCase() == "rect"
-            ? ShapeLightFocus.RRect
-            : ShapeLightFocus.Circle,
-        identify: "keyDialog",
-        keyTarget: key,
-        alignSkip: Alignment.topRight,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: ContentAlign.bottom,
-            builder: (context, controller) {
-              return AlertDialog(
-                backgroundColor: isDarkTheme ? Colors.black : Colors.white,
-                title: Text(
-                  title,
-                ),
-                // backgroundColor: AppTheme.backgroundColor,
-                content: SingleChildScrollView(
-                  child: ListBody(
-                    children: <Widget>[
-                      Text(
-                        body,
-                      ),
-                    ],
-                  ),
-                ),
-                actions: <Widget>[
-                  // TextButton(
-                  //   onPressed: () => Navigator.pop(context),
-                  //   child: const Text(
-                  //     'Cancel',
-                  //   ),
-                  // ),
-                  TextButton(
-                    onPressed: onOkPressed == null
-                        ? () {
-                            tutorialCoachMark.finish();
-                          }
-                        : () {
-                            tutorialCoachMark.finish();
-                            onOkPressed();
-                          },
-                    child: const Text(
-                      'OK',
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
+    Widget widget = AlertDialog(
+      backgroundColor: isDarkTheme ? Colors.black : Colors.white,
+      title: Text(
+        data.title.toString(),
       ),
+      // backgroundColor: AppTheme.backgroundColor,
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: <Widget>[
+            Text(
+              data.content.toString(),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        // TextButton(
+        //   onPressed: () => Navigator.pop(context),
+        //   child: const Text(
+        //     'Cancel',
+        //   ),
+        // ),
+        TextButton(
+          onPressed: onOkPressed == null
+              ? () {
+                  TourUtil.finish();
+                }
+              : () {
+                  TourUtil.finish();
+                  onOkPressed();
+                },
+          child: const Text(
+            'OK',
+          ),
+        ),
+      ],
     );
 
-    PagePilot.initTutorialCoachMark(targets);
-    tutorialCoachMark.show(context: context);
+    TourUtil.show(
+      context,
+      widgets: [widget],
+      keys: [key],
+      data: [data],
+      targetIdentifier: "keyInfoDialog",
+    );
   }
 
   static void showTooltip(
     BuildContext context, {
     required GlobalKey key,
-    required String shape,
-    String? title,
-    required String body,
-    String? background,
-    String? textColor,
-    int? scale,
-    String? contentHeight,
-    String? contentWidth,
-    String? position,
+    required StepModel data,
   }) {
-    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    List<TargetFocus> targets = [];
-    targets.add(
-      TargetFocus(
-        shape: shape.toString().toLowerCase() == "rect"
-            ? ShapeLightFocus.RRect
-            : ShapeLightFocus.Circle,
-        identify: "keyTooltip",
-        keyTarget: key,
-        alignSkip: Alignment.topRight,
-        enableOverlayTab: true,
-        contents: [
-          TargetContent(
-            align: position.toString() == "bottom"
-                ? ContentAlign.bottom
-                : position.toString() == "top"
-                    ? ContentAlign.top
-                    : position.toString() == "left"
-                        ? ContentAlign.left
-                        : ContentAlign.right,
-            builder: (context, coachMarkController) {
-              return SafeArea(
-                child: SingleChildScrollView(
-                  child: Container(
-                    margin: EdgeInsets.zero,
-                    padding: EdgeInsets.zero,
-                    child: WebviewUtil.getWebViewWidget(
-                      body,
-                      textColor,
-                      contentHeight,
-                    ),
-                  ),
-                ),
-              );
-            },
+    Widget widget = SafeArea(
+      child: SingleChildScrollView(
+        child: Container(
+          margin: EdgeInsets.zero,
+          padding: EdgeInsets.zero,
+          child: WebviewUtil.getWebViewWidget(
+            data.content,
+            data.textColor,
+            data.height,
           ),
-        ],
+        ),
       ),
     );
+    TourUtil.show(
+      context,
+      widgets: [widget],
+      keys: [key],
+      data: [data],
+      targetIdentifier: "keyTooltip",
+    );
 
-    PagePilot.initTutorialCoachMark(targets);
-    tutorialCoachMark.show(context: context);
-
-    WebviewUtil.load(null, body, tutorialCoachMark);
+    WebviewUtil.load(null, data.content);
   }
 
   static OverlayEntry? _entry;
@@ -666,7 +561,7 @@ class PagePilot {
                           decoration: BoxDecoration(
                             color: background != null
                                 ? Util.hexToColor(background)
-                                : isDarkMode
+                                : Util.isDarkMode
                                     ? Colors.black
                                     : Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -717,7 +612,6 @@ class PagePilot {
       WebviewUtil.load(
         url,
         htmlBodyStart + body.toString() + htmlBodyEnd,
-        tutorialCoachMark,
       );
     }
   }
@@ -729,14 +623,10 @@ class PagePilot {
 
   static void showBeacon(
     BuildContext context, {
-    required String shape,
     required GlobalKey key,
     required String beaconPosition,
-    String? title,
-    required String body,
-    String? background,
-    String? textColor,
     required Color color,
+    required StepModel data,
     required Function() onBeaconClicked,
   }) {
     // Get the render box for the target widget
@@ -763,11 +653,7 @@ class PagePilot {
             showTooltip(
               context,
               key: key,
-              shape: shape,
-              title: title,
-              body: body,
-              background: background,
-              textColor: textColor,
+              data: data,
             );
             onBeaconClicked();
           },
@@ -787,13 +673,14 @@ class PagePilot {
       {required List<StepModel> tours, ScrollController? scrollController
       // required Widget widget,
       }) async {
-    var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
-    List<TargetFocus> targets = [];
-
+    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    List<Widget> widgets = [];
+    List<GlobalKey> keys = [];
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i].content.toString();
       String? contentHeight = tours[i].height;
       final key = config.keys[tours[i].selector.toString()];
+      keys.add(key);
       if (scrollController != null) {
         await scrollToTarget(key, scrollController);
       }
@@ -807,17 +694,17 @@ class PagePilot {
 
             switch (data['action']) {
               case 'onNextStepClicked':
-                tutorialCoachMark.next();
+                TourUtil.next();
                 break;
               case 'onPrevStepClicked':
-                tutorialCoachMark.previous();
+                TourUtil.previous();
                 break;
               case 'openLink':
                 final url = data['url'] as String;
                 Util.launchInBrowser(url);
                 break;
               case 'onCloseStepClicked':
-                tutorialCoachMark.finish();
+                TourUtil.finish();
                 break;
             }
           },
@@ -930,103 +817,78 @@ class PagePilot {
           },
         ),
       );
-      targets.add(
-        TargetFocus(
-          identify: "",
-          shape: tours[i].shape.toString().toLowerCase() == "circle"
-              ? ShapeLightFocus.Circle
-              : ShapeLightFocus.RRect,
-          keyTarget: config.keys[tours[i].selector.toString()],
-          alignSkip: Alignment.topRight,
-          enableOverlayTab: true,
-          contents: [
-            TargetContent(
+
+      widgets.add(SafeArea(
+        child: Column(
+          children: [
+            Container(
+              margin: EdgeInsets.zero,
               padding: EdgeInsets.zero,
-              align: tours[i].position.toString() == "bottom"
-                  ? ContentAlign.bottom
-                  : tours[i].position.toString() == "top"
-                      ? ContentAlign.top
-                      : tours[i].position.toString() == "left"
-                          ? ContentAlign.left
-                          : ContentAlign.right,
-              builder: (context, TCMcontroller) {
-                return SafeArea(
-                  child: Column(
-                    children: [
-                      Container(
-                        margin: EdgeInsets.zero,
-                        padding: EdgeInsets.zero,
-                        // decoration: BoxDecoration(
-                        //   color: tours[i].background != null
-                        //       ? hexToColor(tours[i].background ?? "#ffffff")
-                        //       : isDarkTheme
-                        //           ? Colors.black
-                        //           : Colors.white,
-                        //   borderRadius: BorderRadius.circular(borderRadius),
-                        // ),
-                        // Text(
-                        //   tours[i].title.toString(),
-                        //   style: TextStyle(
-                        //     fontSize: 18,
-                        //     fontWeight: FontWeight.bold,
-                        //     color: tours[i].textColor != null
-                        //         ? hexToColor(tours[i].textColor ?? "#000000")
-                        //         : isDarkTheme
-                        //             ? Colors.white
-                        //             : Colors.black,
-                        //   ),
-                        // ),
-                        // Text(tours[i]["description"].toString()),
-                        child: body.toString().startsWith(
-                                WebviewUtil.bodyStartsWithHtmlString)
-                            ? contentHeight == null
-                                ? ValueListenableBuilder<double>(
-                                    valueListenable: heightNotifier,
-                                    builder: (context, height, child) {
-                                      return SizedBox(
-                                        height: height,
-                                        // width:
-                                        //     MediaQuery.of(context).size.width * 0.8,
-                                        child: WebViewWidget(
-                                            controller: webViewController),
-                                      );
-                                    },
-                                  )
-                                : SizedBox(
-                                    height: double.tryParse(contentHeight
-                                            .toString()
-                                            .replaceAll("px", "replace")) ??
-                                        200,
-                                    // width:
-                                    //     MediaQuery.of(context).size.width * 0.8,
-                                    child: WebViewWidget(
-                                        controller: webViewController),
-                                  )
-                            // HtmlWidget(body)
-                            : Text(
-                                body,
-                                overflow: TextOverflow.clip,
-                                style: TextStyle(
-                                  color: tours[i].textColor != null
-                                      ? Util.hexToColor(
-                                          tours[i].textColor ?? "#000")
-                                      : null,
-                                ),
-                              ),
+              // decoration: BoxDecoration(
+              //   color: tours[i].background != null
+              //       ? hexToColor(tours[i].background ?? "#ffffff")
+              //       : isDarkTheme
+              //           ? Colors.black
+              //           : Colors.white,
+              //   borderRadius: BorderRadius.circular(borderRadius),
+              // ),
+              // Text(
+              //   tours[i].title.toString(),
+              //   style: TextStyle(
+              //     fontSize: 18,
+              //     fontWeight: FontWeight.bold,
+              //     color: tours[i].textColor != null
+              //         ? hexToColor(tours[i].textColor ?? "#000000")
+              //         : isDarkTheme
+              //             ? Colors.white
+              //             : Colors.black,
+              //   ),
+              // ),
+              // Text(tours[i]["description"].toString()),
+              child: body
+                      .toString()
+                      .startsWith(WebviewUtil.bodyStartsWithHtmlString)
+                  ? contentHeight == null
+                      ? ValueListenableBuilder<double>(
+                          valueListenable: heightNotifier,
+                          builder: (context, height, child) {
+                            return SizedBox(
+                              height: height,
+                              // width:
+                              //     MediaQuery.of(context).size.width * 0.8,
+                              child:
+                                  WebViewWidget(controller: webViewController),
+                            );
+                          },
+                        )
+                      : SizedBox(
+                          height: double.tryParse(contentHeight
+                                  .toString()
+                                  .replaceAll("px", "replace")) ??
+                              200,
+                          // width:
+                          //     MediaQuery.of(context).size.width * 0.8,
+                          child: WebViewWidget(controller: webViewController),
+                        )
+                  // HtmlWidget(body)
+                  : Text(
+                      body,
+                      overflow: TextOverflow.clip,
+                      style: TextStyle(
+                        color: tours[i].textColor != null
+                            ? Util.hexToColor(tours[i].textColor ?? "#000")
+                            : null,
                       ),
-                      const SizedBox(height: 5),
-                      // previousAndNextButtons(
-                      //   i,
-                      //   tours.length - 1,
-                      // ),
-                    ],
-                  ),
-                );
-              },
+                    ),
             ),
+            const SizedBox(height: 5),
+            // previousAndNextButtons(
+            //   i,
+            //   tours.length - 1,
+            // ),
           ],
         ),
-      );
+      ));
       if (body.startsWith("http")) {
         webViewController.loadRequest(Uri.parse(body));
       }
@@ -1035,14 +897,19 @@ class PagePilot {
         // adjustWebviewZoom(scale: tours[i].scale ?? 2);
       }
     }
-    if (scrollController != null) {
-      if (targets.isNotEmpty && tours.isNotEmpty) {
-        final firstKey = config.keys[tours[0].selector.toString()];
-        await scrollToTarget(firstKey, scrollController);
-      }
-    }
-    PagePilot.initTutorialCoachMark(targets);
-    tutorialCoachMark.show(context: context);
+    // if (scrollController != null) {
+    //   if (targets.isNotEmpty && tours.isNotEmpty) {
+    //     final firstKey = config.keys[tours[0].selector.toString()];
+    //     await scrollToTarget(firstKey, scrollController);
+    //   }
+    // }
+    TourUtil.show(
+      context,
+      widgets: widgets,
+      keys: keys,
+      data: tours,
+      targetIdentifier: "keyTour",
+    );
   }
 
   static Offset calculateBeaconPosition(
@@ -1091,11 +958,11 @@ class PagePilot {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           GestureDetector(
-            onTap: index == 0 ? null : () => tutorialCoachMark.previous(),
+            onTap: index == 0 ? null : () => TourUtil.previous(),
             child: Text(index == 0 ? '' : 'Previous'),
           ),
           GestureDetector(
-            onTap: index == lastIndex ? null : () => tutorialCoachMark.next(),
+            onTap: index == lastIndex ? null : () => TourUtil.next(),
             child: Text(index == lastIndex ? '' : 'Next'),
           ),
         ],
@@ -1122,7 +989,7 @@ class PagePilot {
                         config.keys[tours[index - 1]["selector"].toString()];
                     await scrollToTarget(prevKey, scrollController);
                   }
-                  tutorialCoachMark.previous();
+                  TourUtil.previous();
                 },
           child: Text(index == 0 ? '' : 'Previous'),
         ),
@@ -1135,58 +1002,13 @@ class PagePilot {
                         config.keys[tours[index + 1]["selector"].toString()];
                     await scrollToTarget(nextKey, scrollController);
                   }
-                  tutorialCoachMark.next();
+                  TourUtil.next();
                 },
           child: Text(index == lastIndex ? '' : 'Next'),
         ),
       ],
     );
   }
-
-//   static Widget AdjustedWebView(
-//       WebViewController controller, String htmlString) {
-//     return StatefulBuilder(
-//       builder: (context, setState) {
-//         double webViewHeight = 1.0;
-//         double webViewWidth = 1.0;
-
-//         controller!.setNavigationDelegate(NavigationDelegate(
-//           onPageFinished: (String url) async {
-//             Object heightObj = await controller!.runJavaScriptReturningResult(
-//                 "document.documentElement.scrollHeight");
-//             Object widthObj = await controller!.runJavaScriptReturningResult(
-//                 'document.documentElement.scrollHeight;');
-//             double height = double.tryParse(heightObj.toString()) ?? 0.0;
-//             double width = double.tryParse(widthObj.toString()) ?? 0.0;
-//             debugPrint('parse : $height $width');
-//             if (webViewHeight != height) {
-//               setState(() {
-//                 webViewHeight = height;
-//                 webViewWidth = width;
-//               });
-//               print("INSIDE");
-//               print(webViewHeight * 2);
-//               print(webViewWidth * 2);
-//             }
-// //document.body.style.zoom = 5; NOT SUPPORTED
-//             await controller.runJavaScript("""
-//               document.body.style.transform = "scale(5)";
-//               document.body.style.transformOrigin = "0 0";
-//             """);
-//           },
-//         ));
-//         print(webViewHeight * 2);
-//         print(webViewWidth * 2);
-//         return Container(
-//           // height: webViewHeight * 9,
-//           // width: webViewWidth / 60,
-//           height: webViewHeight * 2,
-//           width: webViewWidth * 2,
-//           child: WebViewWidget(controller: controller!),
-//         );
-//       },
-//     );
-//   }
 
   /// A custom Path to paint stars.
   static Path drawStar(Size size) {

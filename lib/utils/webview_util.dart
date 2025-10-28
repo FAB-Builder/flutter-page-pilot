@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
-import 'package:pagepilot/widgets/utils.dart';
-import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
+import 'package:pagepilot/utils/tour_util.dart';
+import 'package:pagepilot/utils/utils.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class WebviewUtil {
@@ -151,7 +151,7 @@ class WebviewUtil {
     controller!.clearCache();
   }
 
-  static load(String? url, String? body, TutorialCoachMark? tutorialCoachMark) {
+  static load(String? url, String? body) {
     if (url != null) {
       WebviewUtil.loadUrl(url);
     }
@@ -168,10 +168,7 @@ class WebviewUtil {
               Util.launchInBrowser(url);
               break;
             case 'onCloseStepClicked':
-              if (tutorialCoachMark != null) {
-                tutorialCoachMark!.finish();
-              }
-              ;
+              TourUtil.finish();
               break;
           }
         },

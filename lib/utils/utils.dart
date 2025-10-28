@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:url_launcher/url_launcher.dart';
 
 class Util {
+  static bool isDarkMode = false;
   static Color hexToColor(String hexString) {
     final buffer = StringBuffer();
     if (hexString.length == 6 || hexString.length == 7) {
