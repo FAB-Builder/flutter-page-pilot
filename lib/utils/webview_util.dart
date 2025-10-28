@@ -10,13 +10,13 @@ class WebviewUtil {
   static ValueNotifier<double> heightNotifier = ValueNotifier<double>(200);
   static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
 
-  static init() {
-    controller = WebViewController()
+  static WebViewController init({required bool isTour}) {
+    WebViewController c;
+    c = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0x00000000)) // ✅ Transparent background
       ..enableZoom(false);
-
-    controller!.setNavigationDelegate(
+    c.setNavigationDelegate(
       NavigationDelegate(
         onProgress: (int progress) {
           // Update loading bar.
@@ -32,7 +32,17 @@ class WebviewUtil {
             //data-action="onPrevStep"
             //data-action="link"
             //data-action="onCloseStep"
-            await controller!.runJavaScript('''
+            await c!.runJavaScript('''
+                document.querySelectorAll('button[data-action="onNextStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onNextStepClicked'}));
+                  });
+                });
+                document.querySelectorAll('button[data-action="onPrevStep"]').forEach(btn => {
+                  btn.addEventListener('click', () => {
+                    FlutterChannel.postMessage(JSON.stringify({action: 'onPrevStepClicked'}));
+                  });
+                });
                 document.querySelectorAll('button[data-action="link"]').forEach(btn => {
                   btn.addEventListener('click', (event) => {
                     event.preventDefault(); // Prevent navigation
@@ -50,7 +60,7 @@ class WebviewUtil {
                 });
               ''');
 
-            final jsResult = await controller!.runJavaScriptReturningResult('''
+            final jsResult = await c!.runJavaScriptReturningResult('''
       (function() {
         const body = document.body;
         const html = document.documentElement;
@@ -86,7 +96,7 @@ class WebviewUtil {
                 jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
             final heightVal = double.tryParse(heightStr) ?? 0;
 
-            final pixelRatioJs = await controller!
+            final pixelRatioJs = await c!
                 .runJavaScriptReturningResult('window.devicePixelRatio');
             final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
 
@@ -109,6 +119,8 @@ class WebviewUtil {
         },
       ),
     );
+    if (!isTour) controller = c;
+    return c;
   }
 
   static Widget getWebView() {
@@ -116,7 +128,8 @@ class WebviewUtil {
   }
 
   static Widget getWebViewWidget(
-      String? body, String? textColor, String? contentHeight) {
+      String? body, String? textColor, String? contentHeight,
+      {WebViewController? tourWebViewController}) {
     return body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)
         ? contentHeight == null
             ? ValueListenableBuilder<double>(
@@ -126,7 +139,8 @@ class WebviewUtil {
                     height: height,
                     // width:
                     //     MediaQuery.of(context).size.width * 0.8,
-                    child: WebViewWidget(controller: controller!),
+                    child: WebViewWidget(
+                        controller: tourWebViewController ?? controller!),
                   );
                 },
               )
@@ -136,7 +150,8 @@ class WebviewUtil {
                     200,
                 // width:
                 //     MediaQuery.of(context).size.width * 0.8,
-                child: WebViewWidget(controller: controller!),
+                child: WebViewWidget(
+                    controller: tourWebViewController ?? controller!),
               )
         : Text(
             body.toString(),
@@ -151,18 +166,32 @@ class WebviewUtil {
     controller!.clearCache();
   }
 
-  static load(String? url, String? body) {
+  static load(String? url, String? body,
+      {WebViewController? tourWebViewController}) {
     if (url != null) {
       WebviewUtil.loadUrl(url);
     }
     if (body.toString().startsWith(bodyStartsWithHtmlString)) {
-      WebviewUtil.loadHtml(body);
+      WebviewUtil.loadHtml(body, tourWebViewController: tourWebViewController);
       // adjustWebviewZoom(scale: scale ?? 2);
-      controller!.addJavaScriptChannel(
+      WebViewController? c;
+      if (tourWebViewController != null) {
+        c = tourWebViewController;
+      } else {
+        c = controller;
+      }
+      c!.addJavaScriptChannel(
         'FlutterChannel',
         onMessageReceived: (JavaScriptMessage message) {
           final data = jsonDecode(message.message);
           switch (data['action']) {
+            case 'onNextStepClicked':
+              print("NEXTTTT");
+              TourUtil.next();
+              break;
+            case 'onPrevStepClicked':
+              TourUtil.previous();
+              break;
             case 'openLink':
               final url = data['url'] as String;
               Util.launchInBrowser(url);
@@ -180,8 +209,15 @@ class WebviewUtil {
     controller!.loadRequest(Uri.parse(url));
   }
 
-  static void loadHtml(String? body) {
-    controller!.loadHtmlString(body.toString());
+  static void loadHtml(String? body,
+      {WebViewController? tourWebViewController}) {
+    WebViewController? c;
+    if (tourWebViewController != null) {
+      c = tourWebViewController;
+    } else {
+      c = controller;
+    }
+    c!.loadHtmlString(body.toString());
   }
 
   static void adjustWebviewZoom({int scale = 4}) {

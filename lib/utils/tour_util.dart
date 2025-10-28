@@ -68,6 +68,50 @@ class TourUtil {
     );
   }
 
+  static CustomTargetContentPosition getCustomPosition(
+    String position,
+    GlobalKey keyTarget,
+  ) {
+    const double verticalOffset = 220;
+    const double horizontalOffset = 50;
+
+    final RenderBox renderBox =
+        keyTarget.currentContext!.findRenderObject() as RenderBox;
+    final Offset widgetPos = renderBox.localToGlobal(Offset.zero);
+    // final Size widgetSize = renderBox.size;
+
+    switch (position) {
+      case "center":
+        return CustomTargetContentPosition(
+          top: widgetPos.dy - (verticalOffset - 100),
+        );
+      case "topLeft":
+        return CustomTargetContentPosition(
+          top: widgetPos.dy - verticalOffset,
+          right: widgetPos.dx - horizontalOffset,
+        );
+      case "topRight":
+        return CustomTargetContentPosition(
+          top: widgetPos.dy - verticalOffset,
+          left: widgetPos.dx - horizontalOffset,
+        );
+      case "bottomLeft":
+        return CustomTargetContentPosition(
+          bottom: widgetPos.dy - verticalOffset,
+          right: widgetPos.dx - horizontalOffset,
+        );
+      case "bottomRight":
+        return CustomTargetContentPosition(
+          bottom: widgetPos.dy - verticalOffset,
+          left: widgetPos.dx - horizontalOffset,
+        );
+      default:
+        return CustomTargetContentPosition(
+          top: 0,
+        );
+    }
+  }
+
   static void show(
     BuildContext context, {
     required List<Widget> widgets,
@@ -76,7 +120,10 @@ class TourUtil {
     required String targetIdentifier,
   }) {
     List<TargetFocus> targets = [];
+
     for (int i = 0; i < keys.length; i++) {
+      String position = data[i].position.toString();
+
       targets.add(
         TargetFocus(
           shape: data[i].shape.toString().toLowerCase() == "circle"
@@ -89,13 +136,16 @@ class TourUtil {
           contents: [
             TargetContent(
               padding: EdgeInsets.zero,
-              align: data[i].position.toString() == "bottom"
+              customPosition: getCustomPosition(position.toString(), keys[i]),
+              align: position.toString() == "bottom"
                   ? ContentAlign.bottom
-                  : data[i].position.toString() == "top"
+                  : position.toString() == "top"
                       ? ContentAlign.top
-                      : data[i].position.toString() == "left"
+                      : position.toString() == "left"
                           ? ContentAlign.left
-                          : ContentAlign.right,
+                          : position.toString() == "right"
+                              ? ContentAlign.right
+                              : ContentAlign.custom,
               builder: (context, coachMarkController) {
                 return widgets[i];
               },

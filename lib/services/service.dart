@@ -172,10 +172,12 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
         break;
       case "tour":
       case "walktrough":
-
-        //KEYCHANGE: "description" => "body"
-        PagePilot.showTour(context, config,
-            tours: data, scrollController: config.scrollController);
+        PagePilot.showTour(
+          context,
+          config,
+          tours: data,
+          scrollController: config.scrollController,
+        );
 
         await acknowledge(id, Config.userId, type);
         break;

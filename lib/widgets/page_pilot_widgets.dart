@@ -48,7 +48,7 @@ class PagePilot {
 
   static void init({Styles? tourStyles}) {
     TourUtil.initStyles(tourStyles);
-    WebviewUtil.init();
+    WebviewUtil.init(isTour: false);
   }
 
   static void showSnackbar(
@@ -669,240 +669,49 @@ class PagePilot {
     // });
   }
 
-  static Future<void> showTour(BuildContext context, Config config,
-      {required List<StepModel> tours, ScrollController? scrollController
-      // required Widget widget,
-      }) async {
-    // var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+  static Future<void> showTour(
+    BuildContext context,
+    Config config, {
+    required List<StepModel> tours,
+    ScrollController? scrollController,
+  }) async {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i].content.toString();
+      String textColor = tours[i].textColor.toString();
       String? contentHeight = tours[i].height;
       final key = config.keys[tours[i].selector.toString()];
       keys.add(key);
       if (scrollController != null) {
         await scrollToTarget(key, scrollController);
       }
-      ValueNotifier<double> heightNotifier = ValueNotifier<double>(100);
-      WebViewController webViewController = WebViewController()
-        ..setJavaScriptMode(JavaScriptMode.unrestricted)
-        ..addJavaScriptChannel(
-          'FlutterChannel',
-          onMessageReceived: (JavaScriptMessage message) {
-            final data = jsonDecode(message.message);
 
-            switch (data['action']) {
-              case 'onNextStepClicked':
-                TourUtil.next();
-                break;
-              case 'onPrevStepClicked':
-                TourUtil.previous();
-                break;
-              case 'openLink':
-                final url = data['url'] as String;
-                Util.launchInBrowser(url);
-                break;
-              case 'onCloseStepClicked':
-                TourUtil.finish();
-                break;
-            }
-          },
-        )
-        ..setBackgroundColor(
-            const Color(0x00000000)) // ✅ Transparent background
-        ..enableZoom(false);
-      webViewController.setNavigationDelegate(
-        NavigationDelegate(
-          onProgress: (int progress) {
-            // Update loading bar.
-          },
-          onPageStarted: (String url) {},
-          onPageFinished: (String url) async {
-            try {
-              // Wait for layout (especially images/fonts)
-              await Future.delayed(const Duration(milliseconds: 400));
+      WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
 
-              // Inject JS to intercept clicks on buttons with
-              //data-action="onNextStep"
-              //data-action="onPrevStep"
-              //data-action="link"
-              //data-action="onCloseStep"
-              await webViewController.runJavaScript('''
-                document.querySelectorAll('button[data-action="onNextStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onNextStepClicked'}));
-                  });
-                });
-                document.querySelectorAll('button[data-action="onPrevStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onPrevStepClicked'}));
-                  });
-                });
-                document.querySelectorAll('button[data-action="link"]').forEach(btn => {
-                  btn.addEventListener('click', (event) => {
-                    event.preventDefault(); // Prevent navigation
-                    const anchor = btn.closest('a');
-                    if (anchor) {
-                      // Send URL to Flutter
-                      FlutterChannel.postMessage(JSON.stringify({action: 'openLink', url: anchor.href}));
-                    }
-                  });
-                });
-                document.querySelectorAll('button[data-action="onCloseStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onCloseStepClicked'}));
-                  });
-                });
-              ''');
-
-              final jsResult =
-                  await webViewController.runJavaScriptReturningResult('''
-      (function() {
-        const body = document.body;
-        const html = document.documentElement;
-
-        html.style.margin = '0';
-        html.style.padding = '0';
-        html.style.overflow = 'hidden';
-        body.style.margin = '0';
-        body.style.padding = '0';
-        body.style.overflow = 'hidden';
-
-        // Ensure all images loaded
-        const imgs = document.images;
-        for (let i = 0; i < imgs.length; i++) {
-          if (!imgs[i].complete) return -1;
-        }
-
-        let height = Math.max(
-          body.scrollHeight, body.offsetHeight,
-          html.clientHeight, html.scrollHeight, html.offsetHeight
-        );
-
-        return height.toString();
-      })();
-    ''');
-
-              // if (jsResult.toString().contains('-1')) {
-              //   await Future.delayed(const Duration(milliseconds: 300));
-              //   return onPageFinished(url);
-              // }
-
-              final heightStr =
-                  jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
-              final heightVal = double.tryParse(heightStr) ?? 0;
-
-              final pixelRatioJs = await webViewController
-                  .runJavaScriptReturningResult('window.devicePixelRatio');
-              final pixelRatio =
-                  double.tryParse(pixelRatioJs.toString()) ?? 1.0;
-
-              final adjustedHeight = (heightVal / pixelRatio) + 75;
-
-              heightNotifier.value = adjustedHeight;
-              print('WebView height set to: ${heightNotifier.value}');
-            } catch (e) {
-              print('Error getting height: $e');
-              heightNotifier.value = 400;
-            }
-          },
-          onHttpError: (HttpResponseError error) {},
-          onWebResourceError: (WebResourceError error) {},
-          onNavigationRequest: (NavigationRequest request) {
-            // if (request.url.startsWith('https://www.youtube.com/')) {
-            //   return NavigationDecision.prevent;
-            // }
-            return NavigationDecision.navigate;
-          },
+      widgets.add(
+        SafeArea(
+          child: SingleChildScrollView(
+            child: Container(
+              margin: EdgeInsets.zero,
+              padding: EdgeInsets.zero,
+              child: WebviewUtil.getWebViewWidget(
+                body,
+                textColor,
+                contentHeight,
+                tourWebViewController: tourWebViewController,
+              ),
+            ),
+          ),
         ),
       );
 
-      widgets.add(SafeArea(
-        child: Column(
-          children: [
-            Container(
-              margin: EdgeInsets.zero,
-              padding: EdgeInsets.zero,
-              // decoration: BoxDecoration(
-              //   color: tours[i].background != null
-              //       ? hexToColor(tours[i].background ?? "#ffffff")
-              //       : isDarkTheme
-              //           ? Colors.black
-              //           : Colors.white,
-              //   borderRadius: BorderRadius.circular(borderRadius),
-              // ),
-              // Text(
-              //   tours[i].title.toString(),
-              //   style: TextStyle(
-              //     fontSize: 18,
-              //     fontWeight: FontWeight.bold,
-              //     color: tours[i].textColor != null
-              //         ? hexToColor(tours[i].textColor ?? "#000000")
-              //         : isDarkTheme
-              //             ? Colors.white
-              //             : Colors.black,
-              //   ),
-              // ),
-              // Text(tours[i]["description"].toString()),
-              child: body
-                      .toString()
-                      .startsWith(WebviewUtil.bodyStartsWithHtmlString)
-                  ? contentHeight == null
-                      ? ValueListenableBuilder<double>(
-                          valueListenable: heightNotifier,
-                          builder: (context, height, child) {
-                            return SizedBox(
-                              height: height,
-                              // width:
-                              //     MediaQuery.of(context).size.width * 0.8,
-                              child:
-                                  WebViewWidget(controller: webViewController),
-                            );
-                          },
-                        )
-                      : SizedBox(
-                          height: double.tryParse(contentHeight
-                                  .toString()
-                                  .replaceAll("px", "replace")) ??
-                              200,
-                          // width:
-                          //     MediaQuery.of(context).size.width * 0.8,
-                          child: WebViewWidget(controller: webViewController),
-                        )
-                  // HtmlWidget(body)
-                  : Text(
-                      body,
-                      overflow: TextOverflow.clip,
-                      style: TextStyle(
-                        color: tours[i].textColor != null
-                            ? Util.hexToColor(tours[i].textColor ?? "#000")
-                            : null,
-                      ),
-                    ),
-            ),
-            const SizedBox(height: 5),
-            // previousAndNextButtons(
-            //   i,
-            //   tours.length - 1,
-            // ),
-          ],
-        ),
-      ));
-      if (body.startsWith("http")) {
-        webViewController.loadRequest(Uri.parse(body));
-      }
-      if (body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)) {
-        await webViewController.loadHtmlString(body);
-        // adjustWebviewZoom(scale: tours[i].scale ?? 2);
-      }
+      WebviewUtil.load(
+        null,
+        body,
+        tourWebViewController: tourWebViewController,
+      );
     }
-    // if (scrollController != null) {
-    //   if (targets.isNotEmpty && tours.isNotEmpty) {
-    //     final firstKey = config.keys[tours[0].selector.toString()];
-    //     await scrollToTarget(firstKey, scrollController);
-    //   }
-    // }
     TourUtil.show(
       context,
       widgets: widgets,
