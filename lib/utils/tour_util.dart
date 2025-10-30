@@ -6,6 +6,7 @@ import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/utils/utils.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class TourUtil {
@@ -124,6 +125,7 @@ class TourUtil {
 
     List<TargetFocus> targets = [];
     for (int i = 0; i < keys.length; i++) {
+      final tooltip = SuperTooltipController();
       String position = steps[i].position.toString();
 
       targets.add(
@@ -149,7 +151,34 @@ class TourUtil {
                               ? ContentAlign.right
                               : ContentAlign.custom,
               builder: (context, coachMarkController) {
-                return widgets[i];
+                // ✅ Auto-show tooltip once this widget is built
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (!tooltip.isVisible) {
+                    tooltip.showTooltip();
+                  }
+                });
+                // return widgets[i];
+                return SuperTooltip(
+                  borderRadius: 12,
+                  closeButtonSize: 0,
+                  closeButtonType: CloseButtonType.outside,
+                  bubbleDimensions: EdgeInsets.zero,
+                  overlayDimensions: EdgeInsets.zero,
+                  showBarrier: true,
+                  showCloseButton: false,
+                  barrierColor: Colors.transparent,
+                  backgroundColor: Colors.black,
+                  shadowColor: Colors.transparent,
+                  controller: tooltip,
+                  popupDirection: TooltipDirection.down,
+                  borderColor: Colors.transparent,
+                  borderWidth: 1,
+                  arrowBaseWidth: 16,
+                  arrowLength: 12,
+                  minimumOutsideMargin: 0,
+                  content: widgets[i],
+                  child: const SizedBox(),
+                );
               },
             ),
           ],

@@ -694,17 +694,15 @@ class PagePilot {
       WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
 
       widgets.add(
-        SafeArea(
-          child: SingleChildScrollView(
-            child: Container(
-              margin: EdgeInsets.zero,
-              padding: EdgeInsets.zero,
-              child: WebviewUtil.getWebViewWidget(
-                body,
-                textColor,
-                contentHeight,
-                tourWebViewController: tourWebViewController,
-              ),
+        SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
+            child: WebviewUtil.getWebViewWidget(
+              body,
+              textColor,
+              contentHeight,
+              tourWebViewController: tourWebViewController,
             ),
           ),
         ),
