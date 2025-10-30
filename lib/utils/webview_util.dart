@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
@@ -7,8 +8,79 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 class WebviewUtil {
   static WebViewController? controller;
-  static ValueNotifier<double> heightNotifier = ValueNotifier<double>(200);
+  static ValueNotifier<Map<String, double>> sizeNotifier =
+      ValueNotifier<Map<String, double>>({"height": 200, "width": 200});
+
   static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
+
+  static String calculateHtmlDocDimensions = '''
+      (function() {
+        const body = document.body;
+        const html = document.documentElement;
+
+        html.style.margin = '0';
+        html.style.padding = '0';
+        html.style.overflow = 'hidden';
+        body.style.margin = '0';
+        body.style.padding = '0';
+        body.style.overflow = 'hidden';
+
+        // Ensure all images loaded
+        const imgs = document.images;
+        for (let i = 0; i < imgs.length; i++) {
+          if (!imgs[i].complete) return -1;
+        }
+
+        let height = Math.max(
+          body.scrollHeight, body.offsetHeight,
+          html.clientHeight, html.scrollHeight, html.offsetHeight
+        );
+        let width = Math.max(
+          body.scrollWidth, body.offsetWidth,
+          html.clientWidth, html.scrollWidth, html.offsetWidth
+        );
+
+
+        // Consider iframes
+        const iframes = document.getElementsByTagName('iframe');
+        for (let i = 0; i < iframes.length; i++) {
+          const iframe = iframes[i];
+          let iframeHeight = 0;
+          let iframeWidth = 0;
+
+          try {
+            // Try reading internal body height (same-origin only)
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+            if (iframeDoc && iframeDoc.readyState === 'complete') {
+              const ib = iframeDoc.body;
+              if (ib) {
+                iframeHeight = Math.max(ib.scrollHeight, ib.offsetHeight);
+                iframeWidth = Math.max(ib.scrollWidth, ib.offsetWidth);
+              }
+            }
+          } catch (e) {
+            // Cross-origin: fallback to visible/computed height
+            iframeHeight =
+              parseInt(iframe.getAttribute('height')) ||
+              iframe.offsetHeight ||
+              parseInt(window.getComputedStyle(iframe).height) ||
+              0;
+            iframeWidth =
+              parseInt(iframe.getAttribute('width')) ||
+              iframe?.offsetWidth ||
+              parseInt((window.getComputedStyle(iframe) || {}).width)  || 0;
+          }
+
+          // Add based on bottom edge position, not sum
+          height=height+(iframeHeight+280);
+          if(iframeWidth){
+            width = iframeWidth;
+          }
+        }
+
+        return JSON.stringify({ height: height.toString(), width: width.toString() });
+      })();
+    ''';
 
   static WebViewController init({required bool isTour}) {
     WebViewController c;
@@ -25,7 +97,7 @@ class WebviewUtil {
         onPageFinished: (String url) async {
           try {
             // Wait for layout (especially images/fonts)
-            await Future.delayed(const Duration(milliseconds: 400));
+            await Future.delayed(const Duration(milliseconds: 1000));
 
             // Inject JS to intercept clicks on buttons with
             //data-action="onNextStep"
@@ -60,53 +132,43 @@ class WebviewUtil {
                 });
               ''');
 
-            final jsResult = await c!.runJavaScriptReturningResult('''
-      (function() {
-        const body = document.body;
-        const html = document.documentElement;
-
-        html.style.margin = '0';
-        html.style.padding = '0';
-        html.style.overflow = 'hidden';
-        body.style.margin = '0';
-        body.style.padding = '0';
-        body.style.overflow = 'hidden';
-
-        // Ensure all images loaded
-        const imgs = document.images;
-        for (let i = 0; i < imgs.length; i++) {
-          if (!imgs[i].complete) return -1;
-        }
-
-        let height = Math.max(
-          body.scrollHeight, body.offsetHeight,
-          html.clientHeight, html.scrollHeight, html.offsetHeight
-        );
-
-        return height.toString();
-      })();
-    ''');
+            final jsResult = await c!
+                .runJavaScriptReturningResult(calculateHtmlDocDimensions);
 
             // if (jsResult.toString().contains('-1')) {
             //   await Future.delayed(const Duration(milliseconds: 300));
             //   return onPageFinished(url);
             // }
 
-            final heightStr =
-                jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
-            final heightVal = double.tryParse(heightStr) ?? 0;
+            // final jsonStr =
+            //     jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
+            final decoded = jsonDecode(jsResult.toString());
+
+            final calculatedHeight = decoded['height'];
+            final calculatedWidth = decoded['width'];
+
+            final heightVal = double.tryParse(calculatedHeight) ?? 0;
+            final widthVal = double.tryParse(calculatedWidth) ?? 0;
 
             final pixelRatioJs = await c!
                 .runJavaScriptReturningResult('window.devicePixelRatio');
             final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
 
             final adjustedHeight = (heightVal / pixelRatio) + 75;
+            final adjustedWidth = (widthVal / pixelRatio) + 75;
 
-            heightNotifier.value = adjustedHeight;
-            print('WebView height set to: ${heightNotifier.value}');
+            sizeNotifier.value = {
+              "height": adjustedHeight,
+              "width": adjustedWidth
+            };
+            print('WebView size set to: ${sizeNotifier.value}');
           } catch (e) {
-            print('Error getting height: $e');
-            heightNotifier.value = 400;
+            print('Error getting size: $e');
+
+            sizeNotifier.value = {
+              "height": 400,
+              "width": 400,
+            };
           }
         },
         onHttpError: (HttpResponseError error) {},
@@ -132,13 +194,14 @@ class WebviewUtil {
       {WebViewController? tourWebViewController}) {
     return body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)
         ? contentHeight == null
-            ? ValueListenableBuilder<double>(
-                valueListenable: heightNotifier,
-                builder: (context, height, child) {
+            ? ValueListenableBuilder<Map<String, double>>(
+                valueListenable: sizeNotifier,
+                builder: (context, size, child) {
                   return SizedBox(
-                    height: height,
+                    height: size["height"],
                     // width:
                     //     MediaQuery.of(context).size.width * 0.8,
+                    width: size["width"],
                     child: WebViewWidget(
                         controller: tourWebViewController ?? controller!),
                   );
