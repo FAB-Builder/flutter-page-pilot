@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/utils/tour_util.dart';
@@ -386,20 +387,21 @@ class PagePilot {
 
   static void showInfoDialog(BuildContext context,
       {required GlobalKey key,
-      required StepModel data,
+      required DataModel data,
       Function()? onOkPressed}) {
     var isDarkTheme = Theme.of(context).brightness == Brightness.dark;
+    StepModel step = data.steps[0];
     Widget widget = AlertDialog(
       backgroundColor: isDarkTheme ? Colors.black : Colors.white,
       title: Text(
-        data.title.toString(),
+        step.title.toString(),
       ),
       // backgroundColor: AppTheme.backgroundColor,
       content: SingleChildScrollView(
         child: ListBody(
           children: <Widget>[
             Text(
-              data.content.toString(),
+              step.content.toString(),
             ),
           ],
         ),
@@ -431,7 +433,7 @@ class PagePilot {
       context,
       widgets: [widget],
       keys: [key],
-      data: [data],
+      data: data,
       targetIdentifier: "keyInfoDialog",
     );
   }
@@ -439,17 +441,18 @@ class PagePilot {
   static void showTooltip(
     BuildContext context, {
     required GlobalKey key,
-    required StepModel data,
+    required DataModel data,
   }) {
+    StepModel step = data.steps[0];
     Widget widget = SafeArea(
       child: SingleChildScrollView(
         child: Container(
           margin: EdgeInsets.zero,
           padding: EdgeInsets.zero,
           child: WebviewUtil.getWebViewWidget(
-            data.content,
-            data.textColor,
-            data.height,
+            step.content,
+            step.textColor,
+            step.height,
           ),
         ),
       ),
@@ -458,11 +461,11 @@ class PagePilot {
       context,
       widgets: [widget],
       keys: [key],
-      data: [data],
+      data: data,
       targetIdentifier: "keyTooltip",
     );
 
-    WebviewUtil.load(null, data.content);
+    WebviewUtil.load(null, step.content);
   }
 
   static OverlayEntry? _entry;
@@ -626,7 +629,7 @@ class PagePilot {
     required GlobalKey key,
     required String beaconPosition,
     required Color color,
-    required StepModel data,
+    required DataModel data,
     required Function() onBeaconClicked,
   }) {
     // Get the render box for the target widget
@@ -672,11 +675,12 @@ class PagePilot {
   static Future<void> showTour(
     BuildContext context,
     Config config, {
-    required List<StepModel> tours,
+    required DataModel data,
     ScrollController? scrollController,
   }) async {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
+    List<StepModel> tours = data.steps;
     for (int i = 0; i < tours.length; i++) {
       String body = tours[i].content.toString();
       String textColor = tours[i].textColor.toString();
@@ -716,7 +720,7 @@ class PagePilot {
       context,
       widgets: widgets,
       keys: keys,
-      data: tours,
+      data: data,
       targetIdentifier: "keyTour",
     );
   }

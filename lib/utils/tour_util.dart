@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/utils/utils.dart';
@@ -116,17 +117,18 @@ class TourUtil {
     BuildContext context, {
     required List<Widget> widgets,
     required List<GlobalKey> keys,
-    required List<StepModel> data,
+    required DataModel data,
     required String targetIdentifier,
   }) {
-    List<TargetFocus> targets = [];
+    List<StepModel> steps = data.steps;
 
+    List<TargetFocus> targets = [];
     for (int i = 0; i < keys.length; i++) {
-      String position = data[i].position.toString();
+      String position = steps[i].position.toString();
 
       targets.add(
         TargetFocus(
-          shape: data[i].shape.toString().toLowerCase() == "circle"
+          shape: steps[i].shape.toString().toLowerCase() == "circle"
               ? ShapeLightFocus.Circle
               : ShapeLightFocus.RRect,
           identify: targetIdentifier + i.toString(),
@@ -157,6 +159,13 @@ class TourUtil {
 
     initTutorialCoachMark(targets);
     tutorialCoachMark.show(context: context);
+
+    // switch (data.type) {
+    //   case "material":
+    //     break;
+    //   case "fancy":
+    //     break;
+    // }
   }
 
   static void finish() {

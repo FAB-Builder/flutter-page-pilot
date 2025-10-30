@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
+import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 
@@ -76,28 +77,27 @@ void doShow({
       }
 
       tooltips.forEach((tooltip) async {
-        String slug = tooltip["slug"];
-        if (slug == screen) {
+        DataModel tooltipModel =
+            DataModel.fromJson(tooltip, [StepModel.fromJson(tooltip["step"])]);
+        if (tooltipModel.slug == screen) {
           showWidget(
             "tooltip",
-            tooltip["id"],
-            [StepModel.fromJson(tooltip["step"])],
+            tooltipModel,
             config,
             context,
           );
         }
       });
       tours.forEach((tour) async {
-        String slug = tour["slug"];
         List<StepModel> steps = [];
         for (int i = 0; i < tour["steps"].length; i++) {
           steps.add(StepModel.fromJson(tour["steps"][i]));
         }
-        if (slug == screen) {
+        DataModel tourModel = DataModel.fromJson(tour, steps);
+        if (tourModel.slug == screen) {
           showWidget(
             "tour",
-            tour["id"],
-            steps,
+            tourModel,
             config,
             context,
           );
@@ -116,8 +116,8 @@ acknowledge(id, userId, type) async {
   );
 }
 
-void showWidget(String type, String id, List<StepModel> data, Config config,
-    BuildContext context) async {
+void showWidget(
+    String type, DataModel data, Config config, BuildContext context) async {
   String? shape,
       title,
       body,
@@ -133,25 +133,25 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
   GlobalKey? key;
   bool showConfetti = false, isDraggable = false;
   if (type != "tour") {
-    shape = data[0].shape ?? "rect";
+    shape = data.steps[0].shape ?? "rect";
 
-    title = data[0].title;
-    body = data[0].content;
-    height = data[0].height;
-    width = data[0].width;
-    background = data[0].background ?? "#ffffff";
-    textColor = data[0].textColor ?? "#000000";
-    showConfetti = data[0].showConfetti ?? false;
+    title = data.steps[0].title;
+    body = data.steps[0].content;
+    height = data.steps[0].height;
+    width = data.steps[0].width;
+    background = data.steps[0].background ?? "#ffffff";
+    textColor = data.steps[0].textColor ?? "#000000";
+    showConfetti = data.steps[0].showConfetti ?? false;
 
-    url = data[0].url;
+    url = data.steps[0].url;
     //TODO adjust scale from frontend(cs) first
     scale = null;
     // scale =
     //     int.tryParse(jsonResponse["content"]["bodyHtmlScale"].toString());
-    isDraggable = data[0].draggable ?? false;
-    position = data[0].position;
-    color = data[0].color;
-    selector = data[0].selector;
+    isDraggable = data.steps[0].draggable ?? false;
+    position = data.steps[0].position;
+    color = data.steps[0].color;
+    selector = data.steps[0].selector;
     key = config.keys[selector.toString()];
   }
 
@@ -167,19 +167,19 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
             "PagePilotPluginError: Key not found for ${selector.toString()}",
           );
         }
-        PagePilot.showTooltip(context, key: key, data: data[0]);
-        await acknowledge(id, Config.userId, type);
+        PagePilot.showTooltip(context, key: key, data: data);
+        await acknowledge(data.id, Config.userId, type);
         break;
       case "tour":
       case "walktrough":
         PagePilot.showTour(
           context,
           config,
-          tours: data,
+          data: data,
           scrollController: config.scrollController,
         );
 
-        await acknowledge(id, Config.userId, type);
+        await acknowledge(data.id, Config.userId, type);
         break;
 
       /*case "dialog":
@@ -295,7 +295,7 @@ void showWidget(String type, String id, List<StepModel> data, Config config,
     }
   } else {
     throw Exception(
-      "PagePilotPluginError: Either provide title & body or html for $type  and key: ${data[0].selector.toString()}",
+      "PagePilotPluginError: Either provide title & body or html for $type  and key: ${data.steps[0].selector.toString()}",
     );
   }
 }
