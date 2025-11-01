@@ -116,6 +116,20 @@ acknowledge(id, userId, type) async {
   );
 }
 
+unacknowledgedAll(userId) async {
+  await http.get(
+    Uri.parse(
+        "$baseUrl/tenant/${Config.tenantId}/stats/markall-unacknowledged/$userId"),
+  );
+}
+
+unacknowledged(id, userId) async {
+  await http.get(
+    Uri.parse(
+        "$baseUrl/tenant/${Config.tenantId}/stats/mark-unacknowledged/$userId/$id"),
+  );
+}
+
 void showWidget(
     String type, DataModel data, Config config, BuildContext context) async {
   String? shape,
