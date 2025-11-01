@@ -1,3 +1,7 @@
+## 0.0.9+17
+
+- Tour reset functionility added
+
 ## 0.0.9+16
 
 - Tour UI space reduced

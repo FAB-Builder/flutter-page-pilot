@@ -39,4 +39,12 @@ class Pagepilot {
       type: type,
     );
   }
+
+  Future<void> resetAllTour(userId) async {
+    return PagepilotPlatform.instance.resetAllTour(userId);
+  }
+
+  Future<void> resetTourById(id, userId) async {
+    return PagepilotPlatform.instance.resetTourById(id, userId);
+  }
 }

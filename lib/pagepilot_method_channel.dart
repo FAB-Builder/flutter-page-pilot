@@ -44,4 +44,14 @@ class MethodChannelPagepilot extends PagepilotPlatform {
     config ??= CONFIG!;
     doShow(context: context, config: config, screen: screen, type: type);
   }
+
+  @override
+  Future<void> resetAllTour(userId) async {
+    unacknowledgedAll(userId);
+  }
+
+  @override
+  Future<void> resetTourById(id, userId) async {
+    unacknowledged(id, userId);
+  }
 }
