@@ -1,3 +1,7 @@
+## 0.0.9+18
+
+- Tour next & previous button on-off functionality added
+
 ## 0.0.9+17
 
 - Tour reset functionility added
