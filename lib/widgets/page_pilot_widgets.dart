@@ -677,6 +677,7 @@ class PagePilot {
     Config config, {
     required DataModel data,
     ScrollController? scrollController,
+    bool showNextAndPreviousButtons = false,
   }) async {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
@@ -699,11 +700,23 @@ class PagePilot {
             child: Container(
               margin: EdgeInsets.zero,
               padding: EdgeInsets.zero,
-              child: WebviewUtil.getWebViewWidget(
-                body,
-                textColor,
-                contentHeight,
-                tourWebViewController: tourWebViewController,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  WebviewUtil.getWebViewWidget(
+                    body,
+                    textColor,
+                    contentHeight,
+                    tourWebViewController: tourWebViewController,
+                  ),
+                  if (showNextAndPreviousButtons) ...{
+                    const SizedBox(height: 20),
+                    previousAndNextButtons(
+                      i,
+                      tours.length - 1,
+                    ),
+                  }
+                ],
               ),
             ),
           ),

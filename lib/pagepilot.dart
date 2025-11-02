@@ -32,11 +32,13 @@ class Pagepilot {
     required String screen,
     Config? config,
     String? type,
+    bool showNextAndPreviousButtons = false,
   }) async {
     return PagepilotPlatform.instance.show(
       context: context,
       screen: screen,
       type: type,
+      showNextAndPreviousButtons: showNextAndPreviousButtons,
     );
   }
 

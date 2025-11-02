@@ -40,9 +40,16 @@ class MethodChannelPagepilot extends PagepilotPlatform {
     required String screen,
     Config? config,
     String? type,
+    bool showNextAndPreviousButtons = false,
   }) async {
     config ??= CONFIG!;
-    doShow(context: context, config: config, screen: screen, type: type);
+    doShow(
+      context: context,
+      config: config,
+      screen: screen,
+      type: type,
+      showNextAndPreviousButtons: showNextAndPreviousButtons,
+    );
   }
 
   @override

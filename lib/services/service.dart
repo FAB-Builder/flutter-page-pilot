@@ -14,6 +14,7 @@ void doShow({
   required String screen,
   required Config config,
   String? type,
+  bool showNextAndPreviousButtons = false,
 }) async {
   try {
     PagePilot.init(tourStyles: config.styles);
@@ -100,6 +101,7 @@ void doShow({
             tourModel,
             config,
             context,
+            showNextAndPreviousButtons: showNextAndPreviousButtons,
           );
         }
       });
@@ -131,7 +133,8 @@ unacknowledged(id, userId) async {
 }
 
 void showWidget(
-    String type, DataModel data, Config config, BuildContext context) async {
+    String type, DataModel data, Config config, BuildContext context,
+    {bool showNextAndPreviousButtons = false}) async {
   String? shape,
       title,
       body,
@@ -191,6 +194,7 @@ void showWidget(
           config,
           data: data,
           scrollController: config.scrollController,
+          showNextAndPreviousButtons: showNextAndPreviousButtons,
         );
 
         await acknowledge(data.id, Config.userId, type);
