@@ -53,6 +53,11 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   }
 
   @override
+  Future<void> dispose() async {
+    doDispose();
+  }
+
+  @override
   Future<void> resetAllTour(userId) async {
     unacknowledgedAll(userId);
   }

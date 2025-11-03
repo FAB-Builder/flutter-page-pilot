@@ -42,6 +42,10 @@ class Pagepilot {
     );
   }
 
+  Future<void> dispose() async {
+    return PagepilotPlatform.instance.dispose();
+  }
+
   Future<void> resetAllTour(userId) async {
     return PagepilotPlatform.instance.resetAllTour(userId);
   }

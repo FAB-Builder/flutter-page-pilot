@@ -50,6 +50,10 @@ abstract class PagepilotPlatform extends PlatformInterface {
     throw UnimplementedError('show() has not been implemented.');
   }
 
+  Future<void> dispose() async {
+    throw UnimplementedError('dispose() has not been implemented.');
+  }
+
   Future<void> resetAllTour(userId) async {
     throw UnimplementedError('unacknowledgedAll() has not been implemented.');
   }

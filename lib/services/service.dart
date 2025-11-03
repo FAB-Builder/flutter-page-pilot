@@ -7,7 +7,22 @@ import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
+import 'package:pagepilot/utils/tour_util.dart';
+import 'package:pagepilot/utils/webview_util.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
+
+http.Client client = http.Client();
+
+void doDispose() {
+  try {
+    print("doDispose CALLED");
+    client.close();
+    WebviewUtil.clearCache();
+    TourUtil.finish();
+  } catch (e) {
+    print("Error in doDispose ${e.toString()}");
+  }
+}
 
 void doShow({
   required BuildContext context,
@@ -20,7 +35,7 @@ void doShow({
     PagePilot.init(tourStyles: config.styles);
     var jsonResponse;
 
-    var response = await http.get(
+    var response = await client.get(
       Uri.parse(
           "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}&slug=${screen}"),
     );
@@ -112,21 +127,21 @@ void doShow({
 }
 
 acknowledge(id, userId, type) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=$id&userId=$userId&device=${Platform.operatingSystem}&type=$type"),
   );
 }
 
 unacknowledgedAll(userId) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/stats/markall-unacknowledged/$userId"),
   );
 }
 
 unacknowledged(id, userId) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/stats/mark-unacknowledged/$userId/$id"),
   );
@@ -211,7 +226,7 @@ void showWidget(
           url: url,
           scale: scale,
           onOkPressed: () async {
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
@@ -233,7 +248,7 @@ void showWidget(
           duration: int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
         );
         //acknowledge
-        await http.get(
+        await client.get(
           Uri.parse(
             "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
           ),
@@ -249,7 +264,7 @@ void showWidget(
           url: url,
           scale: scale,
           onOkPressed: () async {
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
@@ -273,7 +288,7 @@ void showWidget(
           isDraggable: isDraggable,
           isVisible: true,
         );
-        await http.get(
+        await client.get(
           Uri.parse(
             "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
           ),
@@ -299,7 +314,7 @@ void showWidget(
               : PagePilot.hexToColor(color),
           onBeaconClicked: () async {
             //acknowledge
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
