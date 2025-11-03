@@ -1,3 +1,7 @@
+## 0.0.9+20
+
+- Minor Bug fixes
+
 ## 0.0.9+19
 
 - Tour height & width fixed
