@@ -444,16 +444,14 @@ class PagePilot {
     required DataModel data,
   }) {
     StepModel step = data.steps[0];
-    Widget widget = SafeArea(
-      child: SingleChildScrollView(
-        child: Container(
-          margin: EdgeInsets.zero,
-          padding: EdgeInsets.zero,
-          child: WebviewUtil.getWebViewWidget(
-            step.content,
-            step.textColor,
-            step.height,
-          ),
+    Widget widget = SingleChildScrollView(
+      child: Container(
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.zero,
+        child: WebviewUtil.getWebViewWidget(
+          step.content,
+          step.textColor,
+          step.height,
         ),
       ),
     );
@@ -682,7 +680,9 @@ class PagePilot {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
     List<StepModel> tours = data.steps;
+
     for (int i = 0; i < tours.length; i++) {
+      WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
       String body = tours[i].content.toString();
       String textColor = tours[i].textColor.toString();
       String? contentHeight = tours[i].height;
@@ -692,32 +692,28 @@ class PagePilot {
         await scrollToTarget(key, scrollController);
       }
 
-      WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
-
       widgets.add(
-        SafeArea(
-          child: SingleChildScrollView(
-            child: Container(
-              margin: EdgeInsets.zero,
-              padding: EdgeInsets.zero,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  WebviewUtil.getWebViewWidget(
-                    body,
-                    textColor,
-                    contentHeight,
-                    tourWebViewController: tourWebViewController,
+        SingleChildScrollView(
+          child: Container(
+            margin: EdgeInsets.zero,
+            padding: EdgeInsets.zero,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                WebviewUtil.getWebViewWidget(
+                  body,
+                  textColor,
+                  contentHeight,
+                  tourWebViewController: tourWebViewController,
+                ),
+                if (showNextAndPreviousButtons) ...{
+                  const SizedBox(height: 20),
+                  previousAndNextButtons(
+                    i,
+                    tours.length - 1,
                   ),
-                  if (showNextAndPreviousButtons) ...{
-                    const SizedBox(height: 20),
-                    previousAndNextButtons(
-                      i,
-                      tours.length - 1,
-                    ),
-                  }
-                ],
-              ),
+                }
+              ],
             ),
           ),
         ),

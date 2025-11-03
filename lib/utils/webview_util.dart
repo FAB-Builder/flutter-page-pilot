@@ -72,7 +72,7 @@ class WebviewUtil {
           }
 
           // Add based on bottom edge position, not sum
-          height=height+(iframeHeight+280);
+          height=height+(iframeHeight);
           if(iframeWidth){
             width = iframeWidth;
           }
@@ -97,7 +97,8 @@ class WebviewUtil {
         onPageFinished: (String url) async {
           try {
             // Wait for layout (especially images/fonts)
-            await Future.delayed(const Duration(milliseconds: 1000));
+            print("onPageFinished");
+            await Future.delayed(const Duration(milliseconds: 400));
 
             // Inject JS to intercept clicks on buttons with
             //data-action="onNextStep"
@@ -154,7 +155,7 @@ class WebviewUtil {
                 .runJavaScriptReturningResult('window.devicePixelRatio');
             final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
 
-            final adjustedHeight = (heightVal / pixelRatio) + 75;
+            final adjustedHeight = (heightVal / pixelRatio) + 40;
             final adjustedWidth = (widthVal / pixelRatio) + 75;
 
             sizeNotifier.value = {
@@ -201,7 +202,7 @@ class WebviewUtil {
                     height: size["height"],
                     // width:
                     //     MediaQuery.of(context).size.width * 0.8,
-                    width: size["width"],
+                    // width: size["width"],
                     child: WebViewWidget(
                         controller: tourWebViewController ?? controller!),
                   );
