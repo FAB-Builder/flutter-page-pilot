@@ -1,3 +1,7 @@
+## 0.0.9+19
+
+- Tour height & width fixed
+
 ## 0.0.9+18
 
 - Tour next & previous button on-off functionality added
