@@ -725,13 +725,16 @@ class PagePilot {
         tourWebViewController: tourWebViewController,
       );
     }
-    TourUtil.show(
-      context,
-      widgets: widgets,
-      keys: keys,
-      data: data,
-      targetIdentifier: "keyTour",
-    );
+    //TODO: fix this temporary hack
+    Future.delayed(Duration(milliseconds: 500), () {
+      TourUtil.show(
+        context,
+        widgets: widgets,
+        keys: keys,
+        data: data,
+        targetIdentifier: "keyTour",
+      );
+    });
   }
 
   static Offset calculateBeaconPosition(
