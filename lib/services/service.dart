@@ -7,16 +7,21 @@ import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
+import 'package:pagepilot/utils/pref_util.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/utils/webview_util.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 http.Client client = http.Client();
 
 void doDispose() {
   try {
     print("doDispose CALLED");
-    client.close();
+    () async {
+      await Pref.writeBool('disposed', true);
+    }();
+    // client.close();
     WebviewUtil.clearCache();
     TourUtil.finish();
   } catch (e) {
@@ -32,6 +37,8 @@ void doShow({
   bool showNextAndPreviousButtons = false,
 }) async {
   try {
+    await Pref.writeBool('disposed', false);
+
     PagePilot.init(tourStyles: config.styles);
     var jsonResponse;
 

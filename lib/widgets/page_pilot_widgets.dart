@@ -7,6 +7,7 @@ import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
+import 'package:pagepilot/utils/pref_util.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:pagepilot/utils/utils.dart';
@@ -726,14 +727,17 @@ class PagePilot {
       );
     }
     //TODO: fix this temporary hack
-    Future.delayed(Duration(milliseconds: 500), () {
-      TourUtil.show(
-        context,
-        widgets: widgets,
-        keys: keys,
-        data: data,
-        targetIdentifier: "keyTour",
-      );
+    Future.delayed(Duration(milliseconds: 500), () async {
+      bool? isDisposed = await Pref.readBool('disposed');
+      if (isDisposed != true) {
+        TourUtil.show(
+          context,
+          widgets: widgets,
+          keys: keys,
+          data: data,
+          targetIdentifier: "keyTour",
+        );
+      }
     });
   }
 
