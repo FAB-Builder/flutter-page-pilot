@@ -1,3 +1,19 @@
+## 0.0.9+21
+
+- Minor Bug fixes
+
+## 0.0.9+20
+
+- Minor Bug fixes
+
+## 0.0.9+19
+
+- Tour height & width fixed
+
+## 0.0.9+18
+
+- Tour next & previous button on-off functionality added
+
 ## 0.0.9+17
 
 - Tour reset functionility added
