@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
+import 'package:el_tooltip/el_tooltip.dart';
+import 'package:flutter/material.dart';
 import 'package:pagepilot/utils/tour_util.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:pagepilot/utils/utils.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+import '../models/step_model.dart';
 
 class WebviewUtil {
   static WebViewController? controller;
@@ -72,7 +76,7 @@ class WebviewUtil {
           }
 
           // Add based on bottom edge position, not sum
-          height=height+(iframeHeight+280);
+          height=height+(iframeHeight);
           if(iframeWidth){
             width = iframeWidth;
           }
@@ -97,7 +101,8 @@ class WebviewUtil {
         onPageFinished: (String url) async {
           try {
             // Wait for layout (especially images/fonts)
-            await Future.delayed(const Duration(milliseconds: 1000));
+            print("onPageFinished");
+            await Future.delayed(const Duration(milliseconds: 400));
 
             // Inject JS to intercept clicks on buttons with
             //data-action="onNextStep"
@@ -154,7 +159,7 @@ class WebviewUtil {
                 .runJavaScriptReturningResult('window.devicePixelRatio');
             final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
 
-            final adjustedHeight = (heightVal / pixelRatio) + 75;
+            final adjustedHeight = (heightVal / pixelRatio) + 40;
             final adjustedWidth = (widthVal / pixelRatio) + 75;
 
             sizeNotifier.value = {
@@ -191,20 +196,52 @@ class WebviewUtil {
 
   static Widget getWebViewWidget(
       String? body, String? textColor, String? contentHeight,
-      {WebViewController? tourWebViewController}) {
+      {WebViewController? tourWebViewController,
+      StepModel? step,
+      ElTooltipController? tooltip}) {
+    GlobalKey key = GlobalKey();
     return body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)
         ? contentHeight == null
             ? ValueListenableBuilder<Map<String, double>>(
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
-                  return SizedBox(
-                    height: size["height"],
-                    // width:
-                    //     MediaQuery.of(context).size.width * 0.8,
-                    width: size["width"],
-                    child: WebViewWidget(
-                        controller: tourWebViewController ?? controller!),
-                  );
+                  String position = (step?.position ?? "").toString();
+                  try {
+                    if (tooltip != null) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) async {
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        tooltip.show();
+                      });
+                    }
+                  } catch (e) {
+                    debugPrint(e.toString());
+                  }
+                  return ElTooltip(
+                      radius: Radius.zero,
+                      position: position == "bottom"
+                          ? ElTooltipPosition.bottomStart
+                          : position == "top"
+                              ? ElTooltipPosition.topCenter
+                              : position == "left"
+                                  ? ElTooltipPosition.leftCenter
+                                  : position == "right"
+                                      ? ElTooltipPosition.rightCenter
+                                      : ElTooltipPosition.bottomCenter,
+                      key: key,
+                      distance: (size["height"] ?? 0) / 2,
+                      showModal: false,
+                      showChildAboveOverlay: false,
+                      controller: tooltip,
+                      padding: EdgeInsets.zero,
+                      color:
+                          Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                      content: SizedBox(
+                        height: size["height"],
+                        width: MediaQuery.of(context).size.width * 0.8,
+                        child: WebViewWidget(
+                            controller: tourWebViewController ?? controller!),
+                      ),
+                      child: const SizedBox());
                 },
               )
             : SizedBox(
@@ -213,8 +250,31 @@ class WebviewUtil {
                     200,
                 // width:
                 //     MediaQuery.of(context).size.width * 0.8,
-                child: WebViewWidget(
-                    controller: tourWebViewController ?? controller!),
+                child: ElTooltip(
+                  position: step?.position.toString() == "bottom"
+                      ? ElTooltipPosition.bottomCenter
+                      : step?.position.toString() == "top"
+                          ? ElTooltipPosition.topCenter
+                          : step?.position.toString() == "left"
+                              ? ElTooltipPosition.leftCenter
+                              : step?.position.toString() == "right"
+                                  ? ElTooltipPosition.rightCenter
+                                  : ElTooltipPosition.bottomCenter,
+                  key: key,
+                  showModal: false,
+                  showChildAboveOverlay: false,
+                  controller: tooltip,
+                  padding: EdgeInsets.zero,
+                  distance: (double.tryParse(contentHeight
+                              .toString()
+                              .replaceAll("px", "replace")) ??
+                          200) /
+                      2,
+                  color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                  content: WebViewWidget(
+                      controller: tourWebViewController ?? controller!),
+                  child: const SizedBox(),
+                ),
               )
         : Text(
             body.toString(),

@@ -45,8 +45,13 @@ abstract class PagepilotPlatform extends PlatformInterface {
     required String screen,
     Config? config,
     String? type,
+    bool showNextAndPreviousButtons = false,
   }) async {
     throw UnimplementedError('show() has not been implemented.');
+  }
+
+  Future<void> dispose() async {
+    throw UnimplementedError('dispose() has not been implemented.');
   }
 
   Future<void> resetAllTour(userId) async {

@@ -1,3 +1,7 @@
+## 0.0.9+22
+
+- Tooltip pointer added
+
 ## 0.0.9+21
 
 - Minor Bug fixes

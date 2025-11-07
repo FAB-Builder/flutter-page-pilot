@@ -7,19 +7,41 @@ import 'package:pagepilot/constants/constants.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
+import 'package:pagepilot/utils/pref_util.dart';
+import 'package:pagepilot/utils/tour_util.dart';
+import 'package:pagepilot/utils/webview_util.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
+
+http.Client client = http.Client();
+
+void doDispose() {
+  try {
+    print("doDispose CALLED");
+    () async {
+      await Pref.writeBool('disposed', true);
+    }();
+    // client.close();
+    WebviewUtil.clearCache();
+    TourUtil.finish();
+  } catch (e) {
+    print("Error in doDispose ${e.toString()}");
+  }
+}
 
 void doShow({
   required BuildContext context,
   required String screen,
   required Config config,
   String? type,
+  bool showNextAndPreviousButtons = false,
 }) async {
   try {
+    await Pref.writeBool('disposed', false);
+
     PagePilot.init(tourStyles: config.styles);
     var jsonResponse;
 
-    var response = await http.get(
+    var response = await client.get(
       Uri.parse(
           "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}&slug=${screen}"),
     );
@@ -100,6 +122,7 @@ void doShow({
             tourModel,
             config,
             context,
+            showNextAndPreviousButtons: showNextAndPreviousButtons,
           );
         }
       });
@@ -110,28 +133,29 @@ void doShow({
 }
 
 acknowledge(id, userId, type) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/client/acknowledge?id=$id&userId=$userId&device=${Platform.operatingSystem}&type=$type"),
   );
 }
 
 unacknowledgedAll(userId) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/stats/markall-unacknowledged/$userId"),
   );
 }
 
 unacknowledged(id, userId) async {
-  await http.get(
+  await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/stats/mark-unacknowledged/$userId/$id"),
   );
 }
 
 void showWidget(
-    String type, DataModel data, Config config, BuildContext context) async {
+    String type, DataModel data, Config config, BuildContext context,
+    {bool showNextAndPreviousButtons = false}) async {
   String? shape,
       title,
       body,
@@ -191,6 +215,7 @@ void showWidget(
           config,
           data: data,
           scrollController: config.scrollController,
+          showNextAndPreviousButtons: showNextAndPreviousButtons,
         );
 
         await acknowledge(data.id, Config.userId, type);
@@ -207,7 +232,7 @@ void showWidget(
           url: url,
           scale: scale,
           onOkPressed: () async {
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
@@ -229,7 +254,7 @@ void showWidget(
           duration: int.tryParse(jsonResponse["timeout"].toString()) ?? 3000,
         );
         //acknowledge
-        await http.get(
+        await client.get(
           Uri.parse(
             "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
           ),
@@ -245,7 +270,7 @@ void showWidget(
           url: url,
           scale: scale,
           onOkPressed: () async {
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),
@@ -269,7 +294,7 @@ void showWidget(
           isDraggable: isDraggable,
           isVisible: true,
         );
-        await http.get(
+        await client.get(
           Uri.parse(
             "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
           ),
@@ -295,7 +320,7 @@ void showWidget(
               : PagePilot.hexToColor(color),
           onBeaconClicked: () async {
             //acknowledge
-            await http.get(
+            await client.get(
               Uri.parse(
                 "$baseUrl/acknowledge?id=${jsonResponse["_id"]}",
               ),

@@ -2,15 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
+import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
+import 'package:pagepilot/utils/pref_util.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:pagepilot/utils/utils.dart';
 import 'package:pagepilot/utils/webview_util.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
@@ -444,16 +447,14 @@ class PagePilot {
     required DataModel data,
   }) {
     StepModel step = data.steps[0];
-    Widget widget = SafeArea(
-      child: SingleChildScrollView(
-        child: Container(
-          margin: EdgeInsets.zero,
-          padding: EdgeInsets.zero,
-          child: WebviewUtil.getWebViewWidget(
-            step.content,
-            step.textColor,
-            step.height,
-          ),
+    Widget widget = SingleChildScrollView(
+      child: Container(
+        margin: EdgeInsets.zero,
+        padding: EdgeInsets.zero,
+        child: WebviewUtil.getWebViewWidget(
+          step.content,
+          step.textColor,
+          step.height,
         ),
       ),
     );
@@ -677,11 +678,17 @@ class PagePilot {
     Config config, {
     required DataModel data,
     ScrollController? scrollController,
+    bool showNextAndPreviousButtons = false,
   }) async {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
     List<StepModel> tours = data.steps;
+    List<ElTooltipController> tooltips = [];
     for (int i = 0; i < tours.length; i++) {
+      // final tooltip = SuperTooltipController();
+      ElTooltipController tooltip = ElTooltipController();
+      tooltips.add(tooltip);
+      WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
       String body = tours[i].content.toString();
       String textColor = tours[i].textColor.toString();
       String? contentHeight = tours[i].height;
@@ -691,36 +698,62 @@ class PagePilot {
         await scrollToTarget(key, scrollController);
       }
 
-      WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
-
       widgets.add(
         SingleChildScrollView(
           child: Container(
             margin: EdgeInsets.zero,
             padding: EdgeInsets.zero,
-            child: WebviewUtil.getWebViewWidget(
-              body,
-              textColor,
-              contentHeight,
-              tourWebViewController: tourWebViewController,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                WebviewUtil.getWebViewWidget(
+                  body,
+                  textColor,
+                  contentHeight,
+                  tourWebViewController: tourWebViewController,
+                  tooltip: tooltips[i],
+                  // tooltip: tooltip,
+                  step: tours[i],
+                ),
+                if (showNextAndPreviousButtons) ...{
+                  const SizedBox(height: 20),
+                  previousAndNextButtons(
+                    i,
+                    tours.length - 1,
+                  ),
+                }
+              ],
             ),
           ),
         ),
       );
-
+      // WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //   await Future.delayed(const Duration(milliseconds: 300));
+      //   // if (!tooltip.isVisible) {
+      //   tooltip.show();
+      //   // tooltip.showTooltip();
+      //   // }
+      // });
       WebviewUtil.load(
         null,
         body,
         tourWebViewController: tourWebViewController,
       );
     }
-    TourUtil.show(
-      context,
-      widgets: widgets,
-      keys: keys,
-      data: data,
-      targetIdentifier: "keyTour",
-    );
+    //TODO: fix this temporary hack
+    Future.delayed(Duration(milliseconds: 500), () async {
+      bool? isDisposed = await Pref.readBool('disposed');
+      if (isDisposed != true) {
+        TourUtil.show(
+          context,
+          widgets: widgets,
+          keys: keys,
+          data: data,
+          targetIdentifier: "keyTour",
+          tooltips: tooltips,
+        );
+      }
+    });
   }
 
   static Offset calculateBeaconPosition(

@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/data_model.dart';
@@ -120,12 +121,12 @@ class TourUtil {
     required List<GlobalKey> keys,
     required DataModel data,
     required String targetIdentifier,
+    List<ElTooltipController>? tooltips,
   }) {
     List<StepModel> steps = data.steps;
 
     List<TargetFocus> targets = [];
     for (int i = 0; i < keys.length; i++) {
-      final tooltip = SuperTooltipController();
       String position = steps[i].position.toString();
 
       targets.add(
@@ -135,15 +136,31 @@ class TourUtil {
               : ShapeLightFocus.RRect,
           identify: targetIdentifier + i.toString(),
           keyTarget: keys[i],
-          alignSkip: Alignment.topRight,
+          alignSkip: position.toString() == "bottom" ||
+                  position.toString() == "bottom-right" ||
+                  position.toString() == "bottom-left"
+              ? Alignment.bottomRight
+              : position.toString() == "top" ||
+                      position.toString() == "top-right" ||
+                      position.toString() == "top-left"
+                  ? Alignment.topRight
+                  : position.toString() == "left"
+                      ? Alignment.topRight
+                      : position.toString() == "right"
+                          ? Alignment.topLeft
+                          : Alignment.topRight,
           enableOverlayTab: true,
           contents: [
             TargetContent(
               padding: EdgeInsets.zero,
               customPosition: getCustomPosition(position.toString(), keys[i]),
-              align: position.toString() == "bottom"
+              align: position.toString() == "bottom" ||
+                      position.toString() == "bottom-right" ||
+                      position.toString() == "bottom-left"
                   ? ContentAlign.bottom
-                  : position.toString() == "top"
+                  : position.toString() == "top" ||
+                          position.toString() == "top-right" ||
+                          position.toString() == "top-left"
                       ? ContentAlign.top
                       : position.toString() == "left"
                           ? ContentAlign.left
@@ -151,34 +168,7 @@ class TourUtil {
                               ? ContentAlign.right
                               : ContentAlign.custom,
               builder: (context, coachMarkController) {
-                // ✅ Auto-show tooltip once this widget is built
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (!tooltip.isVisible) {
-                    tooltip.showTooltip();
-                  }
-                });
-                // return widgets[i];
-                return SuperTooltip(
-                  borderRadius: 12,
-                  closeButtonSize: 0,
-                  closeButtonType: CloseButtonType.outside,
-                  bubbleDimensions: EdgeInsets.zero,
-                  overlayDimensions: EdgeInsets.zero,
-                  showBarrier: true,
-                  showCloseButton: false,
-                  barrierColor: Colors.transparent,
-                  backgroundColor: Colors.black,
-                  shadowColor: Colors.transparent,
-                  controller: tooltip,
-                  popupDirection: TooltipDirection.down,
-                  borderColor: Colors.transparent,
-                  borderWidth: 1,
-                  arrowBaseWidth: 16,
-                  arrowLength: 12,
-                  minimumOutsideMargin: 0,
-                  content: widgets[i],
-                  child: const SizedBox(),
-                );
+                return widgets[i];
               },
             ),
           ],

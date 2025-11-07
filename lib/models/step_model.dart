@@ -23,6 +23,7 @@ class StepModel {
   String? color;
   String? width;
   String? height;
+  String? backgroundColor;
 
   StepModel({
     this.triggerIcon,
@@ -49,6 +50,7 @@ class StepModel {
     this.color,
     this.height,
     this.width,
+    this.backgroundColor,
   });
 
   StepModel.fromJson(Map<String, dynamic> json) {
@@ -80,6 +82,7 @@ class StepModel {
     color = json['color'];
     height = json['height'];
     width = json['width'];
+    backgroundColor = json['backgroundColor'];
   }
 
   Map<String, dynamic> toJson() {
@@ -112,6 +115,7 @@ class StepModel {
     data['color'] = this.color;
     data['height'] = this.height;
     data['width'] = this.width;
+    data['backgroundColor'] = this.backgroundColor;
     return data;
   }
 }
