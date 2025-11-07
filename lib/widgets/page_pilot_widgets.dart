@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:confetti/confetti.dart';
+import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/data_model.dart';
@@ -12,6 +13,7 @@ import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/widgets/pulse_animation.dart';
 import 'package:pagepilot/utils/utils.dart';
 import 'package:pagepilot/utils/webview_util.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 class PagePilot {
@@ -681,8 +683,11 @@ class PagePilot {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
     List<StepModel> tours = data.steps;
-
+    List<ElTooltipController> tooltips = [];
     for (int i = 0; i < tours.length; i++) {
+      // final tooltip = SuperTooltipController();
+      ElTooltipController tooltip = ElTooltipController();
+      tooltips.add(tooltip);
       WebViewController tourWebViewController = WebviewUtil.init(isTour: true);
       String body = tours[i].content.toString();
       String textColor = tours[i].textColor.toString();
@@ -706,6 +711,9 @@ class PagePilot {
                   textColor,
                   contentHeight,
                   tourWebViewController: tourWebViewController,
+                  tooltip: tooltips[i],
+                  // tooltip: tooltip,
+                  step: tours[i],
                 ),
                 if (showNextAndPreviousButtons) ...{
                   const SizedBox(height: 20),
@@ -719,7 +727,13 @@ class PagePilot {
           ),
         ),
       );
-
+      // WidgetsBinding.instance.addPostFrameCallback((_) async {
+      //   await Future.delayed(const Duration(milliseconds: 300));
+      //   // if (!tooltip.isVisible) {
+      //   tooltip.show();
+      //   // tooltip.showTooltip();
+      //   // }
+      // });
       WebviewUtil.load(
         null,
         body,
@@ -736,6 +750,7 @@ class PagePilot {
           keys: keys,
           data: data,
           targetIdentifier: "keyTour",
+          tooltips: tooltips,
         );
       }
     });

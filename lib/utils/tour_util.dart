@@ -1,11 +1,13 @@
 import 'dart:ui';
 
+import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/utils/utils.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class TourUtil {
@@ -119,6 +121,7 @@ class TourUtil {
     required List<GlobalKey> keys,
     required DataModel data,
     required String targetIdentifier,
+    List<ElTooltipController>? tooltips,
   }) {
     List<StepModel> steps = data.steps;
 
@@ -133,15 +136,31 @@ class TourUtil {
               : ShapeLightFocus.RRect,
           identify: targetIdentifier + i.toString(),
           keyTarget: keys[i],
-          alignSkip: Alignment.topRight,
+          alignSkip: position.toString() == "bottom" ||
+                  position.toString() == "bottom-right" ||
+                  position.toString() == "bottom-left"
+              ? Alignment.bottomRight
+              : position.toString() == "top" ||
+                      position.toString() == "top-right" ||
+                      position.toString() == "top-left"
+                  ? Alignment.topRight
+                  : position.toString() == "left"
+                      ? Alignment.topRight
+                      : position.toString() == "right"
+                          ? Alignment.topLeft
+                          : Alignment.topRight,
           enableOverlayTab: true,
           contents: [
             TargetContent(
               padding: EdgeInsets.zero,
               customPosition: getCustomPosition(position.toString(), keys[i]),
-              align: position.toString() == "bottom"
+              align: position.toString() == "bottom" ||
+                      position.toString() == "bottom-right" ||
+                      position.toString() == "bottom-left"
                   ? ContentAlign.bottom
-                  : position.toString() == "top"
+                  : position.toString() == "top" ||
+                          position.toString() == "top-right" ||
+                          position.toString() == "top-left"
                       ? ContentAlign.top
                       : position.toString() == "left"
                           ? ContentAlign.left

@@ -11,7 +11,6 @@ import 'package:pagepilot/utils/pref_util.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/utils/webview_util.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 http.Client client = http.Client();
 
