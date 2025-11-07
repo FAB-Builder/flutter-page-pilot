@@ -711,8 +711,8 @@ class PagePilot {
                   textColor,
                   contentHeight,
                   tourWebViewController: tourWebViewController,
-                  tooltip: tooltips[i],
-                  // tooltip: tooltip,
+                  // tooltip: tooltips[i],
+                  tooltip: tooltip,
                   step: tours[i],
                 ),
                 if (showNextAndPreviousButtons) ...{

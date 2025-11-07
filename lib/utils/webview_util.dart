@@ -4,8 +4,8 @@ import 'dart:convert';
 import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/utils/tour_util.dart';
-import 'package:super_tooltip/super_tooltip.dart';
 import 'package:pagepilot/utils/utils.dart';
+import 'package:super_tooltip/super_tooltip.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../models/step_model.dart';
@@ -219,7 +219,7 @@ class WebviewUtil {
                   return ElTooltip(
                       radius: Radius.zero,
                       position: position == "bottom"
-                          ? ElTooltipPosition.bottomStart
+                          ? ElTooltipPosition.bottomCenter
                           : position == "top"
                               ? ElTooltipPosition.topCenter
                               : position == "left"
@@ -228,7 +228,7 @@ class WebviewUtil {
                                       ? ElTooltipPosition.rightCenter
                                       : ElTooltipPosition.bottomCenter,
                       key: key,
-                      distance: (size["height"] ?? 0) / 2,
+                      distance: position == "bottom" ? 40 : 0,
                       showModal: false,
                       showChildAboveOverlay: false,
                       controller: tooltip,
@@ -265,11 +265,7 @@ class WebviewUtil {
                   showChildAboveOverlay: false,
                   controller: tooltip,
                   padding: EdgeInsets.zero,
-                  distance: (double.tryParse(contentHeight
-                              .toString()
-                              .replaceAll("px", "replace")) ??
-                          200) /
-                      2,
+                  distance: step?.position.toString() == "bottom" ? 40 : 0,
                   color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                   content: WebViewWidget(
                       controller: tourWebViewController ?? controller!),
