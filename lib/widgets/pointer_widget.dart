@@ -33,8 +33,7 @@ class TooltipWithFlushArrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Stack so arrow can overflow without changing child's layout
-    return Container(
-      // color: Colors.red,
+    return SizedBox(
       height: height,
       child: Stack(
         fit: StackFit.loose,

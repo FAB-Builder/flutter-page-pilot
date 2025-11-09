@@ -1,3 +1,7 @@
+## 0.0.9+25
+
+- Bug fixes
+
 ## 0.0.9+24
 
 - Pointer bug fixes

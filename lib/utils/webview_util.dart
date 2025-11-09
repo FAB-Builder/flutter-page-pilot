@@ -252,8 +252,11 @@ class WebviewUtil {
                                                     : PointerPosition.bottom,
                     color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                     height: size["height"] ?? 0,
-                    child: SizedBox(
+                    child: Container(
+                      color:
+                          Util.hexToColor(step?.backgroundColor ?? "#000000"),
                       height: size["height"],
+                      width: MediaQuery.of(context).size.width * 0.8,
                       child: WebViewWidget(
                           controller: tourWebViewController ?? controller!),
                     ),
