@@ -1,13 +1,11 @@
 import 'dart:ui';
 
-import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:pagepilot/models/data_model.dart';
 import 'package:pagepilot/models/step_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/utils/utils.dart';
-import 'package:super_tooltip/super_tooltip.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class TourUtil {
@@ -121,7 +119,6 @@ class TourUtil {
     required List<GlobalKey> keys,
     required DataModel data,
     required String targetIdentifier,
-    List<ElTooltipController>? tooltips,
   }) {
     List<StepModel> steps = data.steps;
 

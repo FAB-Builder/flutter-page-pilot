@@ -1,14 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:el_tooltip/el_tooltip.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/utils/utils.dart';
-import 'package:super_tooltip/super_tooltip.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 import '../models/step_model.dart';
+import '../widgets/pointer_widget.dart';
 
 class WebviewUtil {
   static WebViewController? controller;
@@ -102,6 +101,33 @@ class WebviewUtil {
           try {
             // Wait for layout (especially images/fonts)
             print("onPageFinished");
+            // await c.runJavaScript('''
+            //   document.documentElement.style.overflow = 'hidden';
+            //   document.body.style.overflow = 'hidden';
+            //   document.documentElement.style.height = '100%';
+            //   document.body.style.height = '100%';
+            //   document.documentElement.style.webkitOverflowScrolling = 'auto';
+            // ''');
+//             await c.runJavaScript('''
+//   const style = document.createElement('style');
+//   style.innerHTML = 'body { -webkit-overflow-scrolling: auto !important; overscroll-behavior: none !important; }';
+//   document.head.appendChild(style);
+// ''');
+//             await c.runJavaScript('''
+//   const style = document.createElement('style');
+//   style.innerHTML = `
+//     html, body {
+//       margin: 0;
+//       padding: 0;
+//       overflow: hidden !important;
+//       overscroll-behavior: none !important;
+//       -webkit-overflow-scrolling: auto !important;
+//       height: 100%;
+//     }
+//   `;
+//   document.head.appendChild(style);
+// ''');
+
             await Future.delayed(const Duration(milliseconds: 400));
 
             // Inject JS to intercept clicks on buttons with
@@ -159,7 +185,7 @@ class WebviewUtil {
                 .runJavaScriptReturningResult('window.devicePixelRatio');
             final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
 
-            final adjustedHeight = (heightVal / pixelRatio) + 40;
+            final adjustedHeight = (heightVal / pixelRatio) + 0;
             final adjustedWidth = (widthVal / pixelRatio) + 75;
 
             sizeNotifier.value = {
@@ -196,80 +222,74 @@ class WebviewUtil {
 
   static Widget getWebViewWidget(
       String? body, String? textColor, String? contentHeight,
-      {WebViewController? tourWebViewController,
-      StepModel? step,
-      ElTooltipController? tooltip}) {
+      {WebViewController? tourWebViewController, StepModel? step}) {
     GlobalKey key = GlobalKey();
     return body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)
         ? contentHeight == null
             ? ValueListenableBuilder<Map<String, double>>(
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
-                  String position = (step?.position ?? "").toString();
-                  try {
-                    if (tooltip != null) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) async {
-                        await Future.delayed(const Duration(milliseconds: 300));
-                        tooltip.show();
-                      });
-                    }
-                  } catch (e) {
-                    debugPrint(e.toString());
-                  }
-                  return ElTooltip(
-                      radius: Radius.zero,
-                      position: position == "bottom"
-                          ? ElTooltipPosition.bottomCenter
-                          : position == "top"
-                              ? ElTooltipPosition.topCenter
-                              : position == "left"
-                                  ? ElTooltipPosition.leftCenter
-                                  : position == "right"
-                                      ? ElTooltipPosition.rightCenter
-                                      : ElTooltipPosition.bottomCenter,
-                      key: key,
-                      distance: position == "bottom" ? 40 : 0,
-                      showModal: false,
-                      showChildAboveOverlay: false,
-                      controller: tooltip,
-                      padding: EdgeInsets.zero,
-                      color:
-                          Util.hexToColor(step?.backgroundColor ?? "#000000"),
-                      content: SizedBox(
-                        height: size["height"],
-                        width: MediaQuery.of(context).size.width * 0.8,
-                        child: WebViewWidget(
-                            controller: tourWebViewController ?? controller!),
-                      ),
-                      child: const SizedBox());
+                  return TooltipWithFlushArrow(
+                    pointerPosition: step?.position.toString() == "bottom"
+                        ? PointerPosition.bottom
+                        : step?.position.toString() == "bottom-left"
+                            ? PointerPosition.bottomLeft
+                            : step?.position.toString() == "bottom-right"
+                                ? PointerPosition.bottomRight
+                                : step?.position.toString() == "top"
+                                    ? PointerPosition.top
+                                    : step?.position.toString() == "top-left"
+                                        ? PointerPosition.topLeft
+                                        : step?.position.toString() ==
+                                                "top-right"
+                                            ? PointerPosition.topRight
+                                            : step?.position.toString() ==
+                                                    "left"
+                                                ? PointerPosition.left
+                                                : step?.position.toString() ==
+                                                        "right"
+                                                    ? PointerPosition.right
+                                                    : PointerPosition.bottom,
+                    color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                    height: size["height"] ?? 0,
+                    child: SizedBox(
+                      height: size["height"],
+                      child: WebViewWidget(
+                          controller: tourWebViewController ?? controller!),
+                    ),
+                  );
                 },
               )
-            : SizedBox(
+            : TooltipWithFlushArrow(
+                pointerPosition: step?.position.toString() == "bottom"
+                    ? PointerPosition.bottom
+                    : step?.position.toString() == "bottom-left"
+                        ? PointerPosition.bottomLeft
+                        : step?.position.toString() == "bottom-right"
+                            ? PointerPosition.bottomRight
+                            : step?.position.toString() == "top"
+                                ? PointerPosition.top
+                                : step?.position.toString() == "top-left"
+                                    ? PointerPosition.topLeft
+                                    : step?.position.toString() == "top-right"
+                                        ? PointerPosition.topRight
+                                        : step?.position.toString() == "left"
+                                            ? PointerPosition.left
+                                            : step?.position.toString() ==
+                                                    "right"
+                                                ? PointerPosition.right
+                                                : PointerPosition.bottom,
+                color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                 height: double.tryParse(
                         contentHeight.toString().replaceAll("px", "replace")) ??
                     200,
-                // width:
-                //     MediaQuery.of(context).size.width * 0.8,
-                child: ElTooltip(
-                  position: step?.position.toString() == "bottom"
-                      ? ElTooltipPosition.bottomCenter
-                      : step?.position.toString() == "top"
-                          ? ElTooltipPosition.topCenter
-                          : step?.position.toString() == "left"
-                              ? ElTooltipPosition.leftCenter
-                              : step?.position.toString() == "right"
-                                  ? ElTooltipPosition.rightCenter
-                                  : ElTooltipPosition.bottomCenter,
-                  key: key,
-                  showModal: false,
-                  showChildAboveOverlay: false,
-                  controller: tooltip,
-                  padding: EdgeInsets.zero,
-                  distance: step?.position.toString() == "bottom" ? 40 : 0,
-                  color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
-                  content: WebViewWidget(
+                child: SizedBox(
+                  height: double.tryParse(contentHeight
+                          .toString()
+                          .replaceAll("px", "replace")) ??
+                      200,
+                  child: WebViewWidget(
                       controller: tourWebViewController ?? controller!),
-                  child: const SizedBox(),
                 ),
               )
         : Text(

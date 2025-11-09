@@ -1,6 +1,6 @@
 name: pagepilot
 description: "This package will be used for quick and easy integration with PagePilot in your app."
-version: 0.0.9+23
+version: 0.0.9+24
 homepage: "https://pagepilot.fabbuilder.com"
 
 environment:
@@ -26,9 +26,7 @@ dependencies:
   url_launcher: ^6.3.1
   flutter_inappwebview: ^6.1.5
   webview_flutter: ^4.10.0
-  super_tooltip: ^2.1.0
   shared_preferences: ^2.5.3
-  el_tooltip: ^2.2.1
   
   
 
