@@ -25,10 +25,10 @@ class WebviewUtil {
 
         html.style.margin = '0';
         html.style.padding = '0';
-        html.style.overflow = 'hidden';
+        html.style.overflow = 'auto';
         body.style.margin = '0';
         body.style.padding = '0';
-        body.style.overflow = 'hidden';
+        body.style.overflow = 'auto';
 
         // Ensure all images loaded
         const imgs = document.images;
