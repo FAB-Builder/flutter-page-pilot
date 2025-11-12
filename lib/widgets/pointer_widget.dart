@@ -12,13 +12,15 @@ enum PointerPosition {
 }
 
 /// Use this widget around your existing child (e.g. SizedBox with WebView).
-class TooltipWithFlushArrow extends StatelessWidget {
+class TooltipWithFlushArrow extends StatefulWidget {
   final Widget child;
   final PointerPosition pointerPosition;
   final double arrowSize;
   final Color color;
   final double borderRadius;
   final double height;
+  final GlobalKey targetKey;
+  final bool showArrow;
 
   const TooltipWithFlushArrow({
     super.key,
@@ -28,97 +30,141 @@ class TooltipWithFlushArrow extends StatelessWidget {
     this.color = Colors.black87,
     this.borderRadius = 8.0,
     required this.height,
+    required this.targetKey,
+    this.showArrow = false,
   });
+
+  @override
+  State<TooltipWithFlushArrow> createState() => _TooltipWithFlushArrowState();
+}
+
+class _TooltipWithFlushArrowState extends State<TooltipWithFlushArrow> {
+  Offset? position;
+
+  Size? size;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => getPosition());
+  }
+
+  void getPosition() {
+    final box =
+        widget.targetKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box != null) {
+      setState(() {
+        position = box.localToGlobal(Offset.zero);
+        size = box.size;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     // Stack so arrow can overflow without changing child's layout
-    return SizedBox(
-      height: height,
+    return Container(
+      height: widget.height,
+      color: widget.color,
       child: Stack(
-        fit: StackFit.loose,
         clipBehavior: Clip.none,
         children: [
-          // The main content (no padding added)
-          child,
+          widget.child,
+
+          // Pointer overlay
+          if (position != null && size != null && widget.showArrow)
+            Positioned(
+              left: position!.dx + size!.width / 2 - 10,
+              top: position!.dy - 20,
+              child: const Icon(Icons.arrow_drop_down,
+                  size: 40, color: Colors.red),
+            ),
 
           // Arrow - positioned depending on pointerPosition using negative offsets
-          if (pointerPosition == PointerPosition.bottom)
+          if (widget.pointerPosition == PointerPosition.bottom &&
+              widget.showArrow)
             Positioned(
               // left: null,
               right: null,
-              bottom: -arrowSize, // negative to overlap flush
-              left: MediaQuery.of(context).size.width * 0.5 - arrowSize,
+              bottom: -widget.arrowSize, // negative to overlap flush
+              left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
               child: _Triangle(
-                size: arrowSize,
-                color: color,
+                size: widget.arrowSize,
+                color: widget.color,
                 direction: PointerPosition.bottom,
               ),
             )
-          else if (pointerPosition == PointerPosition.top)
+          else if (widget.pointerPosition == PointerPosition.top &&
+              widget.showArrow)
             Positioned(
-              top: -arrowSize,
-              left: MediaQuery.of(context).size.width * 0.5 - arrowSize,
+              top: -widget.arrowSize,
+              left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
               child: _Triangle(
-                size: arrowSize,
-                color: color,
+                size: widget.arrowSize,
+                color: widget.color,
                 direction: PointerPosition.top,
               ),
             )
-          else if (pointerPosition == PointerPosition.left)
+          else if (widget.pointerPosition == PointerPosition.left &&
+              widget.showArrow)
             Positioned(
-              left: -arrowSize,
-              top: (_centerY(context, child) ?? 0) - arrowSize,
+              left: -widget.arrowSize,
+              top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
               child: _Triangle(
-                size: arrowSize,
-                color: color,
+                size: widget.arrowSize,
+                color: widget.color,
                 direction: PointerPosition.left,
               ),
             )
-          else if (pointerPosition == PointerPosition.right)
+          else if (widget.pointerPosition == PointerPosition.right &&
+              widget.showArrow)
             Positioned(
-              right: -arrowSize,
-              top: (_centerY(context, child) ?? 0) - arrowSize,
+              right: -widget.arrowSize,
+              top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
               child: _Triangle(
-                size: arrowSize,
-                color: color,
+                size: widget.arrowSize,
+                color: widget.color,
                 direction: PointerPosition.right,
               ),
             )
-          else if (pointerPosition == PointerPosition.bottomLeft)
+          else if (widget.pointerPosition == PointerPosition.bottomLeft &&
+              widget.showArrow)
             Positioned(
-              bottom: -arrowSize,
+              bottom: -widget.arrowSize,
               left: MediaQuery.of(context).size.width * 0.15,
               child: _Triangle(
-                  size: arrowSize,
-                  color: color,
+                  size: widget.arrowSize,
+                  color: widget.color,
                   direction: PointerPosition.bottom),
             )
-          else if (pointerPosition == PointerPosition.bottomRight)
+          else if (widget.pointerPosition == PointerPosition.bottomRight &&
+              widget.showArrow)
             Positioned(
-              bottom: -arrowSize,
+              bottom: -widget.arrowSize,
               right: MediaQuery.of(context).size.width * 0.15,
               child: _Triangle(
-                  size: arrowSize,
-                  color: color,
+                  size: widget.arrowSize,
+                  color: widget.color,
                   direction: PointerPosition.bottom),
             )
-          else if (pointerPosition == PointerPosition.topLeft)
+          else if (widget.pointerPosition == PointerPosition.topLeft &&
+              widget.showArrow)
             Positioned(
-              top: -arrowSize,
+              top: -widget.arrowSize,
               left: MediaQuery.of(context).size.width * 0.15,
               child: _Triangle(
-                  size: arrowSize,
-                  color: color,
+                  size: widget.arrowSize,
+                  color: widget.color,
                   direction: PointerPosition.top),
             )
-          else if (pointerPosition == PointerPosition.topRight)
+          else if (widget.pointerPosition == PointerPosition.topRight &&
+              widget.showArrow)
             Positioned(
-              top: -arrowSize,
+              top: -widget.arrowSize,
               right: MediaQuery.of(context).size.width * 0.15,
               child: _Triangle(
-                  size: arrowSize,
-                  color: color,
+                  size: widget.arrowSize,
+                  color: widget.color,
                   direction: PointerPosition.top),
             ),
         ],
@@ -127,8 +173,6 @@ class TooltipWithFlushArrow extends StatelessWidget {
   }
 
   // Helpers — try to estimate center offsets relative to child's RenderBox.
-  // These use context.findRenderObject which may be null in some build timings;
-  // they fallback to 0 so arrow still shows (tweak positions manually if needed).
   double? _centerX(BuildContext context, Widget childWidget) {
     // Can't reliably compute child's size here synchronously for arbitrary widget.
     // Return null so we don't crash; you can pass explicit offsets if needed.

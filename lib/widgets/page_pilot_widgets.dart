@@ -452,7 +452,8 @@ class PagePilot {
         child: WebviewUtil.getWebViewWidget(
           step.content,
           step.textColor,
-          step.height,
+          contentHeight: step.height,
+          contentwidth: step.width,
         ),
       ),
     );
@@ -594,7 +595,6 @@ class PagePilot {
                                 WebviewUtil.getWebViewWidget(
                                   body,
                                   textColor,
-                                  null,
                                 )
                             ],
                           ),
@@ -687,6 +687,7 @@ class PagePilot {
       String body = tours[i].content.toString();
       String textColor = tours[i].textColor.toString();
       String? contentHeight = tours[i].height;
+      String? contentwidth = tours[i].width;
       final key = config.keys[tours[i].selector.toString()];
       keys.add(key);
       if (scrollController != null) {
@@ -702,9 +703,11 @@ class PagePilot {
               mainAxisSize: MainAxisSize.min,
               children: [
                 WebviewUtil.getWebViewWidget(
+                  targetKey: key,
                   body,
                   textColor,
-                  contentHeight,
+                  contentHeight: contentHeight,
+                  contentwidth: contentwidth,
                   tourWebViewController: tourWebViewController,
                   step: tours[i],
                 ),

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:pagepilot/utils/tour_util.dart';
@@ -14,9 +15,10 @@ class WebviewUtil {
   static ValueNotifier<Map<String, double>> sizeNotifier =
       ValueNotifier<Map<String, double>>({"height": 200, "width": 200});
 
-  static String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
+  static const String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
 
-  static String calculateHtmlDocDimensions = '''
+  static String calculateHtmlDocDimensions = Platform.isIOS
+      ? '''
       (function() {
         const body = document.body;
         const html = document.documentElement;
@@ -83,135 +85,160 @@ class WebviewUtil {
 
         return JSON.stringify({ height: height.toString(), width: width.toString() });
       })();
-    ''';
+    '''
+      : '''
+(function() {
+  try {
+    const body = document.body;
+    const html = document.documentElement;
 
+    html.style.margin = '0';
+    html.style.padding = '0';
+    body.style.margin = '0';
+    body.style.padding = '0';
+    html.style.overflow = 'visible';
+    body.style.overflow = 'visible';
+
+    // Wait until all images and iframes are fully loaded
+    const imgs = document.images;
+    for (let i = 0; i < imgs.length; i++) {
+      if (!imgs[i].complete) return -1;
+    }
+
+    // Compute true rendered bounds
+    const rect = body.getBoundingClientRect();
+    const height = rect.bottom - rect.top;
+    const width = rect.right - rect.left;
+
+    // Include any absolutely positioned or floating elements outside normal flow
+    const all = document.querySelectorAll('*');
+    let maxBottom = height;
+    let maxRight = width;
+    all.forEach(el => {
+      const r = el.getBoundingClientRect();
+      if (r.bottom > maxBottom) maxBottom = r.bottom;
+      if (r.right > maxRight) maxRight = r.right;
+    });
+
+    const finalHeight = Math.ceil(maxBottom);
+    const finalWidth = Math.ceil(maxRight);
+
+    return JSON.stringify({
+      height: finalHeight.toString(),
+      width: finalWidth.toString()
+    });
+  } catch (e) {
+    return JSON.stringify({ height: "400", width: "400" });
+  }
+})();
+''';
+
+  /// ✅ Initialize WebView with full auto-size and click-channel support
   static WebViewController init({required bool isTour}) {
-    WebViewController c;
-    c = WebViewController()
+    final c = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
-      ..setBackgroundColor(const Color(0x00000000)) // ✅ Transparent background
+      ..setBackgroundColor(const Color(0x00000000))
       ..enableZoom(false);
+
     c.setNavigationDelegate(
       NavigationDelegate(
-        onProgress: (int progress) {
-          // Update loading bar.
-        },
-        onPageStarted: (String url) {},
+        onProgress: (_) {},
+        onPageStarted: (_) {},
         onPageFinished: (String url) async {
           try {
-            // Wait for layout (especially images/fonts)
-            print("onPageFinished");
-            // await c.runJavaScript('''
-            //   document.documentElement.style.overflow = 'hidden';
-            //   document.body.style.overflow = 'hidden';
-            //   document.documentElement.style.height = '100%';
-            //   document.body.style.height = '100%';
-            //   document.documentElement.style.webkitOverflowScrolling = 'auto';
-            // ''');
-//             await c.runJavaScript('''
-//   const style = document.createElement('style');
-//   style.innerHTML = 'body { -webkit-overflow-scrolling: auto !important; overscroll-behavior: none !important; }';
-//   document.head.appendChild(style);
-// ''');
-//             await c.runJavaScript('''
-//   const style = document.createElement('style');
-//   style.innerHTML = `
-//     html, body {
-//       margin: 0;
-//       padding: 0;
-//       overflow: hidden !important;
-//       overscroll-behavior: none !important;
-//       -webkit-overflow-scrolling: auto !important;
-//       height: 100%;
-//     }
-//   `;
-//   document.head.appendChild(style);
-// ''');
-
+            print("✅ onPageFinished: $url");
             await Future.delayed(const Duration(milliseconds: 400));
 
-            // Inject JS to intercept clicks on buttons with
-            //data-action="onNextStep"
-            //data-action="onPrevStep"
-            //data-action="link"
-            //data-action="onCloseStep"
-            await c!.runJavaScript('''
-                document.querySelectorAll('button[data-action="onNextStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onNextStepClicked'}));
-                  });
-                });
-                document.querySelectorAll('button[data-action="onPrevStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onPrevStepClicked'}));
-                  });
-                });
-                document.querySelectorAll('button[data-action="link"]').forEach(btn => {
-                  btn.addEventListener('click', (event) => {
-                    event.preventDefault(); // Prevent navigation
-                    const anchor = btn.closest('a');
-                    if (anchor) {
-                      // Send URL to Flutter
-                      FlutterChannel.postMessage(JSON.stringify({action: 'openLink', url: anchor.href}));
-                    }
-                  });
-                });
-                document.querySelectorAll('button[data-action="onCloseStep"]').forEach(btn => {
-                  btn.addEventListener('click', () => {
-                    FlutterChannel.postMessage(JSON.stringify({action: 'onCloseStepClicked'}));
-                  });
-                });
-              ''');
+            // Inject button click listeners
+            await c.runJavaScript('''
+      document.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+          const action = btn.getAttribute('data-action');
+          const anchor = btn.closest('a');
+          let payload = { action };
+          if (action === 'link' && anchor) {
+            event.preventDefault();
+            payload.url = anchor.href;
+          }
+          FlutterChannel.postMessage(JSON.stringify(payload));
+        });
+      });
+    ''');
 
-            final jsResult = await c!
-                .runJavaScriptReturningResult(calculateHtmlDocDimensions);
+            // --- Safe JSON parser (no double decode) ---
+            dynamic safeJsonParse(dynamic jsResult) {
+              if (jsResult == null) return {};
+              dynamic str = jsResult.toString().trim();
 
-            // if (jsResult.toString().contains('-1')) {
-            //   await Future.delayed(const Duration(milliseconds: 300));
-            //   return onPageFinished(url);
-            // }
+              // Unwrap quoted JSON like "\"{...}\""
+              if (str.startsWith('"') && str.endsWith('"')) {
+                str = str.substring(1, str.length - 1);
+              }
 
-            // final jsonStr =
-            //     jsResult.toString().replaceAll(RegExp(r'[^0-9.]'), '');
-            final decoded = jsonDecode(jsResult.toString());
+              // Replace escaped quotes
+              str = str.replaceAll(r'\"', '"');
 
-            final calculatedHeight = decoded['height'];
-            final calculatedWidth = decoded['width'];
+              try {
+                final json = jsonDecode(str);
+                if (json is Map) return json;
+              } catch (_) {}
+              return {};
+            }
 
-            final heightVal = double.tryParse(calculatedHeight) ?? 0;
-            final widthVal = double.tryParse(calculatedWidth) ?? 0;
+            Map<String, double> newSize = {"height": 400, "width": 400};
 
-            final pixelRatioJs = await c!
-                .runJavaScriptReturningResult('window.devicePixelRatio');
-            final pixelRatio = double.tryParse(pixelRatioJs.toString()) ?? 1.0;
+            for (int attempt = 0; attempt < 3; attempt++) {
+              final jsResult = await c
+                  .runJavaScriptReturningResult(calculateHtmlDocDimensions);
 
-            final adjustedHeight = (heightVal / pixelRatio) + 0;
-            final adjustedWidth = (widthVal / pixelRatio) + 75;
+              if (jsResult.toString().contains('-1')) {
+                await Future.delayed(const Duration(milliseconds: 300));
+                continue;
+              }
 
-            sizeNotifier.value = {
-              "height": adjustedHeight,
-              "width": adjustedWidth
-            };
-            print('WebView size set to: ${sizeNotifier.value}');
-          } catch (e) {
-            print('Error getting size: $e');
+              final decoded = safeJsonParse(jsResult);
 
-            sizeNotifier.value = {
-              "height": 400,
-              "width": 400,
-            };
+              final heightVal =
+                  double.tryParse(decoded['height']?.toString() ?? '0') ?? 0;
+              final widthVal =
+                  double.tryParse(decoded['width']?.toString() ?? '0') ?? 0;
+
+              // Pixel ratio
+              final pixelRatioJs = await c
+                  .runJavaScriptReturningResult('window.devicePixelRatio');
+              final pixelRatio =
+                  double.tryParse(pixelRatioJs.toString()) ?? 1.0;
+
+              final adjustedHeight = (heightVal / pixelRatio);
+              final adjustedWidth = (widthVal / pixelRatio);
+
+              // Sanity cap
+              if (adjustedHeight > 3000 || adjustedHeight < 100) {
+                print("⚠️ Height suspicious ($adjustedHeight), fallback used");
+                newSize = {"height": 400, "width": 400};
+              } else {
+                newSize = {"height": adjustedHeight, "width": adjustedWidth};
+              }
+              break;
+            }
+
+            if (newSize["height"]! > 5000) newSize["height"] = 500;
+
+            sizeNotifier.value = newSize;
+            print('📏 Final WebView size (adjusted): $newSize');
+          } catch (e, st) {
+            print('❌ Error calculating WebView size: $e\n$st');
+            sizeNotifier.value = {"height": 400, "width": 400};
           }
         },
-        onHttpError: (HttpResponseError error) {},
-        onWebResourceError: (WebResourceError error) {},
+        onHttpError: (error) => print("HTTP Error: $error"),
+        onWebResourceError: (error) => print("Web Resource Error: $error"),
         onNavigationRequest: (NavigationRequest request) {
-          // if (request.url.startsWith('https://www.youtube.com/')) {
-          //   return NavigationDecision.prevent;
-          // }
           return NavigationDecision.navigate;
         },
       ),
     );
+
     if (!isTour) controller = c;
     return c;
   }
@@ -220,35 +247,39 @@ class WebviewUtil {
     return WebViewWidget(controller: controller!);
   }
 
-  static Widget getWebViewWidget(
-      String? body, String? textColor, String? contentHeight,
-      {WebViewController? tourWebViewController, StepModel? step}) {
-    GlobalKey key = GlobalKey();
+  static Widget getWebViewWidget(String? body, String? textColor,
+      {WebViewController? tourWebViewController,
+      String? contentHeight,
+      String? contentwidth,
+      StepModel? step,
+      GlobalKey? targetKey}) {
     return body.toString().startsWith(WebviewUtil.bodyStartsWithHtmlString)
-        ? contentHeight == null
+        ? contentHeight == null || contentHeight == "0"
             ? ValueListenableBuilder<Map<String, double>>(
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
                   return TooltipWithFlushArrow(
+                    showArrow: step?.isCaret == true,
+                    targetKey: targetKey ?? GlobalKey(),
                     pointerPosition: step?.position.toString() == "bottom"
-                        ? PointerPosition.bottom
+                        ? PointerPosition.top
                         : step?.position.toString() == "bottom-left"
-                            ? PointerPosition.bottomLeft
+                            ? PointerPosition.topRight
                             : step?.position.toString() == "bottom-right"
-                                ? PointerPosition.bottomRight
+                                ? PointerPosition.topLeft
                                 : step?.position.toString() == "top"
-                                    ? PointerPosition.top
+                                    ? PointerPosition.bottom
                                     : step?.position.toString() == "top-left"
-                                        ? PointerPosition.topLeft
+                                        ? PointerPosition.bottomLeft
                                         : step?.position.toString() ==
                                                 "top-right"
-                                            ? PointerPosition.topRight
+                                            ? PointerPosition.bottomRight
                                             : step?.position.toString() ==
                                                     "left"
-                                                ? PointerPosition.left
+                                                ? PointerPosition.right
                                                 : step?.position.toString() ==
                                                         "right"
-                                                    ? PointerPosition.right
+                                                    ? PointerPosition.left
                                                     : PointerPosition.bottom,
                     color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                     height: size["height"] ?? 0,
@@ -256,6 +287,7 @@ class WebviewUtil {
                       color:
                           Util.hexToColor(step?.backgroundColor ?? "#000000"),
                       height: size["height"],
+                      // width: size["width"],
                       width: MediaQuery.of(context).size.width * 0.8,
                       child: WebViewWidget(
                           controller: tourWebViewController ?? controller!),
@@ -264,32 +296,36 @@ class WebviewUtil {
                 },
               )
             : TooltipWithFlushArrow(
+                showArrow: step?.isCaret == true,
+                targetKey: targetKey ?? GlobalKey(),
                 pointerPosition: step?.position.toString() == "bottom"
-                    ? PointerPosition.bottom
+                    ? PointerPosition.top
                     : step?.position.toString() == "bottom-left"
-                        ? PointerPosition.bottomLeft
+                        ? PointerPosition.topRight
                         : step?.position.toString() == "bottom-right"
-                            ? PointerPosition.bottomRight
+                            ? PointerPosition.topLeft
                             : step?.position.toString() == "top"
-                                ? PointerPosition.top
+                                ? PointerPosition.bottom
                                 : step?.position.toString() == "top-left"
-                                    ? PointerPosition.topLeft
+                                    ? PointerPosition.bottomLeft
                                     : step?.position.toString() == "top-right"
-                                        ? PointerPosition.topRight
+                                        ? PointerPosition.bottomRight
                                         : step?.position.toString() == "left"
-                                            ? PointerPosition.left
+                                            ? PointerPosition.right
                                             : step?.position.toString() ==
                                                     "right"
-                                                ? PointerPosition.right
+                                                ? PointerPosition.left
                                                 : PointerPosition.bottom,
                 color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                 height: double.tryParse(
-                        contentHeight.toString().replaceAll("px", "replace")) ??
+                        contentHeight.toString().replaceAll("px", "")) ??
                     200,
                 child: SizedBox(
-                  height: double.tryParse(contentHeight
-                          .toString()
-                          .replaceAll("px", "replace")) ??
+                  height: double.tryParse(
+                          contentHeight.toString().replaceAll("px", "")) ??
+                      200,
+                  width: double.tryParse(
+                          contentwidth.toString().replaceAll("px", "")) ??
                       200,
                   child: WebViewWidget(
                       controller: tourWebViewController ?? controller!),
