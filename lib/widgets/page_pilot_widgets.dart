@@ -702,6 +702,7 @@ class PagePilot {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 20),
                 WebviewUtil.getWebViewWidget(
                   targetKey: key,
                   body,

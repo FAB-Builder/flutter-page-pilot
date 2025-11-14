@@ -19,6 +19,7 @@ class TooltipWithFlushArrow extends StatefulWidget {
   final Color color;
   final double borderRadius;
   final double height;
+  final double width;
   final GlobalKey targetKey;
   final bool showArrow;
 
@@ -30,6 +31,7 @@ class TooltipWithFlushArrow extends StatefulWidget {
     this.color = Colors.black87,
     this.borderRadius = 8.0,
     required this.height,
+    required this.width,
     required this.targetKey,
     this.showArrow = false,
   });
@@ -60,113 +62,164 @@ class _TooltipWithFlushArrowState extends State<TooltipWithFlushArrow> {
     }
   }
 
+  double _calculateArrowLeft({
+    required double containerWidth,
+    required double arrowSize,
+    required double targetDx,
+    required double childWidth,
+  }) {
+    // Convert global target X to local inside child
+    double arrowLeft = targetDx - (arrowSize / 2);
+
+    // Clamp inside the child
+    arrowLeft = arrowLeft.clamp(0, containerWidth - arrowSize);
+
+    return arrowLeft;
+  }
+
   @override
   Widget build(BuildContext context) {
     // Stack so arrow can overflow without changing child's layout
+    getPosition();
+    print("pointerPosition: ${position}");
+    print("size: ${size}");
+    print(MediaQuery.of(context).size);
     return Container(
       height: widget.height,
+      width: widget.width,
       color: widget.color,
       child: Stack(
         clipBehavior: Clip.none,
+        // alignment: Alignment.center,
         children: [
           widget.child,
 
           // Pointer overlay
           if (position != null && size != null && widget.showArrow)
             Positioned(
-              left: position!.dx + size!.width / 2 - 10,
-              top: position!.dy - 20,
-              child: const Icon(Icons.arrow_drop_down,
-                  size: 40, color: Colors.red),
+              bottom: widget.pointerPosition == PointerPosition.top
+                  ? null
+                  : -widget.arrowSize / 1.75,
+              top: widget.pointerPosition == PointerPosition.bottom
+                  ? null
+                  : -widget.arrowSize / 1.75,
+              left: _calculateArrowLeft(
+                containerWidth: widget.width,
+                arrowSize: widget.arrowSize,
+                targetDx: position!.dx,
+                childWidth: size!.width,
+              ),
+              child: Transform.rotate(
+                angle: widget.pointerPosition == PointerPosition.left
+                    ? 3.14
+                    : widget.pointerPosition == PointerPosition.right
+                        ? 0
+                        : widget.pointerPosition == PointerPosition.topLeft
+                            ? 3.14 / 2
+                            : widget.pointerPosition == PointerPosition.topRight
+                                ? -3.14 / 2
+                                : widget.pointerPosition ==
+                                        PointerPosition.bottomLeft
+                                    ? 3.14 / 2
+                                    : widget.pointerPosition ==
+                                            PointerPosition.bottomRight
+                                        ? -3.14 / 2
+                                        : widget.pointerPosition ==
+                                                PointerPosition.top
+                                            ? 3.14
+                                            : 0,
+                child: Icon(Icons.arrow_drop_down,
+                    size: widget.arrowSize, color: widget.color),
+              ),
             ),
 
-          // Arrow - positioned depending on pointerPosition using negative offsets
-          if (widget.pointerPosition == PointerPosition.bottom &&
-              widget.showArrow)
-            Positioned(
-              // left: null,
-              right: null,
-              bottom: -widget.arrowSize, // negative to overlap flush
-              left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
-              child: _Triangle(
-                size: widget.arrowSize,
-                color: widget.color,
-                direction: PointerPosition.bottom,
-              ),
-            )
-          else if (widget.pointerPosition == PointerPosition.top &&
-              widget.showArrow)
-            Positioned(
-              top: -widget.arrowSize,
-              left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
-              child: _Triangle(
-                size: widget.arrowSize,
-                color: widget.color,
-                direction: PointerPosition.top,
-              ),
-            )
-          else if (widget.pointerPosition == PointerPosition.left &&
-              widget.showArrow)
-            Positioned(
-              left: -widget.arrowSize,
-              top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
-              child: _Triangle(
-                size: widget.arrowSize,
-                color: widget.color,
-                direction: PointerPosition.left,
-              ),
-            )
-          else if (widget.pointerPosition == PointerPosition.right &&
-              widget.showArrow)
-            Positioned(
-              right: -widget.arrowSize,
-              top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
-              child: _Triangle(
-                size: widget.arrowSize,
-                color: widget.color,
-                direction: PointerPosition.right,
-              ),
-            )
-          else if (widget.pointerPosition == PointerPosition.bottomLeft &&
-              widget.showArrow)
-            Positioned(
-              bottom: -widget.arrowSize,
-              left: MediaQuery.of(context).size.width * 0.15,
-              child: _Triangle(
-                  size: widget.arrowSize,
-                  color: widget.color,
-                  direction: PointerPosition.bottom),
-            )
-          else if (widget.pointerPosition == PointerPosition.bottomRight &&
-              widget.showArrow)
-            Positioned(
-              bottom: -widget.arrowSize,
-              right: MediaQuery.of(context).size.width * 0.15,
-              child: _Triangle(
-                  size: widget.arrowSize,
-                  color: widget.color,
-                  direction: PointerPosition.bottom),
-            )
-          else if (widget.pointerPosition == PointerPosition.topLeft &&
-              widget.showArrow)
-            Positioned(
-              top: -widget.arrowSize,
-              left: MediaQuery.of(context).size.width * 0.15,
-              child: _Triangle(
-                  size: widget.arrowSize,
-                  color: widget.color,
-                  direction: PointerPosition.top),
-            )
-          else if (widget.pointerPosition == PointerPosition.topRight &&
-              widget.showArrow)
-            Positioned(
-              top: -widget.arrowSize,
-              right: MediaQuery.of(context).size.width * 0.15,
-              child: _Triangle(
-                  size: widget.arrowSize,
-                  color: widget.color,
-                  direction: PointerPosition.top),
-            ),
+          // // Arrow - positioned depending on pointerPosition using negative offsets
+          // if (widget.pointerPosition == PointerPosition.bottom &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     // left: null,
+          //     right: null,
+          //     bottom: -widget.arrowSize, // negative to overlap flush
+          //     left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
+          //     child: _Triangle(
+          //       size: widget.arrowSize,
+          //       color: widget.color,
+          //       direction: PointerPosition.bottom,
+          //     ),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.top &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     top: -widget.arrowSize,
+          //     left: MediaQuery.of(context).size.width * 0.5 - widget.arrowSize,
+          //     child: _Triangle(
+          //       size: widget.arrowSize,
+          //       color: widget.color,
+          //       direction: PointerPosition.top,
+          //     ),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.left &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     left: -widget.arrowSize,
+          //     top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
+          //     child: _Triangle(
+          //       size: widget.arrowSize,
+          //       color: widget.color,
+          //       direction: PointerPosition.left,
+          //     ),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.right &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     right: -widget.arrowSize,
+          //     top: (_centerY(context, widget.child) ?? 0) - widget.arrowSize,
+          //     child: _Triangle(
+          //       size: widget.arrowSize,
+          //       color: widget.color,
+          //       direction: PointerPosition.right,
+          //     ),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.bottomLeft &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     bottom: -widget.arrowSize,
+          //     left: MediaQuery.of(context).size.width * 0.15,
+          //     child: _Triangle(
+          //         size: widget.arrowSize,
+          //         color: widget.color,
+          //         direction: PointerPosition.bottom),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.bottomRight &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     bottom: -widget.arrowSize,
+          //     right: MediaQuery.of(context).size.width * 0.15,
+          //     child: _Triangle(
+          //         size: widget.arrowSize,
+          //         color: widget.color,
+          //         direction: PointerPosition.bottom),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.topLeft &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     top: -widget.arrowSize,
+          //     left: MediaQuery.of(context).size.width * 0.15,
+          //     child: _Triangle(
+          //         size: widget.arrowSize,
+          //         color: widget.color,
+          //         direction: PointerPosition.top),
+          //   )
+          // else if (widget.pointerPosition == PointerPosition.topRight &&
+          //     widget.showArrow)
+          //   Positioned(
+          //     top: -widget.arrowSize,
+          //     right: MediaQuery.of(context).size.width * 0.15,
+          //     child: _Triangle(
+          //         size: widget.arrowSize,
+          //         color: widget.color,
+          //         direction: PointerPosition.top),
+          //   ),
         ],
       ),
     );

@@ -259,6 +259,7 @@ class WebviewUtil {
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
                   return TooltipWithFlushArrow(
+                    arrowSize: 60,
                     showArrow: step?.isCaret == true,
                     targetKey: targetKey ?? GlobalKey(),
                     pointerPosition: step?.position.toString() == "bottom"
@@ -283,6 +284,7 @@ class WebviewUtil {
                                                     : PointerPosition.bottom,
                     color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                     height: size["height"] ?? 0,
+                    width: size["width"] ?? 0,
                     child: Container(
                       color:
                           Util.hexToColor(step?.backgroundColor ?? "#000000"),
@@ -296,6 +298,7 @@ class WebviewUtil {
                 },
               )
             : TooltipWithFlushArrow(
+                arrowSize: 60,
                 showArrow: step?.isCaret == true,
                 targetKey: targetKey ?? GlobalKey(),
                 pointerPosition: step?.position.toString() == "bottom"
@@ -320,7 +323,11 @@ class WebviewUtil {
                 height: double.tryParse(
                         contentHeight.toString().replaceAll("px", "")) ??
                     200,
-                child: SizedBox(
+                width: double.tryParse(
+                        contentwidth.toString().replaceAll("px", "")) ??
+                    200,
+                child: Container(
+                  color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                   height: double.tryParse(
                           contentHeight.toString().replaceAll("px", "")) ??
                       200,
@@ -363,18 +370,18 @@ class WebviewUtil {
         onMessageReceived: (JavaScriptMessage message) {
           final data = jsonDecode(message.message);
           switch (data['action']) {
-            case 'onNextStepClicked':
+            case 'onNextStep':
               print("NEXTTTT");
               TourUtil.next();
               break;
-            case 'onPrevStepClicked':
+            case 'onPrevStep':
               TourUtil.previous();
               break;
             case 'openLink':
               final url = data['url'] as String;
               Util.launchInBrowser(url);
               break;
-            case 'onCloseStepClicked':
+            case 'onCloseStep':
               TourUtil.finish();
               break;
           }
