@@ -1,3 +1,7 @@
+## 0.0.9+28
+
+- Carret position fixed
+
 ## 0.0.9+27
 
 - Bug fixes
