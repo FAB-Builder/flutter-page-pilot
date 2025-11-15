@@ -50,11 +50,7 @@ abstract class PagepilotPlatform extends PlatformInterface {
     throw UnimplementedError('show() has not been implemented.');
   }
 
-  Future<void> loadTour({
-    Config? config,
-    String? type,
-    bool showNextAndPreviousButtons = false,
-  }) async {
+  Future<void> loadTour() async {
     throw UnimplementedError('loadTour() has not been implemented.');
   }
 

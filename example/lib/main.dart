@@ -118,7 +118,7 @@ class _MyAppState extends State<MyApp> {
       _pagepilotPlugin.setUserIdentifier(
           userId: userId, tenantId: tenantId, language: "en");
       await _pagepilotPlugin.init(config); // initialize the library
-      _pagepilotPlugin.loadTour(showNextAndPreviousButtons: true);
+      _pagepilotPlugin.loadTour();
     } on PlatformException {
       // Log exception and report studio@gameolive.com
     }

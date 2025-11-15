@@ -108,6 +108,7 @@ void doShow({
             context,
           );
         }
+        tooltips.removeWhere((element) => element["slug"] == screen);
       }
 
       if (tours.any((element) => element["slug"] == screen)) {
@@ -126,6 +127,12 @@ void doShow({
             showNextAndPreviousButtons: showNextAndPreviousButtons,
           );
         }
+        tours.removeWhere((element) => element["slug"] == screen);
+      }
+
+      if (tours.isNotEmpty || tooltips.isNotEmpty) {
+        await Pref.write(
+            "data", jsonEncode({"tours": tours, "tooltips": tooltips}));
       }
     }
   } catch (e) {
@@ -133,11 +140,7 @@ void doShow({
   }
 }
 
-void loadTours({
-  required Config config,
-  String? type,
-  bool showNextAndPreviousButtons = false,
-}) async {
+void loadTours() async {
   var response = await client.get(
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}"),
@@ -160,6 +163,8 @@ unacknowledgedAll(userId) async {
     Uri.parse(
         "$baseUrl/tenant/${Config.tenantId}/stats/markall-unacknowledged/$userId"),
   );
+  Pref.write("data", "null");
+  loadTours();
 }
 
 unacknowledged(id, userId) async {

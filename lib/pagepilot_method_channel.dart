@@ -53,17 +53,8 @@ class MethodChannelPagepilot extends PagepilotPlatform {
   }
 
   @override
-  Future<void> loadTour({
-    Config? config,
-    String? type,
-    bool showNextAndPreviousButtons = false,
-  }) async {
-    config ??= CONFIG!;
-    loadTours(
-      config: config,
-      type: type,
-      showNextAndPreviousButtons: showNextAndPreviousButtons,
-    );
+  Future<void> loadTour() async {
+    loadTours();
   }
 
   @override
