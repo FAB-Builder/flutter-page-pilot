@@ -87,7 +87,10 @@ class _TooltipWithFlushArrowState extends State<TooltipWithFlushArrow> {
     return Container(
       height: widget.height,
       width: widget.width,
-      color: widget.color,
+      decoration: BoxDecoration(
+        color: widget.color,
+        borderRadius: BorderRadius.circular(widget.borderRadius),
+      ),
       child: Stack(
         clipBehavior: Clip.none,
         // alignment: Alignment.center,
@@ -99,10 +102,10 @@ class _TooltipWithFlushArrowState extends State<TooltipWithFlushArrow> {
             Positioned(
               bottom: widget.pointerPosition == PointerPosition.top
                   ? null
-                  : -widget.arrowSize / 1.75,
+                  : -widget.arrowSize / 1.85,
               top: widget.pointerPosition == PointerPosition.bottom
                   ? null
-                  : -widget.arrowSize / 1.75,
+                  : -widget.arrowSize / 1.85,
               left: _calculateArrowLeft(
                 containerWidth: widget.width,
                 arrowSize: widget.arrowSize,
@@ -128,7 +131,7 @@ class _TooltipWithFlushArrowState extends State<TooltipWithFlushArrow> {
                                                 PointerPosition.top
                                             ? 3.14
                                             : 0,
-                child: Icon(Icons.arrow_drop_down,
+                child: Icon(Icons.arrow_drop_down_rounded,
                     size: widget.arrowSize, color: widget.color),
               ),
             ),

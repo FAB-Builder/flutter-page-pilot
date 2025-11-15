@@ -41,10 +41,7 @@ void doShow({
     PagePilot.init(tourStyles: config.styles);
     var jsonResponse;
 
-    var response = await client.get(
-      Uri.parse(
-          "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}&slug=${screen}"),
-    );
+    var response = await Pref.read("data");
 
     //mock data
     if (type != null) {
@@ -83,12 +80,12 @@ void doShow({
         }
       };
     } else {
-      if (response.body != "null") {
-        jsonResponse = jsonDecode(response.body);
+      if (response != "null") {
+        jsonResponse = jsonDecode(response);
       }
     }
 
-    if (response.body != "null") {
+    if (response != "null") {
       List<dynamic> tours = [];
       List<dynamic> tooltips = [];
       if (jsonResponse["tooltips"].length > 0) {
@@ -98,7 +95,9 @@ void doShow({
         tours = jsonResponse["tours"];
       }
 
-      tooltips.forEach((tooltip) async {
+      if (tooltips.any((element) => element["slug"] == screen)) {
+        var tooltip =
+            tooltips.where((element) => element["slug"] == screen).first;
         DataModel tooltipModel =
             DataModel.fromJson(tooltip, [StepModel.fromJson(tooltip["step"])]);
         if (tooltipModel.slug == screen) {
@@ -109,8 +108,10 @@ void doShow({
             context,
           );
         }
-      });
-      tours.forEach((tour) async {
+      }
+
+      if (tours.any((element) => element["slug"] == screen)) {
+        var tour = tours.where((element) => element["slug"] == screen).first;
         List<StepModel> steps = [];
         for (int i = 0; i < tour["steps"].length; i++) {
           steps.add(StepModel.fromJson(tour["steps"][i]));
@@ -125,10 +126,26 @@ void doShow({
             showNextAndPreviousButtons: showNextAndPreviousButtons,
           );
         }
-      });
+      }
     }
   } catch (e) {
     debugPrint(e.toString());
+  }
+}
+
+void loadTours({
+  required BuildContext context,
+  required Config config,
+  String? type,
+  bool showNextAndPreviousButtons = false,
+}) async {
+  var response = await client.get(
+    Uri.parse(
+        "$baseUrl/tenant/${Config.tenantId}/client/unacknowledged?userId=${Config.userId}&device=${Platform.operatingSystem}"),
+  );
+
+  if (response.body != "null") {
+    Pref.write("data", response.body);
   }
 }
 

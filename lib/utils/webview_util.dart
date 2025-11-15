@@ -259,6 +259,7 @@ class WebviewUtil {
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
                   return TooltipWithFlushArrow(
+                    borderRadius: 12,
                     arrowSize: 60,
                     showArrow: step?.isCaret == true,
                     targetKey: targetKey ?? GlobalKey(),
@@ -286,8 +287,11 @@ class WebviewUtil {
                     height: size["height"] ?? 0,
                     width: size["width"] ?? 0,
                     child: Container(
-                      color:
-                          Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                      decoration: BoxDecoration(
+                        color:
+                            Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       height: size["height"],
                       // width: size["width"],
                       width: MediaQuery.of(context).size.width * 0.8,
@@ -298,6 +302,7 @@ class WebviewUtil {
                 },
               )
             : TooltipWithFlushArrow(
+                borderRadius: 12,
                 arrowSize: 60,
                 showArrow: step?.isCaret == true,
                 targetKey: targetKey ?? GlobalKey(),
@@ -327,13 +332,16 @@ class WebviewUtil {
                         contentwidth.toString().replaceAll("px", "")) ??
                     200,
                 child: Container(
-                  color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
                   height: double.tryParse(
                           contentHeight.toString().replaceAll("px", "")) ??
                       200,
                   width: double.tryParse(
                           contentwidth.toString().replaceAll("px", "")) ??
                       200,
+                  decoration: BoxDecoration(
+                    color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: WebViewWidget(
                       controller: tourWebViewController ?? controller!),
                 ),

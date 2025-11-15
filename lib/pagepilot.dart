@@ -42,6 +42,19 @@ class Pagepilot {
     );
   }
 
+  Future<void> loadTour({
+    required BuildContext context,
+    Config? config,
+    String? type,
+    bool showNextAndPreviousButtons = false,
+  }) async {
+    return PagepilotPlatform.instance.loadTour(
+      context: context,
+      type: type,
+      showNextAndPreviousButtons: showNextAndPreviousButtons,
+    );
+}
+
   Future<void> dispose() async {
     return PagepilotPlatform.instance.dispose();
   }
