@@ -1,14 +1,16 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
 
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pagepilot/models/config_model.dart';
 import 'package:pagepilot/models/styles_model.dart';
 import 'package:pagepilot/pagepilot.dart';
+import 'package:pagepilot/widgets/page_pilot_banner.dart';
 import 'package:pagepilot/widgets/page_pilot_widgets.dart';
 import 'package:pagepilot/widgets/pagepilotpip.dart';
+import 'package:pagepilot_example/d.dart';
+
 import 'app_theme.dart';
-import 'package:pagepilot/widgets/page_pilot_banner.dart';
 
 void main() {
   runApp(const MyApp());
@@ -22,8 +24,20 @@ const tenantId = "";
 GlobalKey keyDialog = GlobalKey();
 GlobalKey keyTooltip = GlobalKey();
 GlobalKey keyBeacon = GlobalKey();
-GlobalKey keyappbanner = GlobalKey();
+GlobalKey keyDashboardProfileIcon = GlobalKey();
+GlobalKey keyDashboardAccounting = GlobalKey();
+GlobalKey keyDashboardLoan = GlobalKey();
+GlobalKey keyDashboardTrading = GlobalKey();
+GlobalKey keyDashboardInsurance = GlobalKey();
+GlobalKey keyDashboardBanner = GlobalKey();
 GlobalKey keyAccTransaction = GlobalKey();
+GlobalKey keyAccBudget = GlobalKey();
+GlobalKey keyAccStats = GlobalKey();
+GlobalKey keyAccAccounts = GlobalKey();
+GlobalKey keyAccChatbot = GlobalKey();
+GlobalKey addAccountKey = GlobalKey();
+GlobalKey addTransactionKey = GlobalKey();
+GlobalKey addBudgetKey = GlobalKey();
 bool showpip = false;
 
 class MyApp extends StatefulWidget {
@@ -41,6 +55,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+
     initPagePilot();
   }
 
@@ -71,11 +86,24 @@ class _MyAppState extends State<MyApp> {
 
   initPagePilot() async {
     Map keys = {
-      "#keyAccTransaction": keyAccTransaction,
       '#dialog': keyDialog,
-      '#liveTooltip': keyTooltip,
-      '#filter-content': keyBeacon,
-      '#appbanner': keyappbanner,
+      '#tooltip': keyTooltip,
+      '#beacon': keyBeacon,
+      '#keyDashboardProfileIcon': keyDashboardProfileIcon,
+      '#dashboardAccounting': keyDashboardAccounting,
+      '#dashboardLoan': keyDashboardLoan,
+      '#dashboardTrading': keyDashboardTrading,
+      '#dashboardInsurance': keyDashboardInsurance,
+      '#dashboardBanner': keyDashboardBanner,
+      "#keyAccTransaction": keyAccTransaction,
+      "#keyAccBudget": keyAccBudget,
+      "#keyAccStats": keyAccStats,
+      "#keyAccAccounts": keyAccAccounts,
+      "#keyAccChatbot": keyAccChatbot,
+      "#addAccountKey": addAccountKey,
+      "#addTransactionKey": addTransactionKey,
+      "#addBudgetKey": addBudgetKey,
+      "#abc": addTransactionKey
     };
 
     Config config = Config(
@@ -90,6 +118,8 @@ class _MyAppState extends State<MyApp> {
       _pagepilotPlugin.setUserIdentifier(
           userId: userId, tenantId: tenantId, language: "en");
       await _pagepilotPlugin.init(config); // initialize the library
+      _pagepilotPlugin.loadTour(
+          context: context, showNextAndPreviousButtons: true);
     } on PlatformException {
       // Log exception and report studio@gameolive.com
     }
@@ -183,6 +213,10 @@ class _AppState extends State<App> {
         ),
       );
     });
+    widget.pagepilotPlugin.show(
+        context: context,
+        screen: "new_bottom-bar",
+        showNextAndPreviousButtons: true);
   }
 
   @override
@@ -217,26 +251,35 @@ class _AppState extends State<App> {
         ),
         body: Column(
           children: [
+            Text(key: keyDashboardProfileIcon, 'Dialog'),
+            Spacer(),
             Center(
+              key: keyAccTransaction,
               child: Text('Running on: ${widget.platformVersion}\n'),
             ),
             ElevatedButton(
-              key: keyBeacon,
               onPressed: () {
-                widget.pagepilotPlugin
-                    .show(context: context, screen: "/new_bottom-bar");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RR(),
+                  ),
+                );
+                widget.pagepilotPlugin.resetAllTour(userId);
               },
               child: const Text("Tap     Me!"),
             ),
             const SizedBox(height: 20),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              key: keyAccAccounts,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(key: keyDialog, 'Dialog'),
-                Text(key: keyTooltip, 'Tooltip'),
+                Text(key: keyAccBudget, 'Tooltip'),
+                Text(key: keyAccStats, 'Dialog'),
               ],
             ),
-            const SizedBox(height: 20),
+            SizedBox(key: addTransactionKey, height: 20),
             const Center(
               child: Text('tour'),
             ),
@@ -255,7 +298,6 @@ class _AppState extends State<App> {
                   }
                 });
               },
-              key: keyAccTransaction,
               backgroundcolor: Colors.transparent,
               deepLinkPrefix: "",
               onDeeplinkTap: (String link) => debugPrint(link),

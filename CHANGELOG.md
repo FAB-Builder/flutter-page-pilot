@@ -1,3 +1,7 @@
+## 0.0.9+29
+
+- Tour Caching added
+
 ## 0.0.9+28
 
 - Carret position fixed
