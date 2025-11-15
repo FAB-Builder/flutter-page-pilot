@@ -134,7 +134,6 @@ void doShow({
 }
 
 void loadTours({
-  required BuildContext context,
   required Config config,
   String? type,
   bool showNextAndPreviousButtons = false,

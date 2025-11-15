@@ -51,7 +51,6 @@ abstract class PagepilotPlatform extends PlatformInterface {
   }
 
   Future<void> loadTour({
-    required BuildContext context,
     Config? config,
     String? type,
     bool showNextAndPreviousButtons = false,
