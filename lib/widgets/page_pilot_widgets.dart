@@ -677,6 +677,7 @@ class PagePilot {
     required DataModel data,
     ScrollController? scrollController,
     bool showNextAndPreviousButtons = false,
+    required Map<dynamic, dynamic> gkeys,
   }) async {
     List<Widget> widgets = [];
     List<GlobalKey> keys = [];
@@ -688,7 +689,7 @@ class PagePilot {
       String textColor = tours[i].textColor.toString();
       String? contentHeight = tours[i].height;
       String? contentwidth = tours[i].width;
-      final key = config.keys[tours[i].selector.toString()];
+      final key = gkeys[tours[i].selector.toString()];
       keys.add(key);
       if (scrollController != null) {
         await scrollToTarget(key, scrollController);
@@ -810,6 +811,7 @@ class PagePilot {
     List<dynamic> tours,
     Config config,
     ScrollController? scrollController,
+    Map<dynamic, dynamic> gkeys,
   ) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -820,7 +822,7 @@ class PagePilot {
               : () async {
                   if (scrollController != null) {
                     final prevKey =
-                        config.keys[tours[index - 1]["selector"].toString()];
+                        gkeys[tours[index - 1]["selector"].toString()];
                     await scrollToTarget(prevKey, scrollController);
                   }
                   TourUtil.previous();
@@ -833,7 +835,7 @@ class PagePilot {
               : () async {
                   if (scrollController != null) {
                     final nextKey =
-                        config.keys[tours[index + 1]["selector"].toString()];
+                        gkeys[tours[index + 1]["selector"].toString()];
                     await scrollToTarget(nextKey, scrollController);
                   }
                   TourUtil.next();

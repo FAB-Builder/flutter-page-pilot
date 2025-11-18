@@ -41,6 +41,7 @@ class MethodChannelPagepilot extends PagepilotPlatform {
     Config? config,
     String? type,
     bool showNextAndPreviousButtons = false,
+    required Map<dynamic, dynamic> keys,
   }) async {
     config ??= CONFIG!;
     doShow(
@@ -49,6 +50,7 @@ class MethodChannelPagepilot extends PagepilotPlatform {
       screen: screen,
       type: type,
       showNextAndPreviousButtons: showNextAndPreviousButtons,
+      keys: keys,
     );
   }
 

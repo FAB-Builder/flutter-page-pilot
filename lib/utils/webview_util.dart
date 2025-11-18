@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:pagepilot/utils/tour_util.dart';
 import 'package:pagepilot/utils/utils.dart';
@@ -17,115 +19,42 @@ class WebviewUtil {
 
   static const String bodyStartsWithHtmlString = "\u003C!DOCTYPE html";
 
-  static String calculateHtmlDocDimensions = Platform.isIOS
-      ? '''
-      (function() {
-        const body = document.body;
-        const html = document.documentElement;
-
-        html.style.margin = '0';
-        html.style.padding = '0';
-        html.style.overflow = 'auto';
-        body.style.margin = '0';
-        body.style.padding = '0';
-        body.style.overflow = 'auto';
-
-        // Ensure all images loaded
-        const imgs = document.images;
-        for (let i = 0; i < imgs.length; i++) {
-          if (!imgs[i].complete) return -1;
-        }
-
-        let height = Math.max(
-          body.scrollHeight, body.offsetHeight,
-          html.clientHeight, html.scrollHeight, html.offsetHeight
-        );
-        let width = Math.max(
-          body.scrollWidth, body.offsetWidth,
-          html.clientWidth, html.scrollWidth, html.offsetWidth
-        );
-
-
-        // Consider iframes
-        const iframes = document.getElementsByTagName('iframe');
-        for (let i = 0; i < iframes.length; i++) {
-          const iframe = iframes[i];
-          let iframeHeight = 0;
-          let iframeWidth = 0;
-
-          try {
-            // Try reading internal body height (same-origin only)
-            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
-            if (iframeDoc && iframeDoc.readyState === 'complete') {
-              const ib = iframeDoc.body;
-              if (ib) {
-                iframeHeight = Math.max(ib.scrollHeight, ib.offsetHeight);
-                iframeWidth = Math.max(ib.scrollWidth, ib.offsetWidth);
-              }
-            }
-          } catch (e) {
-            // Cross-origin: fallback to visible/computed height
-            iframeHeight =
-              parseInt(iframe.getAttribute('height')) ||
-              iframe.offsetHeight ||
-              parseInt(window.getComputedStyle(iframe).height) ||
-              0;
-            iframeWidth =
-              parseInt(iframe.getAttribute('width')) ||
-              iframe?.offsetWidth ||
-              parseInt((window.getComputedStyle(iframe) || {}).width)  || 0;
-          }
-
-          // Add based on bottom edge position, not sum
-          height=height+(iframeHeight);
-          if(iframeWidth){
-            width = iframeWidth;
-          }
-        }
-
-        return JSON.stringify({ height: height.toString(), width: width.toString() });
-      })();
-    '''
-      : '''
+  static String calculateHtmlDocDimensions = '''
 (function() {
   try {
     const body = document.body;
     const html = document.documentElement;
 
+    // Remove scrolling and set proper styles for both platforms
     html.style.margin = '0';
     html.style.padding = '0';
+    html.style.overflow = 'hidden';
+    html.style.height = '100%';
+    
     body.style.margin = '0';
     body.style.padding = '0';
-    html.style.overflow = 'visible';
-    body.style.overflow = 'visible';
+    body.style.overflow = 'hidden';
+    body.style.height = '100%';
 
-    // Wait until all images and iframes are fully loaded
+    // Ensure all images are loaded
     const imgs = document.images;
     for (let i = 0; i < imgs.length; i++) {
       if (!imgs[i].complete) return -1;
     }
 
-    // Compute true rendered bounds
-    const rect = body.getBoundingClientRect();
-    const height = rect.bottom - rect.top;
-    const width = rect.right - rect.left;
+    // Compute dimensions
+    let height = Math.max(
+      body.scrollHeight, body.offsetHeight,
+      html.clientHeight, html.scrollHeight, html.offsetHeight
+    );
+    let width = Math.max(
+      body.scrollWidth, body.offsetWidth,
+      html.clientWidth, html.scrollWidth, html.offsetWidth
+    );
 
-    // Include any absolutely positioned or floating elements outside normal flow
-    const all = document.querySelectorAll('*');
-    let maxBottom = height;
-    let maxRight = width;
-    all.forEach(el => {
-      const r = el.getBoundingClientRect();
-      if (r.bottom > maxBottom) maxBottom = r.bottom;
-      if (r.right > maxRight) maxRight = r.right;
-    });
-
-    const finalHeight = Math.ceil(maxBottom);
-    const finalWidth = Math.ceil(maxRight);
-
-    return JSON.stringify({
-      height: finalHeight.toString(),
-      width: finalWidth.toString()
+    return JSON.stringify({ 
+      height: height.toString(), 
+      width: width.toString() 
     });
   } catch (e) {
     return JSON.stringify({ height: "400", width: "400" });
@@ -147,88 +76,112 @@ class WebviewUtil {
         onPageFinished: (String url) async {
           try {
             print("✅ onPageFinished: $url");
-            await Future.delayed(const Duration(milliseconds: 400));
+            await Future.delayed(const Duration(milliseconds: 500));
 
-            // Inject button click listeners
+            // First, inject the channel setup for Android
             await c.runJavaScript('''
-      document.querySelectorAll('button[data-action]').forEach(btn => {
-        btn.addEventListener('click', (event) => {
-          const action = btn.getAttribute('data-action');
-          const anchor = btn.closest('a');
-          let payload = { action };
-          if (action === 'link' && anchor) {
-            event.preventDefault();
-            payload.url = anchor.href;
+      // Setup Flutter channel for Android compatibility
+      if (typeof window.FlutterChannel === 'undefined') {
+        window.FlutterChannel = {
+          postMessage: function(message) {
+            // For Android
+            if (typeof MyFlutterApp !== 'undefined') {
+              MyFlutterApp.postMessage(message);
+            }
+            // For iOS
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.FlutterChannel) {
+              window.webkit.messageHandlers.FlutterChannel.postMessage(message);
+            }
+            // Fallback
+            console.log('FlutterChannel message:', message);
           }
-          FlutterChannel.postMessage(JSON.stringify(payload));
-        });
-      });
+        };
+      }
     ''');
 
-            // --- Safe JSON parser (no double decode) ---
-            dynamic safeJsonParse(dynamic jsResult) {
-              if (jsResult == null) return {};
-              dynamic str = jsResult.toString().trim();
+            // Enhanced button click handler with better Android support
+            await c.runJavaScript('''
+(function() {
+  console.log("[JS] Setting up persistent button listener...");
 
-              // Unwrap quoted JSON like "\"{...}\""
-              if (str.startsWith('"') && str.endsWith('"')) {
-                str = str.substring(1, str.length - 1);
-              }
+  function attachListeners() {
+    const buttons = document.querySelectorAll("button[data-action]");
+    console.log("[JS] Found " + buttons.length + " buttons");
 
-              // Replace escaped quotes
-              str = str.replaceAll(r'\"', '"');
+    buttons.forEach(btn => {
+      if (btn._listenerAttached) return; // avoid duplicates
+      btn._listenerAttached = true;
 
-              try {
-                final json = jsonDecode(str);
-                if (json is Map) return json;
-              } catch (_) {}
-              return {};
-            }
+      const handleClick = function(event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
 
-            Map<String, double> newSize = {"height": 400, "width": 400};
+        const action = this.getAttribute("data-action");
+        const anchor = this.closest("a");
+        let payload = { action: action };
+        if (action === "link" && anchor) payload.url = anchor.href;
 
-            for (int attempt = 0; attempt < 3; attempt++) {
-              final jsResult = await c
-                  .runJavaScriptReturningResult(calculateHtmlDocDimensions);
+        console.log("[JS] Message to Flutter:", payload);
 
-              if (jsResult.toString().contains('-1')) {
-                await Future.delayed(const Duration(milliseconds: 300));
-                continue;
-              }
+        try {
+          if (window.FlutterChannel) {
+            window.FlutterChannel.postMessage(JSON.stringify(payload));
+          }
+          if (window.MyFlutterApp) {
+            window.MyFlutterApp.postMessage(JSON.stringify(payload));
+          }
+          if (window.webkit?.messageHandlers?.FlutterChannel) {
+            window.webkit.messageHandlers.FlutterChannel.postMessage(JSON.stringify(payload));
+          }
+        } catch (e) { console.error("[JS] Error sending:", e); }
+      };
 
-              final decoded = safeJsonParse(jsResult);
+      btn.addEventListener("click", handleClick, true);
+      btn.addEventListener("touchend", handleClick, true);
+      btn.style.cursor = "pointer";
+    });
+  }
 
-              final heightVal =
-                  double.tryParse(decoded['height']?.toString() ?? '0') ?? 0;
-              final widthVal =
-                  double.tryParse(decoded['width']?.toString() ?? '0') ?? 0;
+  // Initial attach
+  attachListeners();
 
-              // Pixel ratio
-              final pixelRatioJs = await c
-                  .runJavaScriptReturningResult('window.devicePixelRatio');
-              final pixelRatio =
-                  double.tryParse(pixelRatioJs.toString()) ?? 1.0;
+  // 🔥 Fix for Android: keep listening for DOM updates
+  const observer = new MutationObserver(() => {
+    console.log("[JS] DOM changed — reattaching listeners");
+    attachListeners();
+  });
 
-              final adjustedHeight = (heightVal / pixelRatio);
-              final adjustedWidth = (widthVal / pixelRatio);
+  observer.observe(document.body, { childList: true, subtree: true });
+})();
+''');
 
-              // Sanity cap
-              if (adjustedHeight > 3000 || adjustedHeight < 100) {
-                print("⚠️ Height suspicious ($adjustedHeight), fallback used");
-                newSize = {"height": 400, "width": 400};
-              } else {
-                newSize = {"height": adjustedHeight, "width": adjustedWidth};
-              }
-              break;
-            }
+            // Verify the setup worked
+            final setupResult = await c.runJavaScriptReturningResult('''
+      (function() {
+        const buttons = document.querySelectorAll('button[data-action]');
+        let activeButtons = 0;
+        
+        buttons.forEach(btn => {
+          const hasClick = btn.onclick || btn.getAttribute('onclick');
+          const listeners = btn._listeners || [];
+          if (hasClick || listeners.length > 0) {
+            activeButtons++;
+          }
+        });
+        
+        return {
+          totalButtons: buttons.length,
+          activeButtons: activeButtons,
+          hasFlutterChannel: typeof window.FlutterChannel !== 'undefined',
+          hasMyFlutterApp: typeof window.MyFlutterApp !== 'undefined',
+          hasWebkitHandlers: !!(window.webkit && window.webkit.messageHandlers)
+        };
+      })();
+    ''');
 
-            if (newSize["height"]! > 5000) newSize["height"] = 500;
-
-            sizeNotifier.value = newSize;
-            print('📏 Final WebView size (adjusted): $newSize');
+            print('🔧 Button setup verification: $setupResult');
           } catch (e, st) {
-            print('❌ Error calculating WebView size: $e\n$st');
-            sizeNotifier.value = {"height": 400, "width": 400};
+            print('❌ Error setting up button listeners: $e\n$st');
           }
         },
         onHttpError: (error) => print("HTTP Error: $error"),
@@ -259,7 +212,7 @@ class WebviewUtil {
                 valueListenable: sizeNotifier,
                 builder: (context, size, child) {
                   return TooltipWithFlushArrow(
-                    borderRadius: 12,
+                    borderRadius: (step?.borderRadius ?? 0).toDouble(),
                     arrowSize: 60,
                     showArrow: step?.isCaret == true,
                     targetKey: targetKey ?? GlobalKey(),
@@ -290,19 +243,31 @@ class WebviewUtil {
                       decoration: BoxDecoration(
                         color:
                             Util.hexToColor(step?.backgroundColor ?? "#000000"),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(
+                            (step?.borderRadius ?? 0).toDouble()),
                       ),
                       height: size["height"],
                       // width: size["width"],
                       width: MediaQuery.of(context).size.width * 0.8,
                       child: WebViewWidget(
+                          gestureRecognizers: Platform.isIOS
+                              ? <Factory<OneSequenceGestureRecognizer>>{
+                                  Factory<VerticalDragGestureRecognizer>(
+                                    () => VerticalDragGestureRecognizer(),
+                                  ),
+                                }.toSet()
+                              : <Factory<OneSequenceGestureRecognizer>>{
+                                  Factory<VerticalDragGestureRecognizer>(
+                                    () => VerticalDragGestureRecognizer(),
+                                  ),
+                                }.toSet(),
                           controller: tourWebViewController ?? controller!),
                     ),
                   );
                 },
               )
             : TooltipWithFlushArrow(
-                borderRadius: 12,
+                borderRadius: (step?.borderRadius ?? 0).toDouble(),
                 arrowSize: 60,
                 showArrow: step?.isCaret == true,
                 targetKey: targetKey ?? GlobalKey(),
@@ -340,9 +305,21 @@ class WebviewUtil {
                       200,
                   decoration: BoxDecoration(
                     color: Util.hexToColor(step?.backgroundColor ?? "#000000"),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(
+                        (step?.borderRadius ?? 0).toDouble()),
                   ),
                   child: WebViewWidget(
+                      gestureRecognizers: Platform.isIOS
+                          ? <Factory<OneSequenceGestureRecognizer>>{
+                              Factory<VerticalDragGestureRecognizer>(
+                                () => VerticalDragGestureRecognizer(),
+                              ),
+                            }.toSet()
+                          : <Factory<OneSequenceGestureRecognizer>>{
+                              Factory<VerticalDragGestureRecognizer>(
+                                () => VerticalDragGestureRecognizer(),
+                              ),
+                            }.toSet(),
                       controller: tourWebViewController ?? controller!),
                 ),
               )

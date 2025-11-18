@@ -32,6 +32,7 @@ void doShow({
   required BuildContext context,
   required String screen,
   required Config config,
+  required Map<dynamic, dynamic> keys,
   String? type,
   bool showNextAndPreviousButtons = false,
 }) async {
@@ -119,13 +120,9 @@ void doShow({
         }
         DataModel tourModel = DataModel.fromJson(tour, steps);
         if (tourModel.slug == screen) {
-          showWidget(
-            "tour",
-            tourModel,
-            config,
-            context,
-            showNextAndPreviousButtons: showNextAndPreviousButtons,
-          );
+          showWidget("tour", tourModel, config, context,
+              showNextAndPreviousButtons: showNextAndPreviousButtons,
+              keys: keys);
         }
         tours.removeWhere((element) => element["slug"] == screen);
       }
@@ -175,8 +172,13 @@ unacknowledged(id, userId) async {
 }
 
 void showWidget(
-    String type, DataModel data, Config config, BuildContext context,
-    {bool showNextAndPreviousButtons = false}) async {
+  String type,
+  DataModel data,
+  Config config,
+  BuildContext context, {
+  bool showNextAndPreviousButtons = false,
+  Map<dynamic, dynamic> keys = const {},
+}) async {
   String? shape,
       title,
       body,
@@ -211,7 +213,7 @@ void showWidget(
     position = data.steps[0].position;
     color = data.steps[0].color;
     selector = data.steps[0].selector;
-    key = config.keys[selector.toString()];
+    key = keys[selector.toString()];
   }
 
   PagePilot.showConfetti = showConfetti;
@@ -237,6 +239,7 @@ void showWidget(
           data: data,
           scrollController: config.scrollController,
           showNextAndPreviousButtons: showNextAndPreviousButtons,
+          gkeys: keys,
         );
 
         await acknowledge(data.id, Config.userId, type);

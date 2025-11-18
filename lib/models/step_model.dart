@@ -24,6 +24,7 @@ class StepModel {
   String? width;
   String? height;
   String? backgroundColor;
+  int? borderRadius;
 
   StepModel({
     this.triggerIcon,
@@ -51,6 +52,7 @@ class StepModel {
     this.height,
     this.width,
     this.backgroundColor,
+    this.borderRadius,
   });
 
   StepModel.fromJson(Map<String, dynamic> json) {
@@ -83,6 +85,7 @@ class StepModel {
     height = json['height'];
     width = json['width'];
     backgroundColor = json['backgroundColor'];
+    borderRadius = int.tryParse(json['borderRadius'] ?? "0");
   }
 
   Map<String, dynamic> toJson() {
@@ -116,6 +119,7 @@ class StepModel {
     data['height'] = this.height;
     data['width'] = this.width;
     data['backgroundColor'] = this.backgroundColor;
+    data['borderRadius'] = this.borderRadius;
     return data;
   }
 }

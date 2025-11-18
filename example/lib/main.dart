@@ -21,23 +21,6 @@ const applicationId = "";
 const userId = "ANNONYMOUS";
 const tenantId = "";
 
-GlobalKey keyDialog = GlobalKey();
-GlobalKey keyTooltip = GlobalKey();
-GlobalKey keyBeacon = GlobalKey();
-GlobalKey keyDashboardProfileIcon = GlobalKey();
-GlobalKey keyDashboardAccounting = GlobalKey();
-GlobalKey keyDashboardLoan = GlobalKey();
-GlobalKey keyDashboardTrading = GlobalKey();
-GlobalKey keyDashboardInsurance = GlobalKey();
-GlobalKey keyDashboardBanner = GlobalKey();
-GlobalKey keyAccTransaction = GlobalKey();
-GlobalKey keyAccBudget = GlobalKey();
-GlobalKey keyAccStats = GlobalKey();
-GlobalKey keyAccAccounts = GlobalKey();
-GlobalKey keyAccChatbot = GlobalKey();
-GlobalKey addAccountKey = GlobalKey();
-GlobalKey addTransactionKey = GlobalKey();
-GlobalKey addBudgetKey = GlobalKey();
 bool showpip = false;
 
 class MyApp extends StatefulWidget {
@@ -85,32 +68,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   initPagePilot() async {
-    Map keys = {
-      '#dialog': keyDialog,
-      '#tooltip': keyTooltip,
-      '#beacon': keyBeacon,
-      '#keyDashboardProfileIcon': keyDashboardProfileIcon,
-      '#dashboardAccounting': keyDashboardAccounting,
-      '#dashboardLoan': keyDashboardLoan,
-      '#dashboardTrading': keyDashboardTrading,
-      '#dashboardInsurance': keyDashboardInsurance,
-      '#dashboardBanner': keyDashboardBanner,
-      "#keyAccTransaction": keyAccTransaction,
-      "#keyAccBudget": keyAccBudget,
-      "#keyAccStats": keyAccStats,
-      "#keyAccAccounts": keyAccAccounts,
-      "#keyAccChatbot": keyAccChatbot,
-      "#addAccountKey": addAccountKey,
-      "#addTransactionKey": addTransactionKey,
-      "#addBudgetKey": addBudgetKey,
-      "#abc": addTransactionKey
-    };
-
     Config config = Config(
       credentials: {
         "applicationId": applicationId,
       },
-      keys: keys,
       styles:
           Styles(shadowColor: Colors.blue, shadowOpacity: 0.3, textSkip: "OK"),
     );
@@ -153,7 +114,22 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   int _currentpage = 0;
-
+  GlobalKey keyDialog = GlobalKey();
+  GlobalKey keyBeacon = GlobalKey();
+  GlobalKey keyDashboardProfileIcon = GlobalKey();
+  GlobalKey keyDashboardAccounting = GlobalKey();
+  GlobalKey keyDashboardLoan = GlobalKey();
+  GlobalKey keyDashboardTrading = GlobalKey();
+  GlobalKey keyDashboardInsurance = GlobalKey();
+  GlobalKey keyDashboardBanner = GlobalKey();
+  GlobalKey keyAccTransaction = GlobalKey();
+  GlobalKey keyAccBudget = GlobalKey();
+  GlobalKey keyAccStats = GlobalKey();
+  GlobalKey keyAccAccounts = GlobalKey();
+  GlobalKey keyAccChatbot = GlobalKey();
+  GlobalKey addAccountKey = GlobalKey();
+  GlobalKey addTransactionKey = GlobalKey();
+  GlobalKey addBudgetKey = GlobalKey();
   PageController pageController = PageController();
 
   @override
@@ -170,9 +146,9 @@ class _AppState extends State<App> {
           print("ok");
         },
         customWidget: Container(
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
               colors: [Color(0xFF874DFF), Color(0xFF2885FF)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -183,7 +159,7 @@ class _AppState extends State<App> {
               right: Radius.circular(20),
             ),
           ),
-          child: Row(
+          child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Image.asset(
@@ -204,7 +180,7 @@ class _AppState extends State<App> {
               SizedBox(width: 4),
               Icon(
                 Icons.keyboard_arrow_right_rounded,
-                color: const Color(0xFF0069CA),
+                color: Color(0xFF0069CA),
                 size: 16,
               ),
             ],
@@ -213,6 +189,12 @@ class _AppState extends State<App> {
       );
     });
     widget.pagepilotPlugin.show(
+        keys: {
+          "#keyAccBudget": keyAccBudget,
+          "#dialog": keyDialog,
+          "#keyDashboardProfileIcon": keyDashboardProfileIcon,
+          "#keyAccStats": keyAccStats,
+        },
         context: context,
         screen: "new_bottom-bar",
         showNextAndPreviousButtons: true);
@@ -251,7 +233,7 @@ class _AppState extends State<App> {
         body: Column(
           children: [
             Text(key: keyDashboardProfileIcon, 'Dialog'),
-            Spacer(),
+            const Spacer(),
             Center(
               key: keyAccTransaction,
               child: Text('Running on: ${widget.platformVersion}\n'),
@@ -261,10 +243,10 @@ class _AppState extends State<App> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => RR(),
+                    builder: (context) => const RR(),
                   ),
                 );
-                widget.pagepilotPlugin.resetAllTour(userId);
+                // widget.pagepilotPlugin.resetAllTour(userId);
               },
               child: const Text("Tap     Me!"),
             ),

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pagepilot/pagepilot.dart';
 
-import 'main.dart';
-
 class RR extends StatefulWidget {
   const RR({super.key});
 
@@ -11,11 +9,15 @@ class RR extends StatefulWidget {
 }
 
 class _RRState extends State<RR> {
+  GlobalKey keyTooltip = GlobalKey();
   final Pagepilot pagepilotPlugin = Pagepilot();
   @override
   void initState() {
     pagepilotPlugin.show(
-        context: context, screen: "/tts", showNextAndPreviousButtons: true);
+        keys: {"#tooltip": keyTooltip},
+        context: context,
+        screen: "/tts",
+        showNextAndPreviousButtons: true);
     super.initState();
   }
 

@@ -46,6 +46,7 @@ abstract class PagepilotPlatform extends PlatformInterface {
     Config? config,
     String? type,
     bool showNextAndPreviousButtons = false,
+    required Map<dynamic, dynamic> keys,
   }) async {
     throw UnimplementedError('show() has not been implemented.');
   }

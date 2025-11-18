@@ -33,12 +33,14 @@ class Pagepilot {
     Config? config,
     String? type,
     bool showNextAndPreviousButtons = false,
+    required Map<dynamic, dynamic> keys,
   }) async {
     return PagepilotPlatform.instance.show(
       context: context,
       screen: screen,
       type: type,
       showNextAndPreviousButtons: showNextAndPreviousButtons,
+      keys: keys,
     );
   }
 
