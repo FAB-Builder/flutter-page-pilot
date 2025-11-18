@@ -76,68 +76,137 @@ class WebviewUtil {
         onPageFinished: (String url) async {
           try {
             print("✅ onPageFinished: $url");
-            await Future.delayed(const Duration(milliseconds: 500));
+            await Future.delayed(const Duration(milliseconds: 400));
 
-            // First, inject the channel setup for Android
+            // 1️⃣ Remove scrollbars everywhere
             await c.runJavaScript('''
-      // Setup Flutter channel for Android compatibility
+      document.documentElement.style.setProperty('margin','0','important');
+      document.documentElement.style.setProperty('padding','0','important');
+      document.documentElement.style.setProperty('overflow','hidden','important');
+      document.body.style.setProperty('margin','0','important');
+      document.body.style.setProperty('padding','0','important');
+      document.body.style.setProperty('overflow','hidden','important');
+      Array.from(document.querySelectorAll('*')).forEach(el=>{
+        el.style.setProperty('overflow','hidden','important');
+      });
+    ''');
+
+            // 2️⃣ Flutter JS Channel Setup (Android + iOS)
+            await c.runJavaScript('''
       if (typeof window.FlutterChannel === 'undefined') {
         window.FlutterChannel = {
           postMessage: function(message) {
-            // For Android
-            if (typeof MyFlutterApp !== 'undefined') {
-              MyFlutterApp.postMessage(message);
+            try {
+              if (window.MyFlutterApp) {
+                window.MyFlutterApp.postMessage(message);
+              }
+              if (window.webkit?.messageHandlers?.FlutterChannel) {
+                window.webkit.messageHandlers.FlutterChannel.postMessage(message);
+              }
+              console.log("FlutterChannel message:", message);
+            } catch(e) {
+              console.error("[Channel error]", e);
             }
-            // For iOS
-            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.FlutterChannel) {
-              window.webkit.messageHandlers.FlutterChannel.postMessage(message);
-            }
-            // Fallback
-            console.log('FlutterChannel message:', message);
           }
         };
       }
     ''');
 
-            // Enhanced button click handler with better Android support
-            await c.runJavaScript('''
+            // 3️⃣ Universal Safe Button Handler (Android FIX)
+            await c.runJavaScript(Platform.isAndroid
+                ? '''
 (function() {
-  console.log("[JS] Setting up persistent button listener...");
+  function send(action, url) {
+    const payload = JSON.stringify({ action: action, url: url || null });
+
+    // iOS
+    try {
+      if (window.webkit?.messageHandlers?.FlutterChannel) {
+        window.webkit.messageHandlers.FlutterChannel.postMessage(payload);
+      }
+    } catch(e){}
+
+    // Android (REQUIRES MyFlutterApp)
+    try {
+      if (window.MyFlutterApp) {
+        window.MyFlutterApp.postMessage(payload);
+      }
+    } catch(e){}
+
+    // Fallback
+    try {
+      if (window.FlutterChannel) {
+        window.FlutterChannel.postMessage(payload);
+      }
+    } catch(e){}
+  }
+
+  function attach() {
+    const buttons = document.querySelectorAll("button[data-action]");
+    buttons.forEach(btn => {
+      if (btn.__added) return;
+      btn.__added = true;
+
+      const handler = function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+
+        const action = btn.getAttribute("data-action");
+        const anchor = btn.closest("a");
+        send(action, anchor?.href || null);
+      };
+
+      btn.addEventListener("click", handler, true);
+      btn.addEventListener("touchend", handler, true);
+    });
+  }
+
+  attach();
+  new MutationObserver(attach).observe(document.body, { childList: true, subtree: true });
+})();
+'''
+                : '''
+(function() {
+  console.log("[JS] Attaching persistent tour button listeners");
+
+  function sendToFlutter(action, url) {
+    const payload = JSON.stringify({
+      action: action,
+      url: url || null
+    });
+
+    try {
+      if (window.FlutterChannel) window.FlutterChannel.postMessage(payload);
+      if (window.MyFlutterApp) window.MyFlutterApp.postMessage(payload);
+      if (window.webkit?.messageHandlers?.FlutterChannel) {
+        window.webkit.messageHandlers.FlutterChannel.postMessage(payload);
+      }
+    } catch(e) {
+      console.error("[JS] Send error:", e);
+    }
+  }
 
   function attachListeners() {
     const buttons = document.querySelectorAll("button[data-action]");
     console.log("[JS] Found " + buttons.length + " buttons");
 
     buttons.forEach(btn => {
-      if (btn._listenerAttached) return; // avoid duplicates
+      if (btn._listenerAttached) return;
       btn._listenerAttached = true;
 
-      const handleClick = function(event) {
+      const action = btn.getAttribute("data-action");
+
+      const handler = function(event) {
         event.preventDefault();
         event.stopImmediatePropagation();
 
-        const action = this.getAttribute("data-action");
-        const anchor = this.closest("a");
-        let payload = { action: action };
-        if (action === "link" && anchor) payload.url = anchor.href;
-
-        console.log("[JS] Message to Flutter:", payload);
-
-        try {
-          if (window.FlutterChannel) {
-            window.FlutterChannel.postMessage(JSON.stringify(payload));
-          }
-          if (window.MyFlutterApp) {
-            window.MyFlutterApp.postMessage(JSON.stringify(payload));
-          }
-          if (window.webkit?.messageHandlers?.FlutterChannel) {
-            window.webkit.messageHandlers.FlutterChannel.postMessage(JSON.stringify(payload));
-          }
-        } catch (e) { console.error("[JS] Error sending:", e); }
+        const anchor = btn.closest("a");
+        sendToFlutter(action, anchor?.href || null);
       };
 
-      btn.addEventListener("click", handleClick, true);
-      btn.addEventListener("touchend", handleClick, true);
+      btn.addEventListener("click", handler, true);
+      btn.addEventListener("touchend", handler, true);
+
       btn.style.cursor = "pointer";
     });
   }
@@ -145,43 +214,28 @@ class WebviewUtil {
   // Initial attach
   attachListeners();
 
-  // 🔥 Fix for Android: keep listening for DOM updates
-  const observer = new MutationObserver(() => {
-    console.log("[JS] DOM changed — reattaching listeners");
-    attachListeners();
-  });
+  // Re-attach when DOM changes (SPA, animations)
+  new MutationObserver(attachListeners)
+    .observe(document.body, { childList: true, subtree: true });
 
-  observer.observe(document.body, { childList: true, subtree: true });
+  // Android safety fallback
+  setInterval(attachListeners, 600);
 })();
 ''');
 
-            // Verify the setup worked
-            final setupResult = await c.runJavaScriptReturningResult('''
+            // 4️⃣ (Optional) Debug verification
+            final result = await c.runJavaScriptReturningResult('''
       (function() {
-        const buttons = document.querySelectorAll('button[data-action]');
-        let activeButtons = 0;
-        
-        buttons.forEach(btn => {
-          const hasClick = btn.onclick || btn.getAttribute('onclick');
-          const listeners = btn._listeners || [];
-          if (hasClick || listeners.length > 0) {
-            activeButtons++;
-          }
+        return JSON.stringify({
+          buttons: document.querySelectorAll("button[data-action]").length,
+          hasChannel: typeof window.FlutterChannel !== "undefined"
         });
-        
-        return {
-          totalButtons: buttons.length,
-          activeButtons: activeButtons,
-          hasFlutterChannel: typeof window.FlutterChannel !== 'undefined',
-          hasMyFlutterApp: typeof window.MyFlutterApp !== 'undefined',
-          hasWebkitHandlers: !!(window.webkit && window.webkit.messageHandlers)
-        };
       })();
     ''');
 
-            print('🔧 Button setup verification: $setupResult');
+            print("🔧 JS Setup Result: $result");
           } catch (e, st) {
-            print('❌ Error setting up button listeners: $e\n$st');
+            print("❌ Error in onPageFinished: $e\n$st");
           }
         },
         onHttpError: (error) => print("HTTP Error: $error"),
@@ -198,6 +252,25 @@ class WebviewUtil {
 
   static Widget getWebView() {
     return WebViewWidget(controller: controller!);
+  }
+
+  static void handleJsMessage(String msg) {
+    final data = jsonDecode(msg);
+
+    switch (data['action']) {
+      case 'onNextStep':
+        TourUtil.next();
+        break;
+      case 'onPrevStep':
+        TourUtil.previous();
+        break;
+      case 'openLink':
+        Util.launchInBrowser(data['url']);
+        break;
+      case 'onCloseStep':
+        TourUtil.finish();
+        break;
+    }
   }
 
   static Widget getWebViewWidget(String? body, String? textColor,
@@ -350,6 +423,12 @@ class WebviewUtil {
       } else {
         c = controller;
       }
+      c!.addJavaScriptChannel(
+        'MyFlutterApp', // REQUIRED FOR ANDROID
+        onMessageReceived: (JavaScriptMessage message) {
+          handleJsMessage(message.message);
+        },
+      );
       c!.addJavaScriptChannel(
         'FlutterChannel',
         onMessageReceived: (JavaScriptMessage message) {
