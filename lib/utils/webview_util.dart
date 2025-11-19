@@ -245,7 +245,34 @@ class WebviewUtil {
         },
       ),
     );
-
+    c.addJavaScriptChannel(
+      'MyFlutterApp', // REQUIRED FOR ANDROID
+      onMessageReceived: (JavaScriptMessage message) {
+        handleJsMessage(message.message);
+      },
+    );
+    c.addJavaScriptChannel(
+      'FlutterChannel',
+      onMessageReceived: (JavaScriptMessage message) {
+        final data = jsonDecode(message.message);
+        switch (data['action']) {
+          case 'onNextStep':
+            print("NEXTTTT");
+            TourUtil.next();
+            break;
+          case 'onPrevStep':
+            TourUtil.previous();
+            break;
+          case 'openLink':
+            final url = data['url'] as String;
+            Util.launchInBrowser(url);
+            break;
+          case 'onCloseStep':
+            TourUtil.finish();
+            break;
+        }
+      },
+    );
     if (!isTour) controller = c;
     return c;
   }
@@ -416,41 +443,6 @@ class WebviewUtil {
     }
     if (body.toString().startsWith(bodyStartsWithHtmlString)) {
       WebviewUtil.loadHtml(body, tourWebViewController: tourWebViewController);
-      // adjustWebviewZoom(scale: scale ?? 2);
-      WebViewController? c;
-      if (tourWebViewController != null) {
-        c = tourWebViewController;
-      } else {
-        c = controller;
-      }
-      c!.addJavaScriptChannel(
-        'MyFlutterApp', // REQUIRED FOR ANDROID
-        onMessageReceived: (JavaScriptMessage message) {
-          handleJsMessage(message.message);
-        },
-      );
-      c!.addJavaScriptChannel(
-        'FlutterChannel',
-        onMessageReceived: (JavaScriptMessage message) {
-          final data = jsonDecode(message.message);
-          switch (data['action']) {
-            case 'onNextStep':
-              print("NEXTTTT");
-              TourUtil.next();
-              break;
-            case 'onPrevStep':
-              TourUtil.previous();
-              break;
-            case 'openLink':
-              final url = data['url'] as String;
-              Util.launchInBrowser(url);
-              break;
-            case 'onCloseStep':
-              TourUtil.finish();
-              break;
-          }
-        },
-      );
     }
   }
 
