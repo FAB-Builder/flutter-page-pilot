@@ -5,7 +5,7 @@ class StepModel {
   String? dismissalSetting;
   String? title;
   String? selector;
-  Null? language;
+  String? language;
   String? content;
   String? animationType;
   int? delay;
@@ -85,7 +85,7 @@ class StepModel {
     height = json['height'];
     width = json['width'];
     backgroundColor = json['backgroundColor'];
-    borderRadius = int.tryParse(json['borderRadius'] ?? "0");
+    borderRadius = int.tryParse((json['borderRadius'] ?? "0").toString());
   }
 
   Map<String, dynamic> toJson() {

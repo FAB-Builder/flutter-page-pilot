@@ -130,6 +130,8 @@ void doShow({
       if (tours.isNotEmpty || tooltips.isNotEmpty) {
         await Pref.write(
             "data", jsonEncode({"tours": tours, "tooltips": tooltips}));
+      } else {
+        await Pref.write("data", "null");
       }
     }
   } catch (e) {
