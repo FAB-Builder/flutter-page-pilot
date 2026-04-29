@@ -76,8 +76,13 @@ class TourUtil {
     const double verticalOffset = 220;
     const double horizontalOffset = 50;
 
-    final RenderBox renderBox =
-        keyTarget.currentContext!.findRenderObject() as RenderBox;
+    final context = keyTarget.currentContext;
+    if (context == null) {
+      return const CustomTargetContentPosition(
+        top: 0,
+      );
+    }
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final Offset widgetPos = renderBox.localToGlobal(Offset.zero);
     // final Size widgetSize = renderBox.size;
 
@@ -124,6 +129,8 @@ class TourUtil {
 
     List<TargetFocus> targets = [];
     for (int i = 0; i < keys.length; i++) {
+      if (keys[i].currentContext == null) continue;
+
       String position = steps[i].position.toString();
 
       targets.add(

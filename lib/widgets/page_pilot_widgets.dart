@@ -632,8 +632,9 @@ class PagePilot {
     required Function() onBeaconClicked,
   }) {
     // Get the render box for the target widget
-    final RenderBox renderBox =
-        key.currentContext!.findRenderObject() as RenderBox;
+    final context = key.currentContext;
+    if (context == null) return;
+    final RenderBox renderBox = context.findRenderObject() as RenderBox;
     final size = renderBox.size;
     final position = renderBox.localToGlobal(Offset.zero);
 
@@ -690,6 +691,7 @@ class PagePilot {
       String? contentHeight = tours[i].height;
       String? contentwidth = tours[i].width;
       final key = gkeys[tours[i].selector.toString()];
+      if (key == null) continue;
       keys.add(key);
       if (scrollController != null) {
         await scrollToTarget(key, scrollController);
